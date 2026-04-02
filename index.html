@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
-<!-- v4.1 fix-briefing-filter -->
+<!-- v4.2 reload-on-login -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -945,7 +945,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div class="agent-logged-name" id="logged-agent-name"></div>
           <div class="agent-logged-sub">תדריכים הממתינים לחתימתך</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="logoutAgent()">החלף ▸</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="logoutAgent()">החלף ▸</button>
+        </div>
       </div>
       <div id="agent-briefing-list"></div>
       <div id="no-briefings" style="display:none">
@@ -1561,12 +1564,18 @@ function renderAgentLogin(){
     </div>`;
   }).join('');
 }
-function selectAgent(id){
+async function selectAgent(id){
   S.agent=S.agents.find(a=>a.id===id);
   document.getElementById('agent-login').style.display='none';
   document.getElementById('agent-briefings').style.display='block';
   document.getElementById('agent-flow').style.display='none';
   document.getElementById('logged-agent-name').textContent=S.agent.name;
+  // Always reload fresh briefings from Supabase on login
+  S.briefings=await dbBriefings();
+  renderAgentBriefings();
+}
+async function refreshAgentBriefings(){
+  S.briefings=await dbBriefings();
   renderAgentBriefings();
 }
 function logoutAgent(){
