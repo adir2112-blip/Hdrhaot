@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
-<!-- v4.0 native-app-mobile -->
+<!-- v4.1 fix-briefing-filter -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1178,8 +1178,8 @@ async function dbBriefings(){
   // parse JSON fields
   return (data||[]).map(b=>{
     b.questions=typeof b.questions==='string'?JSON.parse(b.questions):b.questions;
-    b.targetDepts=typeof b.targetDepts==='string'?JSON.parse(b.targetDepts):b.targetDepts||[];
-    b.completions=typeof b.completions==='string'?JSON.parse(b.completions):b.completions||{};
+    try{ b.targetDepts=b.targetDepts?(typeof b.targetDepts==='string'?JSON.parse(b.targetDepts):b.targetDepts):[]; }catch(e){b.targetDepts=[];}
+    try{ b.completions=b.completions?(typeof b.completions==='string'?JSON.parse(b.completions):b.completions):{}; }catch(e){b.completions={};}
     return b;
   });
 }
@@ -1578,9 +1578,14 @@ function logoutAgent(){
 function renderAgentBriefings(){
   const el=document.getElementById('agent-briefing-list');
   const pending=S.briefings.filter(b=>{
-    if(b.completions[S.agent.id]) return false;
-    if(!b.targetDepts||b.targetDepts.length===0) return true;
-    return (S.agent.depts||[]).some(d=>b.targetDepts.includes(d));
+    // Check completion by both string and number id
+    if(b.completions[S.agent.id]||b.completions[String(S.agent.id)]) return false;
+    // No target depts = show to everyone
+    if(!b.targetDepts||!Array.isArray(b.targetDepts)||b.targetDepts.length===0) return true;
+    // Match agent depts against briefing target depts (case-insensitive)
+    const agentDepts=(S.agent.depts||[]).map(d=>String(d).trim());
+    const briefDepts=b.targetDepts.map(d=>String(d).trim());
+    return agentDepts.some(d=>briefDepts.includes(d));
   });
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
   el.innerHTML=pending.map(b=>`
@@ -1651,7 +1656,7 @@ function submitQuiz(){
 async function signBriefing(){
   const ts=now();
   const b=S.briefings.find(b=>b.id===S.active.id);
-  b.completions[S.agent.id]={score:S.score,ts,name:S.agent.name};
+  b.completions[String(S.agent.id)]={score:S.score,ts,name:S.agent.name};
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
