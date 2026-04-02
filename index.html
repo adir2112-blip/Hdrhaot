@@ -450,51 +450,142 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ice4); }
 
-/* ── BOTTOM NAV (mobile) ─────────────────────────── */
+/* ══ BOTTOM NAV ════════════════════════════════════ */
 .bottom-nav {
   display: none;
   position: fixed; bottom: 0; right: 0; left: 0; z-index: 200;
-  background: rgba(245,244,240,0.97);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--line2);
-  padding: 6px 0 env(safe-area-inset-bottom, 8px);
+  background: #FAFAF8;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 0 max(env(safe-area-inset-bottom),10px);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
 }
-.bottom-nav-inner { display: flex; justify-content: space-around; }
+.bottom-nav-inner { display: flex; justify-content: space-around; align-items: center; }
 .bnav-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 6px 12px; cursor: pointer; border: none; background: none;
-  color: var(--ice3); font-family: 'DM Sans', sans-serif;
-  min-width: 60px; border-radius: 10px; transition: color 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 10px; cursor: pointer; border: none; background: none;
+  color: #999; font-family: 'DM Sans', sans-serif;
+  flex: 1; border-radius: 12px; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.bnav-btn .bni { font-size: 20px; line-height: 1; }
-.bnav-btn .bnl { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+.bnav-btn .bni { font-size: 22px; line-height: 1; transition: transform 0.15s; }
+.bnav-btn .bnl { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
 .bnav-btn.active { color: var(--gold); }
+.bnav-btn.active .bni { transform: scale(1.15); }
 
+/* ══ MOBILE OVERRIDES ══════════════════════════════ */
 @media(max-width:640px){
+  :root { --r: 14px; --r2: 18px; }
+
+  /* hide desktop nav, show bottom nav */
   .topbar .nav { display: none; }
   .bottom-nav { display: block; }
-  .page { padding: 1.5rem 1rem 90px; }
-  .kpi-grid { grid-template-columns: repeat(2,1fr); }
-  .agent-grid { grid-template-columns: repeat(2,1fr); }
-  .agent-pick { padding: 14px 8px; }
-  .agent-pick-name { font-size: 12px; }
-  .card { padding: 1rem; }
-  .sec-title { font-size: 22px; }
-  .lock-box { padding: 2rem 1.5rem; width: 90vw; }
-  .btn { padding: 10px 16px; font-size: 13px; }
-  .opt { padding: 10px 12px; font-size: 13px; }
-  .score-num { font-size: 58px; }
-  .kpi-val { font-size: 26px; }
-  .dept-filter-btn { font-size: 11px; padding: 5px 10px; }
-  .between { flex-wrap: wrap; gap: 8px; }
-  .topbar-inner { padding: 0 1rem; }
-  input[type=text],input[type=password],textarea,select { font-size: 16px; }
+
+  /* topbar compact */
+  .topbar-inner { padding: 0 16px; height: 52px; }
   .brand-sub { display: none; }
-  .track-row { padding: 12px; }
-  .q-text { font-size: 14px; }
-  .done-pill { font-size: 11px; }
-  .eq-card { padding: 14px; }
-  .opt-row { flex-wrap: wrap; }
+  .brand-name { font-size: 14px; }
+  .brand-mark { width: 30px; height: 30px; }
+
+  /* page breathing room above bottom nav */
+  .page { padding: 20px 16px 100px; }
+
+  /* typography — bigger & more readable */
+  body { font-size: 15px; }
+  .sec-title { font-size: 26px; line-height: 1.2; }
+  .sec-eyebrow { font-size: 11px; margin-bottom: 6px; }
+  .card-label { font-size: 11px; margin-bottom: 14px; }
+  .field-label { font-size: 11px; }
+
+  /* inputs — no zoom on iOS */
+  input[type=text],input[type=password],textarea,select {
+    font-size: 16px; padding: 12px 14px; border-radius: 12px;
+  }
+
+  /* cards */
+  .card { padding: 18px 16px; border-radius: 18px; margin-bottom: 12px; }
+  .track-row { padding: 14px 16px; border-radius: 14px; }
+
+  /* lock screens */
+  .lock-scene { min-height: calc(100vh - 160px); }
+  .lock-box { width: 90vw; max-width: 340px; padding: 2.5rem 1.75rem; border-radius: 24px; }
+  .lock-ico { font-size: 44px; margin-bottom: 14px; }
+  .lock-title { font-size: 20px; }
+
+  /* buttons */
+  .btn { padding: 13px 20px; font-size: 14px; border-radius: 12px; }
+  .btn-sm { padding: 9px 14px; font-size: 12px; }
+  .btn-danger-soft { padding: 8px 14px; font-size: 12px; }
+
+  /* KPI stats */
+  .stats-grid { grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .kpi { padding: 16px; border-radius: 14px; }
+  .kpi-val { font-size: 28px; }
+  .kpi-label { font-size: 10px; margin-top: 5px; }
+
+  /* agent select grid */
+  .agent-grid { grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 14px; }
+  .agent-pick { padding: 20px 12px; border-radius: 16px; }
+  .agent-pick:hover { transform: none; }
+  .agent-pick:active { transform: scale(0.97); }
+  .agent-pick-name { font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .av { width: 50px !important; height: 50px !important; font-size: 16px !important; }
+
+  /* group filter pills */
+  .dept-filter-bar { gap: 6px; margin-bottom: 14px; }
+  .dept-filter-btn { font-size: 12px; padding: 7px 13px; border-radius: 20px; }
+
+  /* quiz */
+  .q-card { padding: 16px; border-radius: 16px; }
+  .q-text { font-size: 16px; line-height: 1.6; margin-bottom: 16px; }
+  .opt { padding: 14px 14px; font-size: 15px; border-radius: 12px; margin-bottom: 10px; }
+  .opt-key { width: 30px; height: 30px; font-size: 12px; border-radius: 8px; }
+
+  /* score */
+  .score-num { font-size: 72px; }
+  .result-center { padding: 2rem 0; }
+  .sig-block { padding: 18px; border-radius: 16px; }
+
+  /* progress */
+  .prog-track { height: 5px; border-radius: 3px; }
+  .prog-head { margin-bottom: 10px; }
+  .prog-title { font-size: 13px; }
+
+  /* briefing rows */
+  .brief-row { padding: 16px; border-radius: 14px; margin-bottom: 10px; }
+
+  /* dept chips */
+  .dept-chip { font-size: 10px; padding: 3px 8px; }
+
+  /* done pills */
+  .done-pill { padding: 8px 12px; border-radius: 10px; }
+  .done-pill-title { font-size: 13px; }
+  .done-pill-meta { font-size: 11px; }
+
+  /* edit question cards */
+  .eq-card { padding: 16px; border-radius: 16px; }
+  .opt-row { flex-wrap: wrap; gap: 8px; }
+  .radio-pick { padding: 8px 12px; font-size: 12px; }
+
+  /* success / error bars */
+  .success-bar { padding: 14px 16px; border-radius: 12px; }
+  .success-bar .t { font-size: 14px; }
+  .success-bar .s { font-size: 12px; }
+
+  /* between flex */
+  .between { gap: 10px; }
+
+  /* pin modal */
+  .pin-key { padding: 16px; font-size: 22px; border-radius: 14px; }
+
+  /* range slider */
+  input[type=range] { height: 36px; }
+
+  /* agent flow content */
+  #flow-content { font-size: 15px; line-height: 1.85; }
+
+  /* hide decorative elements */
+  .card::before { display: none; }
+  .agent-pick::before { display: none; }
 }
 </style>
 </head>
@@ -975,59 +1066,51 @@ function switchTab(name){
 }
 
 /* PASSWORD */
-function checkManagerPw(){
-  if(document.getElementById('manager-pw-input').value===ADMIN_PW){
-    document.getElementById('manager-lock').style.display='none';
-    document.getElementById('manager-content').style.display='block';
-    document.getElementById('manager-pw-input').value='';
-    document.getElementById('manager-pw-error').style.display='none';
+/* ── SESSION ADMIN AUTH ── */
+// adminUnlocked lives only in memory — cleared on page close
+let _adminUnlocked = false;
+
+function unlockAll(){
+  _adminUnlocked = true;
+  ['manager','tracking','settings'].forEach(panel => {
+    const lock = document.getElementById(panel+'-lock');
+    const content = document.getElementById(panel+'-content');
+    if(lock) lock.style.display='none';
+    if(content) content.style.display='block';
+  });
+  renderSettings();
+  renderTracking();
+}
+function lockAll(){
+  _adminUnlocked = false;
+  ['manager','tracking','settings'].forEach(panel => {
+    const lock = document.getElementById(panel+'-lock');
+    const content = document.getElementById(panel+'-content');
+    if(lock) lock.style.display='flex';
+    if(content) content.style.display='none';
+  });
+  ['manager-pw-input','tracking-pw-input','admin-pw-input'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['manager-pw-error','tracking-pw-error','admin-pw-error'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
+  });
+}
+function checkAdminInput(inputId, errorId){
+  const val = document.getElementById(inputId).value;
+  if(val === ADMIN_PW){
+    unlockAll();
   } else {
-    document.getElementById('manager-pw-error').style.display='block';
-    document.getElementById('manager-pw-input').value='';
+    document.getElementById(errorId).style.display='block';
+    document.getElementById(inputId).value='';
   }
 }
-function lockManager(){
-  document.getElementById('manager-lock').style.display='flex';
-  document.getElementById('manager-content').style.display='none';
-  document.getElementById('manager-pw-input').value='';
-  document.getElementById('manager-pw-error').style.display='none';
-}
-function checkTrackingPw(){
-  if(document.getElementById('tracking-pw-input').value===ADMIN_PW){
-    document.getElementById('tracking-lock').style.display='none';
-    document.getElementById('tracking-content').style.display='block';
-    document.getElementById('tracking-pw-input').value='';
-    document.getElementById('tracking-pw-error').style.display='none';
-    renderTracking();
-  } else {
-    document.getElementById('tracking-pw-error').style.display='block';
-    document.getElementById('tracking-pw-input').value='';
-  }
-}
-function lockTracking(){
-  document.getElementById('tracking-lock').style.display='flex';
-  document.getElementById('tracking-content').style.display='none';
-  document.getElementById('tracking-pw-input').value='';
-  document.getElementById('tracking-pw-error').style.display='none';
-}
-function checkPw(){
-  if(document.getElementById('admin-pw-input').value===ADMIN_PW){
-    document.getElementById('settings-lock').style.display='none';
-    document.getElementById('settings-content').style.display='block';
-    document.getElementById('admin-pw-input').value='';
-    document.getElementById('admin-pw-error').style.display='none';
-    renderSettings();
-  } else {
-    document.getElementById('admin-pw-error').style.display='block';
-    document.getElementById('admin-pw-input').value='';
-  }
-}
-function lockSettings(){
-  document.getElementById('settings-lock').style.display='flex';
-  document.getElementById('settings-content').style.display='none';
-  document.getElementById('admin-pw-input').value='';
-  document.getElementById('admin-pw-error').style.display='none';
-}
+function checkManagerPw(){ checkAdminInput('manager-pw-input','manager-pw-error'); }
+function checkTrackingPw(){ checkAdminInput('tracking-pw-input','tracking-pw-error'); }
+function checkPw(){ checkAdminInput('admin-pw-input','admin-pw-error'); }
+function lockManager(){ if(!_adminUnlocked){ document.getElementById('manager-lock').style.display='flex'; document.getElementById('manager-content').style.display='none'; } }
+function lockTracking(){ if(!_adminUnlocked){ document.getElementById('tracking-lock').style.display='flex'; document.getElementById('tracking-content').style.display='none'; } }
+function lockSettings(){ lockAll(); }
 
 /* SETTINGS */
 /* ── PIN MODAL ─────────────────────────────────────── */
