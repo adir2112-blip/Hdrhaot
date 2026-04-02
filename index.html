@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Briefing OS — מוקד שירות</title>
+<title>מערכת תדריכים — מוקד שירות</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -488,7 +488,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2V3zm0 4h8v1.5H2V7zm0 4h10v1.5H2V11z"/></svg>
       </div>
       <div>
-        <div class="brand-name">Briefing OS</div>
+        <div class="brand-name">מערכת תדריכים</div>
         <div class="brand-sub">מוקד שירות ומכירה</div>
       </div>
     </div>
@@ -500,7 +500,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <span class="nav-icon">◉</span><span class="nav-label">נציג</span>
       </button>
       <button class="nav-btn" onclick="switchTab('tracking')" id="nav-tracking">
-        <span class="nav-icon">◈</span><span class="nav-label">מעקב</span>
+        <span class="nav-icon">◈</span><span class="nav-label">דשבורד</span>
       </button>
       <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
@@ -513,6 +513,19 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   <!-- MANAGER -->
   <div class="sec active" id="tab-manager">
+    <div id="manager-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">🔐</div>
+        <div class="lock-title">Manager Access</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="manager-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkManagerPw()">
+        </div>
+        <div id="manager-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkManagerPw()">כניסה</button>
+      </div>
+    </div>
+    <div id="manager-content" style="display:none">
     <div class="sec-header">
       <div class="sec-eyebrow">Manager Console</div>
       <div class="sec-title">תדריך <em>חדש</em></div>
@@ -532,6 +545,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">פעילויות מיועדות (בחר אחת או יותר)</label>
         <div class="dept-checkbox-grid" id="briefing-depts-picker"></div>
         <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">אם לא תבחר — התדריך יופיע לכל הנציגים</div>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label class="field-label">כמה שאלות לייצר?</label>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+          <input type="range" id="num-questions" min="3" max="15" value="5" step="1"
+            style="flex:1;accent-color:var(--gold);cursor:pointer"
+            oninput="document.getElementById('num-questions-val').textContent=this.value">
+          <span id="num-questions-val" style="font-size:22px;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif;min-width:32px;text-align:center">5</span>
+          <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">שאלות</span>
+        </div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;margin-top:20px;flex-wrap:wrap">
         <button class="btn btn-gold" id="gen-btn" onclick="generateQuiz()">
@@ -569,6 +592,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
   </div>
 
+    </div><!-- /manager-content -->
   <!-- AGENT -->
   <div class="sec" id="tab-agent">
     <div id="agent-login">
@@ -577,7 +601,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="sec-title">שלום, <em>מי אתה?</em></div>
       </div>
       <div class="card">
-        <div class="card-label">בחר את שמך</div>
+        <div class="card-label">בחר את המחלקה שלך</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px" id="group-filter-btns">
+          <button class="dept-filter-btn active" onclick="setAgentGroup('all',this)">הכל</button>
+          <button class="dept-filter-btn" onclick="setAgentGroup('מובמנט',this)">מובמנט</button>
+          <button class="dept-filter-btn" onclick="setAgentGroup('פריפיט',this)">פריפיט</button>
+          <button class="dept-filter-btn" onclick="setAgentGroup('סחר',this)">סחר</button>
+          <button class="dept-filter-btn" onclick="setAgentGroup('מאוחדת',this)">מאוחדת</button>
+        </div>
         <div class="agent-grid" id="agent-select-grid"></div>
         <div id="no-agents-msg" style="display:none;font-size:14px;color:var(--ice3);padding:1rem 0">לא הוגדרו נציגים עדיין — פנה למנהל.</div>
       </div>
@@ -650,9 +681,22 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   <!-- TRACKING -->
   <div class="sec" id="tab-tracking">
+    <div id="tracking-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">🔐</div>
+        <div class="lock-title">Manager Access</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="tracking-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkTrackingPw()">
+        </div>
+        <div id="tracking-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkTrackingPw()">כניסה</button>
+      </div>
+    </div>
+    <div id="tracking-content" style="display:none">
     <div class="sec-header">
       <div class="sec-eyebrow">Analytics Dashboard</div>
-      <div class="sec-title">מעקב <em>שבועי</em></div>
+      <div class="sec-title">דשבורד <em>מעקב</em></div>
     </div>
     <div class="kpi-grid" id="week-stats"></div>
     <div class="eyebrow">תדריכים השבוע</div>
@@ -663,6 +707,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="tracking-agents-list"></div>
   </div>
 
+    </div><!-- /tracking-content -->
   <!-- SETTINGS -->
   <div class="sec" id="tab-settings">
     <div id="settings-lock" class="lock-scene">
@@ -702,6 +747,49 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
       <div class="eyebrow" style="margin-top:1.5rem">נציגים פעילים</div>
       <div id="agents-list-settings"></div>
+
+      <div class="divider"></div>
+      <div class="eyebrow">איפוס תדריכים</div>
+      <div class="card" style="border-color:var(--danger-line)">
+        <div class="card-label" style="color:var(--danger)">מחיקת תדריכים</div>
+        <div style="font-size:12px;color:var(--ice3);margin-bottom:16px;line-height:1.7">מחיקה תסיר את התדריך מכל הנציגים. לא ניתן לשחזר.</div>
+
+        <div class="field" style="margin-bottom:14px">
+          <label class="field-label">מחק תדריכים לנציג ספציפי</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <select id="reset-agent-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+              <option value="">בחר נציג...</option>
+            </select>
+            <button class="btn btn-danger-soft" onclick="resetAgentBriefings()">מחק סימונים לנציג</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">מחק תדריכים לקבוצה שלמה</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <select id="reset-group-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+              <option value="">בחר קבוצה...</option>
+              <option value="מובמנט">מובמנט</option>
+              <option value="פריפיט">פריפיט</option>
+              <option value="סחר">סחר</option>
+              <option value="מאוחדת">מאוחדת</option>
+              <option value="all">כל הנציגים</option>
+            </select>
+            <button class="btn btn-danger-soft" onclick="resetGroupBriefings()">מחק סימונים לקבוצה</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="field">
+          <label class="field-label">מחק תדריך ספציפי לגמרי</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <select id="reset-briefing-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+              <option value="">בחר תדריך...</option>
+            </select>
+            <button class="btn btn-danger-soft" onclick="deleteBriefing()">מחק תדריך</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -718,7 +806,18 @@ const AV_COLORS=[
 ];
 const LETTERS=['א','ב','ג','ד'];
 const ADMIN_PW='Q1w2e3r4!';
-const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות'];
+const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
+const GROUPS=[
+  {key:'מובמנט', label:'מובמנט', depts:['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT']},
+  {key:'פריפיט',  label:'פריפיט',  depts:['פריפיט שירות','פריפיט מכירות']},
+  {key:'סחר',     label:'סחר',     depts:['מחלקת סחר']},
+  {key:'מאוחדת',  label:'מאוחדת',  depts:['מאוחדת']},
+];
+function agentGroup(a){
+  const d=a.depts||[];
+  for(const g of GROUPS){ if(g.depts.some(x=>d.includes(x))) return g.key; }
+  return null;
+}
 
 /* ---- SUPABASE ---- */
 const _sb = supabase.createClient('https://hbjtpjdthvjikfxsufdo.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc');
@@ -733,7 +832,10 @@ let S={
 async function dbAgents(){
   const {data,error}=await _sb.from('agents').select('*').order('id');
   if(error){console.error('agents load',error);return[];}
-  return data||[];
+  return (data||[]).map(a=>{
+    a.depts=typeof a.depts==='string'?JSON.parse(a.depts||'[]'):a.depts||[];
+    return a;
+  });
 }
 async function dbBriefings(){
   const {data,error}=await _sb.from('briefings').select('*').order('id');
@@ -784,12 +886,48 @@ function switchTab(name){
   document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['manager','agent','tracking','settings'][i]===name));
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='tracking')renderTracking();
+  if(name==='tracking')lockTracking();
   if(name==='settings'){lockSettings();renderSettings();}
   if(name==='agent')renderAgentLogin();
+  if(name==='manager')lockManager();
 }
 
 /* PASSWORD */
+function checkManagerPw(){
+  if(document.getElementById('manager-pw-input').value===ADMIN_PW){
+    document.getElementById('manager-lock').style.display='none';
+    document.getElementById('manager-content').style.display='block';
+    document.getElementById('manager-pw-input').value='';
+    document.getElementById('manager-pw-error').style.display='none';
+  } else {
+    document.getElementById('manager-pw-error').style.display='block';
+    document.getElementById('manager-pw-input').value='';
+  }
+}
+function lockManager(){
+  document.getElementById('manager-lock').style.display='flex';
+  document.getElementById('manager-content').style.display='none';
+  document.getElementById('manager-pw-input').value='';
+  document.getElementById('manager-pw-error').style.display='none';
+}
+function checkTrackingPw(){
+  if(document.getElementById('tracking-pw-input').value===ADMIN_PW){
+    document.getElementById('tracking-lock').style.display='none';
+    document.getElementById('tracking-content').style.display='block';
+    document.getElementById('tracking-pw-input').value='';
+    document.getElementById('tracking-pw-error').style.display='none';
+    renderTracking();
+  } else {
+    document.getElementById('tracking-pw-error').style.display='block';
+    document.getElementById('tracking-pw-input').value='';
+  }
+}
+function lockTracking(){
+  document.getElementById('tracking-lock').style.display='flex';
+  document.getElementById('tracking-content').style.display='none';
+  document.getElementById('tracking-pw-input').value='';
+  document.getElementById('tracking-pw-error').style.display='none';
+}
 function checkPw(){
   if(document.getElementById('admin-pw-input').value===ADMIN_PW){
     document.getElementById('settings-lock').style.display='none';
@@ -893,15 +1031,16 @@ async function generateQuiz(){
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='none';
   try{
+    const numQ=parseInt(document.getElementById('num-questions').value)||5;
     const prompt=`החזר JSON בלבד ללא backtick. פורמט:
 {"questions":[{"q":"שאלה","options":["א","ב","ג","ד"],"correct":0,"hint":"הסבר"}]}
-3 שאלות בעברית, 4 אפשרויות, correct=אינדקס 0-3, hint=הסבר קצר.
+${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=אינדקס 0-3, hint=הסבר קצר.
 כותרת: ${title}
 תוכן: ${content}
-צור 3 שאלות.`;
+צור בדיוק ${numQ} שאלות.`;
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:1000}})
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:3000}})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
@@ -977,17 +1116,35 @@ function resetManager(){
 }
 
 /* AGENT */
+let _agentGroupFilter='all';
+function setAgentGroup(key,btn){
+  _agentGroupFilter=key;
+  document.querySelectorAll('#group-filter-btns .dept-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAgentLogin();
+}
 function renderAgentLogin(){
   const el=document.getElementById('agent-select-grid');
-  if(!S.agents.length){el.innerHTML='';document.getElementById('no-agents-msg').style.display='block';return;}
-  document.getElementById('no-agents-msg').style.display='none';
-  el.innerHTML=S.agents.map(a=>{
+  const noMsg=document.getElementById('no-agents-msg');
+  let visible=S.agents;
+  if(_agentGroupFilter!=='all'){
+    const grp=GROUPS.find(g=>g.key===_agentGroupFilter);
+    if(grp) visible=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+  }
+  if(!visible.length){
+    el.innerHTML='';
+    noMsg.style.display='block';
+    noMsg.textContent=S.agents.length?'אין נציגים במחלקה זו.':'לא הוגדרו נציגים עדיין — פנה למנהל.';
+    return;
+  }
+  noMsg.style.display='none';
+  el.innerHTML=visible.map(a=>{
     const c=col(a.id);
-    const d=(a.depts&&a.depts[0])||'';
+    const g=agentGroup(a);
     return`<div class="agent-pick" onclick="selectAgent(${a.id})">
       <div class="av" style="width:46px;height:46px;margin:0 auto;background:${c.bg};color:${c.c};font-size:14px">${ini(a.name)}</div>
       <div class="agent-pick-name">${a.name}</div>
-      ${d?`<div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d}</div>`:''}
+      ${g?`<div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-top:4px">${g}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -1124,17 +1281,36 @@ function renderTracking(){
     <div class="kpi"><div class="kpi-val">${done}</div><div class="kpi-label">השלמות</div></div>
     <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז עמידה</div></div>`;
   const bwEl=document.getElementById('briefings-week-list');
-  bwEl.innerHTML=!wb.length
-    ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">לא פורסמו תדריכים השבוע.</div>'
-    :wb.map(b=>{const d=Object.keys(b.completions).length;return`
-      <div class="track-row" style="margin-bottom:8px">
-        <div class="between" style="margin-bottom:6px">
-          <div style="font-size:14px;font-weight:500;color:var(--ice)">${b.title}</div>
-          <span class="chip ${d===tot?'chip-ok':'chip-warn'}">${d}/${tot}</span>
+  // Show ALL briefings, not just this week
+  const allBriefings=[...S.briefings].reverse();
+  bwEl.innerHTML=!allBriefings.length
+    ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">לא פורסמו תדריכים עדיין.</div>'
+    :allBriefings.map(b=>{
+      const doneCount=Object.keys(b.completions).length;
+      const doneNames=Object.values(b.completions).map(c=>c.name||'');
+      return`
+      <div class="track-row" style="margin-bottom:10px">
+        <div class="between" style="margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--ice)">${b.title}</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:3px">${b.publishedAt}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="chip ${doneCount===tot?'chip-ok':'chip-warn'}">${doneCount}/${tot} השלימו</span>
+            <button class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px" onclick="deleteBriefingFromDashboard(${b.id})">🗑 מחק</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-bottom:4px">${b.publishedAt}</div>
-        ${b.targetDepts&&b.targetDepts.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join('')}</div>`:''}
-      </div>`;}).join('');
+        ${b.targetDepts&&b.targetDepts.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join('')}</div>`:''}
+        ${doneNames.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${Object.entries(b.completions).map(([aid,comp])=>`
+            <div style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:8px;padding:5px 10px;font-size:11px;display:flex;align-items:center;gap:8px">
+              <span style="color:var(--ok);font-weight:600">${comp.name||aid}</span>
+              <span style="color:var(--ice3);font-family:'DM Mono',monospace">${comp.score}% · ${comp.ts}</span>
+              <button onclick="resetSingleCompletion(${b.id},${aid})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:11px;padding:0;line-height:1" title="בטל חתימה">✕</button>
+            </div>`).join('')}
+        </div>`:'<div style="font-size:11px;color:var(--ice3)">טרם נחתם על ידי אף נציג</div>'}
+      </div>`;
+    }).join('');
   document.getElementById('tracking-agents-list').innerHTML=filteredAgents.map(a=>{
     const c=col(a.id);
     const done=S.briefings.filter(b=>b.completions[a.id]);
@@ -1162,6 +1338,79 @@ function renderTracking(){
       </div>`:''}
     </div>`;
   }).join('');
+}
+
+function populateResetSelects(){
+  const agSel=document.getElementById('reset-agent-select');
+  const brSel=document.getElementById('reset-briefing-select');
+  if(agSel){
+    agSel.innerHTML='<option value="">בחר נציג...</option>'+S.agents.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  }
+  if(brSel){
+    brSel.innerHTML='<option value="">בחר תדריך...</option>'+S.briefings.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+  }
+}
+async function resetAgentBriefings(){
+  const id=parseInt(document.getElementById('reset-agent-select').value);
+  if(!id){alert('בחר נציג');return;}
+  const agent=S.agents.find(a=>a.id===id);
+  if(!confirm(`למחוק את כל סימוני ההשלמה של ${agent.name}?`))return;
+  for(const b of S.briefings){
+    if(b.completions[id]){
+      delete b.completions[id];
+      await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+    }
+  }
+  alert('בוצע — נמחקו סימוני ההשלמה של '+agent.name);
+}
+async function resetGroupBriefings(){
+  const grpKey=document.getElementById('reset-group-select').value;
+  if(!grpKey){alert('בחר קבוצה');return;}
+  let agentIds;
+  if(grpKey==='all'){
+    agentIds=S.agents.map(a=>a.id);
+  } else {
+    const grp=GROUPS.find(g=>g.key===grpKey);
+    agentIds=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d))).map(a=>a.id);
+  }
+  if(!agentIds.length){alert('לא נמצאו נציגים בקבוצה זו');return;}
+  if(!confirm(`למחוק סימוני השלמה ל-${agentIds.length} נציגים בקבוצה "${grpKey}"?`))return;
+  for(const b of S.briefings){
+    let changed=false;
+    agentIds.forEach(id=>{if(b.completions[id]){delete b.completions[id];changed=true;}});
+    if(changed) await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+  }
+  alert('בוצע — נמחקו סימוני ההשלמה לקבוצה '+grpKey);
+}
+async function deleteBriefing(){
+  const id=parseInt(document.getElementById('reset-briefing-select').value);
+  if(!id){alert('בחר תדריך');return;}
+  const b=S.briefings.find(x=>x.id===id);
+  if(!confirm(`למחוק את התדריך "${b.title}" לצמיתות?`))return;
+  await _sb.from('briefings').delete().eq('id',id);
+  S.briefings=S.briefings.filter(x=>x.id!==id);
+  renderTracking();
+  populateResetSelects();
+  alert('התדריך נמחק');
+}
+async function deleteBriefingFromDashboard(id){
+  const b=S.briefings.find(x=>x.id===id);
+  if(!b)return;
+  if(!confirm(`למחוק את התדריך "${b.title}" לצמיתות?`))return;
+  await _sb.from('briefings').delete().eq('id',id);
+  S.briefings=S.briefings.filter(x=>x.id!==id);
+  renderTracking();
+  populateResetSelects();
+}
+async function resetSingleCompletion(briefingId,agentId){
+  const b=S.briefings.find(x=>x.id===briefingId);
+  if(!b)return;
+  const agent=S.agents.find(a=>a.id===agentId);
+  const name=agent?agent.name:agentId;
+  if(!confirm(`לבטל את חתימת ${name} על תדריך זה?`))return;
+  delete b.completions[agentId];
+  await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',briefingId);
+  renderTracking();
 }
 
 async function appInit(){
