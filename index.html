@@ -6,6 +6,7 @@
 <title>מערכת תדריכים — מוקד שירות</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --ink:     #F5F4F0;
@@ -449,12 +450,51 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--ice4); }
 
+/* ── BOTTOM NAV (mobile) ─────────────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; right: 0; left: 0; z-index: 200;
+  background: rgba(245,244,240,0.97);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line2);
+  padding: 6px 0 env(safe-area-inset-bottom, 8px);
+}
+.bottom-nav-inner { display: flex; justify-content: space-around; }
+.bnav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 12px; cursor: pointer; border: none; background: none;
+  color: var(--ice3); font-family: 'DM Sans', sans-serif;
+  min-width: 60px; border-radius: 10px; transition: color 0.15s;
+}
+.bnav-btn .bni { font-size: 20px; line-height: 1; }
+.bnav-btn .bnl { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+.bnav-btn.active { color: var(--gold); }
+
 @media(max-width:640px){
-  .topbar-inner { padding: 0 1rem; }
-  .page { padding: 1.5rem 1rem; }
+  .topbar .nav { display: none; }
+  .bottom-nav { display: block; }
+  .page { padding: 1.5rem 1rem 90px; }
   .kpi-grid { grid-template-columns: repeat(2,1fr); }
-  .nav-btn span.nav-label { display: none; }
-  .agent-grid { grid-template-columns: repeat(3,1fr); }
+  .agent-grid { grid-template-columns: repeat(2,1fr); }
+  .agent-pick { padding: 14px 8px; }
+  .agent-pick-name { font-size: 12px; }
+  .card { padding: 1rem; }
+  .sec-title { font-size: 22px; }
+  .lock-box { padding: 2rem 1.5rem; width: 90vw; }
+  .btn { padding: 10px 16px; font-size: 13px; }
+  .opt { padding: 10px 12px; font-size: 13px; }
+  .score-num { font-size: 58px; }
+  .kpi-val { font-size: 26px; }
+  .dept-filter-btn { font-size: 11px; padding: 5px 10px; }
+  .between { flex-wrap: wrap; gap: 8px; }
+  .topbar-inner { padding: 0 1rem; }
+  input[type=text],input[type=password],textarea,select { font-size: 16px; }
+  .brand-sub { display: none; }
+  .track-row { padding: 12px; }
+  .q-text { font-size: 14px; }
+  .done-pill { font-size: 11px; }
+  .eq-card { padding: 14px; }
+  .opt-row { flex-wrap: wrap; }
 }
 </style>
 </head>
@@ -506,6 +546,23 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
       </button>
     </nav>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" id="bnav-manager" onclick="switchTab('manager')">
+      <span class="bni">✦</span><span class="bnl">תדריך</span>
+    </button>
+    <button class="bnav-btn" id="bnav-agent" onclick="switchTab('agent')">
+      <span class="bni">👤</span><span class="bnl">כניסה</span>
+    </button>
+    <button class="bnav-btn" id="bnav-tracking" onclick="switchTab('tracking')">
+      <span class="bni">📊</span><span class="bnl">דשבורד</span>
+    </button>
+    <button class="bnav-btn" id="bnav-settings" onclick="switchTab('settings')">
+      <span class="bni">⚙️</span><span class="bnl">ניהול</span>
+    </button>
   </div>
 </div>
 
@@ -609,8 +666,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button class="dept-filter-btn" onclick="setAgentGroup('סחר',this)">סחר</button>
           <button class="dept-filter-btn" onclick="setAgentGroup('מאוחדת',this)">מאוחדת</button>
         </div>
+        <div style="position:relative;margin-bottom:14px">
+          <input type="text" id="agent-search" placeholder="🔍 חפש שם עובד..." oninput="renderAgentLogin()" style="width:100%;padding-right:14px;font-size:15px">
+        </div>
         <div class="agent-grid" id="agent-select-grid"></div>
-        <div id="no-agents-msg" style="display:none;font-size:14px;color:var(--ice3);padding:1rem 0">לא הוגדרו נציגים עדיין — פנה למנהל.</div>
+        <div id="no-agents-msg" style="display:none;font-size:14px;color:var(--ice3);padding:1rem 0">לא נמצאו נציגים.</div>
       </div>
     </div>
 
@@ -737,13 +797,23 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="card-label">הוספת נציג</div>
         <div class="field">
           <label class="field-label">שם מלא</label>
-          <input type="text" id="new-agent-name" placeholder="שם מלא של הנציג" onkeydown="if(event.key==='Enter')addAgent()">
+          <input type="text" id="new-agent-name" placeholder="שם מלא הנציג">
         </div>
         <div class="field">
           <label class="field-label">מחלקות (בחר אחת או יותר)</label>
           <div class="dept-checkbox-grid" id="new-agent-depts"></div>
         </div>
-        <button class="btn btn-gold" style="margin-top:14px" onclick="addAgent()">+ הוסף נציג</button>
+        <div class="field">
+          <label class="field-label">4 ספרות אחרונות ת"ז (קוד כניסה)</label>
+          <input type="text" id="new-agent-pin" placeholder="1234" maxlength="4" inputmode="numeric"
+            style="letter-spacing:0.3em;font-family:'DM Mono',monospace;font-size:18px;text-align:center">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="addAgent()">+ הוסף נציג</button>
+          <button class="btn btn-outline" onclick="document.getElementById('excel-upload').click()">📥 טען מאקסל</button>
+          <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
+        </div>
+        <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">פורמט אקסל: שם מלא | פעילות | 4 ספרות</div>
       </div>
       <div class="eyebrow" style="margin-top:1.5rem">נציגים פעילים</div>
       <div id="agents-list-settings"></div>
@@ -884,6 +954,8 @@ function saveApiKey(){
 /* TABS */
 function switchTab(name){
   document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['manager','agent','tracking','settings'][i]===name));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='tracking')lockTracking();
@@ -948,18 +1020,83 @@ function lockSettings(){
 }
 
 /* SETTINGS */
+/* ── PIN MODAL ─────────────────────────────────────── */
+let _pinAgentId=null, _pinVal='';
+function showPinModal(id){
+  const a=S.agents.find(x=>x.id===id);
+  if(!a)return;
+  // if no pin set, allow direct entry
+  if(!a.pin){selectAgent(id);return;}
+  _pinAgentId=id;_pinVal='';
+  document.getElementById('pin-agent-name').textContent=a.name;
+  document.getElementById('pin-error').style.display='none';
+  updatePinDots();
+  document.getElementById('pin-modal').style.display='flex';
+}
+function closePinModal(){document.getElementById('pin-modal').style.display='none';_pinVal='';_pinAgentId=null;}
+function pinPress(d){if(_pinVal.length>=4)return;_pinVal+=d;updatePinDots();if(_pinVal.length===4)setTimeout(pinConfirm,150);}
+function pinClear(){_pinVal=_pinVal.slice(0,-1);updatePinDots();}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    if(d){d.style.background=i<_pinVal.length?'var(--gold)':'transparent';d.style.borderColor=i<_pinVal.length?'var(--gold)':'var(--line2)';}
+  }
+}
+function pinConfirm(){
+  const a=S.agents.find(x=>x.id===_pinAgentId);
+  if(!a)return;
+  if(_pinVal===String(a.pin)){
+    closePinModal();
+    selectAgent(_pinAgentId);
+  } else {
+    document.getElementById('pin-error').style.display='block';
+    _pinVal='';updatePinDots();
+  }
+}
+
+/* ── ADD AGENT ─────────────────────────────────────── */
 async function addAgent(){
   const inp=document.getElementById('new-agent-name'),name=inp.value.trim();
   if(!name)return;
   if(S.agents.find(a=>a.name===name)){alert('נציג זה כבר קיים');return;}
+  const pinRaw=document.getElementById('new-agent-pin').value.trim();
+  if(pinRaw&&(!/^\d{4}$/.test(pinRaw))){alert('קוד ת"ז חייב להיות 4 ספרות');return;}
   const depts=DEPTS.filter((_,i)=>{const btn=document.getElementById('ncbl-'+i);return btn&&btn.dataset.checked==='1';});
-  const {data,error}=await _sb.from('agents').insert({name,depts:JSON.stringify(depts)}).select().single();
+  const row={name,depts:JSON.stringify(depts)};
+  if(pinRaw) row.pin=pinRaw;
+  const {data,error}=await _sb.from('agents').insert(row).select().single();
   if(error){alert('שגיאה בהוספת נציג: '+error.message);return;}
   data.depts=depts;
   S.agents.push(data);
-  inp.value='';
+  inp.value='';document.getElementById('new-agent-pin').value='';
   document.querySelectorAll('[id^=ncbl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';} });
   renderSettings();renderAgentLogin();
+}
+
+/* ── EXCEL IMPORT ──────────────────────────────────── */
+async function importFromExcel(input){
+  const file=input.files[0];if(!file)return;
+  const XLSX=window.XLSX;
+  if(!XLSX){alert('טוען ספרייה... נסה שוב');return;}
+  const ab=await file.arrayBuffer();
+  const wb=XLSX.read(ab,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  let added=0,skipped=0;
+  for(let i=1;i<rows.length;i++){
+    const [name,dept,pin]=rows[i].map(c=>String(c||'').trim());
+    if(!name)continue;
+    if(S.agents.find(a=>a.name===name)){skipped++;continue;}
+    const depts=dept?[dept]:[];
+    const row={name,depts:JSON.stringify(depts)};
+    if(pin&&/^\d{4}$/.test(pin)) row.pin=pin;
+    const {data,error}=await _sb.from('agents').insert(row).select().single();
+    if(!error){data.depts=depts;S.agents.push(data);added++;}
+    else skipped++;
+  }
+  input.value='';
+  renderSettings();renderAgentLogin();
+  alert(`ייבוא הושלם: ${added} נציגים נוספו, ${skipped} דולגו.`);
 }
 async function removeAgent(id){
   if(!confirm('למחוק נציג זה?'))return;
@@ -978,9 +1115,15 @@ function renderSettings(){
       <div class="between" style="margin-bottom:10px">
         <div class="row">
           <div class="av" style="width:36px;height:36px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
-          <span style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</span>
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.pin?`קוד: ****`:'ללא קוד'}</div>
+          </div>
         </div>
-        <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
+          <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
+        </div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
         ${depts.length?depts.map(d=>`<span class="dept-chip">${d}</span>`).join(''):'<span style="font-size:11px;color:var(--ice3)">לא שויך למחלקה</span>'}
@@ -1131,17 +1274,20 @@ function renderAgentLogin(){
     const grp=GROUPS.find(g=>g.key===_agentGroupFilter);
     if(grp) visible=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
   }
+  const searchEl=document.getElementById('agent-search');
+  const q=(searchEl?searchEl.value:'').trim().toLowerCase();
+  if(q) visible=visible.filter(a=>a.name.toLowerCase().includes(q));
   if(!visible.length){
     el.innerHTML='';
     noMsg.style.display='block';
-    noMsg.textContent=S.agents.length?'אין נציגים במחלקה זו.':'לא הוגדרו נציגים עדיין — פנה למנהל.';
+    noMsg.textContent=S.agents.length?'לא נמצאו נציגים.':'לא הוגדרו נציגים עדיין — פנה למנהל.';
     return;
   }
   noMsg.style.display='none';
   el.innerHTML=visible.map(a=>{
     const c=col(a.id);
     const g=agentGroup(a);
-    return`<div class="agent-pick" onclick="selectAgent(${a.id})">
+    return`<div class="agent-pick" onclick="showPinModal(${a.id})">
       <div class="av" style="width:46px;height:46px;margin:0 auto;background:${c.bg};color:${c.c};font-size:14px">${ini(a.name)}</div>
       <div class="agent-pick-name">${a.name}</div>
       ${g?`<div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-top:4px">${g}</div>`:''}
@@ -1413,6 +1559,32 @@ async function resetSingleCompletion(briefingId,agentId){
   renderTracking();
 }
 
+/* ── EDIT PIN ─────────────────────────────────────── */
+let _editPinId=null;
+function openEditPin(id){
+  const a=S.agents.find(x=>x.id===id);if(!a)return;
+  _editPinId=id;
+  document.getElementById('edit-pin-agent-label').textContent=a.name;
+  document.getElementById('edit-pin-input').value=a.pin||'';
+  document.getElementById('edit-pin-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('edit-pin-input').focus(),100);
+}
+function closeEditPin(){
+  document.getElementById('edit-pin-modal').style.display='none';
+  _editPinId=null;
+}
+async function saveEditPin(){
+  const a=S.agents.find(x=>x.id===_editPinId);if(!a)return;
+  const val=document.getElementById('edit-pin-input').value.trim();
+  if(val&&!/^\d{4}$/.test(val)){alert('קוד חייב להיות בדיוק 4 ספרות');return;}
+  const newPin=val||null;
+  const {error}=await _sb.from('agents').update({pin:newPin}).eq('id',_editPinId);
+  if(error){alert('שגיאה בשמירה: '+error.message);return;}
+  a.pin=newPin;
+  closeEditPin();
+  renderSettings();
+}
+
 async function appInit(){
   await loadAll();
   renderSettings();renderAgentLogin();renderTracking();initBriefingDeptPicker();
@@ -1433,6 +1605,63 @@ function toggleBriefingDept(i,btn){
   if(sp){sp.style.border=!on?'1px solid var(--gold)':'1px solid var(--line2)';sp.style.background=!on?'var(--gold)':'transparent';sp.textContent=!on?'✓':'';}
 }
 </script>
+
+<!-- PIN MODAL -->
+<div id="pin-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;padding:2.5rem 2rem;width:320px;max-width:90vw;text-align:center;position:relative">
+    <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:20px 20px 0 0"></div>
+    <div style="font-size:36px;margin-bottom:12px">🔑</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ice);margin-bottom:4px" id="pin-agent-name"></div>
+    <div style="font-size:13px;color:var(--ice3);margin-bottom:20px">הכנס 4 ספרות אחרונות של ת"ז</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px" id="pin-dots">
+      <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--line2)" id="pd0"></div>
+      <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--line2)" id="pd1"></div>
+      <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--line2)" id="pd2"></div>
+      <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--line2)" id="pd3"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px" id="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinClear()" style="font-size:11px">מחק</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key btn-gold" onclick="pinConfirm()" style="background:var(--gold);color:#0B0C10">✓</button>
+    </div>
+    <div id="pin-error" style="display:none;font-size:12px;color:var(--danger);font-family:'DM Mono',monospace;margin-bottom:10px">✗ קוד שגוי — נסה שוב</div>
+    <button class="btn btn-ghost btn-sm" onclick="closePinModal()" style="width:100%">ביטול</button>
+  </div>
+</div>
+<style>
+.pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:12px;padding:14px;font-size:20px;font-weight:600;color:var(--ice);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.1s;}
+.pin-key:hover{background:var(--ink4);border-color:var(--gold-line);}
+.pin-key:active{transform:scale(0.93);}
+</style>
+
+<!-- EDIT PIN MODAL -->
+<div id="edit-pin-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;padding:2rem 1.75rem;width:320px;max-width:90vw;position:relative">
+    <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:20px 20px 0 0"></div>
+    <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:4px">עריכת קוד PIN</div>
+    <div style="font-size:13px;color:var(--ice3);margin-bottom:18px" id="edit-pin-agent-label"></div>
+    <div class="field">
+      <label class="field-label">קוד PIN חדש (4 ספרות ת"ז)</label>
+      <input type="text" id="edit-pin-input" placeholder="1234" maxlength="4" inputmode="numeric"
+        style="letter-spacing:0.3em;font-family:'DM Mono',monospace;font-size:20px;text-align:center"
+        onkeydown="if(event.key==='Enter')saveEditPin()">
+    </div>
+    <div style="font-size:11px;color:var(--ice3);margin-bottom:16px;font-family:'DM Mono',monospace">השאר ריק כדי להסיר את קוד הכניסה</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" style="flex:1" onclick="saveEditPin()">שמור</button>
+      <button class="btn btn-outline" onclick="closeEditPin()">ביטול</button>
+    </div>
+  </div>
+</div>
 
 <div id="global-loading" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(245,244,240,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;flex-direction:column;gap:16px">
   <div style="display:flex;gap:6px"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
