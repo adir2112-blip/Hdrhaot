@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת תדריכים — מוקד שירות</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #f5f5f3;
+    color: #1a1a1a;
+    direction: rtl;
+    min-height: 100vh;
+  }
+  .container { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem; }
+  h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid #e0e0e0; margin-bottom: 1.5rem; flex-wrap: wrap; background: #fff; border-radius: 12px 12px 0 0; padding: 0 1rem; }
+  .tab { font-size: 13px; padding: 12px 16px; cursor: pointer; border: none; background: none; color: #888; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; white-space: nowrap; }
+  .tab.active { color: #534AB7; font-weight: 600; border-bottom-color: #534AB7; }
+  .sec { display: none; } .sec.active { display: block; }
+
+  /* CARDS */
+  .card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; }
+  .card-title { font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+
+  /* FORM ELEMENTS */
+  label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; margin-top: 12px; }
+  label:first-child { margin-top: 0; }
+  input[type=text], textarea, select {
+    width: 100%; border: 1px solid #ddd; border-radius: 8px;
+    padding: 9px 12px; font-size: 14px; font-family: inherit;
+    color: #1a1a1a; background: #fff; direction: rtl;
+  }
+  input[type=text]:focus, textarea:focus { outline: none; border-color: #534AB7; }
+  textarea { resize: vertical; min-height: 110px; }
+
+  /* BUTTONS */
+  .btn { border-radius: 8px; padding: 9px 18px; font-size: 13px; font-family: inherit; cursor: pointer; font-weight: 600; border: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: #534AB7; color: #fff; } .btn-primary:hover { background: #3C3489; }
+  .btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+  .btn-sec { background: #fff; border: 1px solid #ddd; color: #1a1a1a; } .btn-sec:hover { background: #f5f5f3; }
+  .btn-danger { background: #fff; border: 1px solid #f09595; color: #791F1F; font-size: 12px; padding: 5px 10px; } .btn-danger:hover { background: #FCEBEB; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* BADGES */
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 6px; font-weight: 600; }
+  .b-green { background: #EAF3DE; color: #27500A; }
+  .b-amber { background: #FAEEDA; color: #633806; }
+  .b-purple { background: #EEEDFE; color: #3C3489; }
+  .b-gray { background: #f1efea; color: #555; }
+  .b-red { background: #FCEBEB; color: #791F1F; }
+  .b-blue { background: #E6F1FB; color: #0C447C; }
+
+  /* AVATAR */
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+  /* QUIZ */
+  .q-block { border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .q-text { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+  .opt { padding: 9px 13px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 7px; cursor: pointer; font-size: 13px; color: #1a1a1a; transition: background 0.1s; }
+  .opt:hover { background: #f5f5f3; }
+  .opt.correct, .opt.show-correct { background: #EAF3DE; border-color: #3B6D11; color: #27500A; }
+  .opt.wrong { background: #FCEBEB; border-color: #A32D2D; color: #791F1F; }
+  .hint-box { font-size: 12px; color: #666; background: #f5f5f3; border-radius: 8px; padding: 8px 11px; margin-top: 8px; }
+
+  /* PROGRESS */
+  .prog-bg { height: 5px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 1rem; }
+  .prog-fill { height: 100%; background: #534AB7; border-radius: 4px; transition: width 0.3s; }
+  .step-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+
+  /* WEEK STATS */
+  .week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .week-stat { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 14px; }
+  .week-stat .num { font-size: 26px; font-weight: 700; color: #1a1a1a; }
+  .week-stat .wlbl { font-size: 11px; color: #888; margin-bottom: 4px; }
+
+  /* AGENT SELECT */
+  .agent-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 12px; }
+  .agent-select-card { border: 1px solid #e8e8e8; border-radius: 12px; padding: 16px 12px; cursor: pointer; text-align: center; background: #fff; transition: border-color 0.15s, background 0.15s; }
+  .agent-select-card:hover { border-color: #534AB7; background: #EEEDFE; }
+
+  /* LAYOUT HELPERS */
+  .row { display: flex; align-items: center; gap: 10px; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .divider { height: 1px; background: #eee; margin: 1.2rem 0; }
+  .section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  /* SIGNATURE */
+  .sig-box { border: 1px solid #e0e0e0; border-radius: 10px; padding: 16px; background: #f9f9f8; margin-top: 12px; }
+
+  /* SUCCESS */
+  .success-card { background: #EAF3DE; border: 1px solid #3B6D11; border-radius: 10px; padding: 14px; margin-top: 12px; }
+  .success-card .t { font-size: 14px; font-weight: 600; color: #27500A; margin-bottom: 3px; }
+  .success-card .s { font-size: 13px; color: #3B6D11; }
+
+  /* LOADING */
+  .loading { display: none; align-items: center; gap: 8px; font-size: 13px; color: #888; }
+  .dots { display: inline-flex; gap: 4px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #534AB7; animation: pulse 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; } .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 1.5rem; width: 90%; max-width: 480px; }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 1rem; }
+
+  /* RESULT */
+  .result-center { text-align: center; padding: 1.5rem 0; }
+  .result-big { font-size: 52px; font-weight: 700; color: #1a1a1a; }
+  .result-sub { font-size: 14px; color: #888; margin-top: 4px; }
+
+  /* API KEY SECTION */
+  .api-section { background: #EEEDFE; border: 1px solid #AFA9EC; border-radius: 10px; padding: 14px; margin-bottom: 1.5rem; }
+  .api-section p { font-size: 13px; color: #3C3489; margin-bottom: 8px; }
+  .api-row { display: flex; gap: 8px; }
+  .api-row input { flex: 1; font-family: monospace; font-size: 12px; }
+
+  @media (max-width: 600px) {
+    .week-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs { padding: 0 0.5rem; }
+    .tab { padding: 10px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>מערכת תדריכים</h1>
+  <p class="subtitle">מוקד שירות ומכירה</p>
+
+  <!-- API KEY CONFIG -->
+  <div class="api-section">
+    <p>כדי שה-AI ייצר שאלות אוטומטית — הכנס את מפתח ה-API שלך מ-Google Gemini (חינמי). קבל מפתח בכתובת: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#3C3489">aistudio.google.com/apikey</a></p>
+    <div class="api-row">
+      <input type="text" id="api-key-input" placeholder="AIza..." />
+      <button class="btn btn-primary btn-sm" onclick="saveApiKey()">שמור</button>
+    </div>
+    <div id="api-key-status" style="font-size:12px;color:#3C3489;margin-top:6px;display:none"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('manager')">יצירת תדריך</button>
+    <button class="tab" onclick="switchTab('agent')">כניסת נציג</button>
+    <button class="tab" onclick="switchTab('tracking')">מעקב שבועי</button>
+    <button class="tab" onclick="switchTab('settings')">ניהול נציגים</button>
+  </div>
+
+  <!-- MANAGER TAB -->
+  <div class="sec active" id="tab-manager">
+    <div class="card">
+      <div class="card-title">תדריך חדש</div>
+      <label>כותרת התדריך</label>
+      <input type="text" id="briefing-title" placeholder="לדוג׳: עדכון נוהל החזרות — אפריל 2026">
+      <label>תוכן הנוהל / העדכון</label>
+      <textarea id="briefing-content" placeholder="הדבק את טקסט הנוהל כאן. AI יקרא אותו ויבנה ממנו 3 שאלות אוטומטית..."></textarea>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="gen-btn" onclick="generateQuiz()">✦ צור תדריך + שאלות</button>
+        <div class="loading" id="loading-ind">
+          <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          AI יוצר שאלות...
+        </div>
+      </div>
+    </div>
+
+    <div id="preview-section" style="display:none">
+      <div class="divider"></div>
+      <div class="flex-between" style="margin-bottom:12px">
+        <div style="font-size:15px;font-weight:600" id="preview-title"></div>
+        <span class="badge b-purple">תצוגה מקדימה</span>
+      </div>
+      <div id="preview-qs"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="publishBriefing()">פרסם לנציגים</button>
+        <button class="btn btn-sec" onclick="resetManager()">אפס</button>
+      </div>
+    </div>
+
+    <div id="pub-confirm" style="display:none">
+      <div class="success-card">
+        <div class="t">התדריך פורסם בהצלחה</div>
+        <div class="s" id="pub-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AGENT TAB -->
+  <div class="sec" id="tab-agent">
+    <div id="agent-login">
+      <div class="card">
+        <div class="card-title">שלום, מי אתה?</div>
+        <div style="font-size:13px;color:#888;margin-bottom:12px">בחר את שמך מהרשימה</div>
+        <div class="agent-select-grid" id="agent-select-grid"></div>
+        <div id="no-agents-msg" style="display:none;font-size:14px;color:#888;padding:1rem 0">לא הוגדרו נציגים. עבור ל"ניהול נציגים" והוסף נציגים.</div>
+      </div>
+    </div>
+
+    <div id="agent-briefings" style="display:none">
+      <div class="flex-between" style="margin-bottom:14px">
+        <div>
+          <div style="font-size:15px;font-weight:600" id="logged-agent-name"></div>
+          <div style="font-size:12px;color:#888">תדריכים ממתינים לך</div>
+        </div>
+        <button class="btn btn-sec btn-sm" onclick="logoutAgent()">החלף נציג</button>
+      </div>
+      <div id="agent-briefing-list"></div>
+      <div id="no-briefings" style="display:none;font-size:14px;color:#888;padding:1rem 0">אין תדריכים ממתינים. כל הכבוד!</div>
+    </div>
+
+    <div id="agent-flow" style="display:none">
+      <div id="step-read">
+        <div class="step-label">שלב 1 מתוך 3 — קריאת התדריך</div>
+        <div class="prog-bg"><div class="prog-fill" style="width:33%"></div></div>
+        <div class="card">
+          <div style="font-size:15px;font-weight:600;margin-bottom:10px" id="flow-title"></div>
+          <div style="font-size:14px;line-height:1.85;white-space:pre-wrap;color:#1a1a1a" id="flow-content"></div>
+        </div>
+        <button class="btn btn-primary" onclick="goStep('quiz')">קראתי, עבור לשאלות ←</button>
+      </div>
+
+      <div id="step-quiz" style="display:none">
+        <div class="step-label">שלב 2 מתוך 3 — מבדק הבנה</div>
+        <div class="prog-bg"><div class="prog-fill" style="width:66%"></div></div>
+        <div id="quiz-qs"></div>
+        <button class="btn btn-primary" id="submit-btn" onclick="submitQuiz()" style="display:none;margin-top:6px">סיים מבדק ←</button>
+      </div>
+
+      <div id="step-sign" style="display:none">
+        <div class="step-label">שלב 3 מתוך 3 — אישור וחתימה</div>
+        <div class="prog-bg"><div class="prog-fill" style="width:100%"></div></div>
+        <div class="result-center">
+          <div class="result-big" id="score-big"></div>
+          <div class="result-sub" id="score-label"></div>
+        </div>
+        <div class="sig-box">
+          <div style="font-size:14px;font-weight:600;margin-bottom:10px">אישור קריאה וחתימה</div>
+          <div style="font-size:13px;color:#555;margin-bottom:12px">אני מאשר/ת שקראתי את התדריך "<span id="sig-briefing-title" style="font-weight:600"></span>" והבנתי את תוכנו.</div>
+          <button class="btn btn-primary" id="sign-btn" onclick="signBriefing()">✓ חתום ואשר</button>
+        </div>
+        <div id="sign-done" style="display:none">
+          <div class="success-card">
+            <div class="t">נחתם בהצלחה</div>
+            <div class="s" id="sign-done-txt"></div>
+          </div>
+          <button class="btn btn-sec" style="margin-top:12px" onclick="backToBriefings()">חזור לתדריכים</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACKING TAB -->
+  <div class="sec" id="tab-tracking">
+    <div class="week-grid" id="week-stats"></div>
+    <div class="section-label">תדריכים השבוע</div>
+    <div id="briefings-week-list"></div>
+    <div class="divider"></div>
+    <div class="section-label">סטטוס נציגים מלא</div>
+    <div id="tracking-agents-list"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="sec" id="tab-settings">
+    <div id="settings-lock">
+      <div class="card" style="max-width:360px;margin:2rem auto;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">&#128274;</div>
+        <div class="card-title">אזור מנהל</div>
+        <div style="font-size:13px;color:#888;margin-bottom:16px">הכנס סיסמת מנהל להמשך</div>
+        <input type="password" id="Q1w2e3r4!" placeholder="סיסמה..." style="text-align:center;margin-bottom:12px" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+        <div id="admin-pw-error" style="display:none;font-size:12px;color:#A32D2D;margin-bottom:10px">סיסמה שגויה</div>
+        <button class="btn btn-primary" style="width:100%" onclick="checkAdminPassword()">כניסה</button>
+      </div>
+    </div>
+    <div id="settings-content" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a">ניהול נציגים</div>
+        <button class="btn btn-sec" style="font-size:12px;padding:6px 12px" onclick="lockSettings()">נעל</button>
+      </div>
+      <div class="card">
+        <div class="card-title">הוספת נציג</div>
+        <div class="row">
+          <input type="text" id="new-agent-name" placeholder="שם מלא של הנציג" style="flex:1" onkeydown="if(event.key==='Enter')addAgent()">
+          <button class="btn btn-primary" onclick="addAgent()">הוסף</button>
+        </div>
+      </div>
+      <div class="section-label">נציגים פעילים</div>
+      <div id="agents-list-settings"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = [
+  {bg:'#EEEDFE',fg:'#3C3489'},
+  {bg:'#E1F5EE',fg:'#085041'},
+  {bg:'#E6F1FB',fg:'#0C447C'},
+  {bg:'#FAECE7',fg:'#712B13'},
+  {bg:'#FAEEDA',fg:'#633806'},
+  {bg:'#EAF3DE',fg:'#27500A'},
+];
+
+/* ---- STATE ---- */
+let state = {
+  agents: JSON.parse(localStorage.getItem('bs_agents') || 'null') || [
+    {id:1,name:'יוסי כהן'},
+    {id:2,name:'מיכל לוי'},
+    {id:3,name:'דני אביב'},
+    {id:4,name:'רחל ברק'},
+    {id:5,name:'אמיר שלו'},
+  ],
+  briefings: JSON.parse(localStorage.getItem('bs_briefings') || '[]'),
+  nextAgentId: parseInt(localStorage.getItem('bs_next_agent') || '6'),
+  nextBriefingId: parseInt(localStorage.getItem('bs_next_briefing') || '1'),
+  currentAgent: null,
+  activeBriefing: null,
+  currentAgentAnswers: [],
+  lastScore: 0,
+};
+
+function save() {
+  localStorage.setItem('bs_agents', JSON.stringify(state.agents));
+  localStorage.setItem('bs_briefings', JSON.stringify(state.briefings));
+  localStorage.setItem('bs_next_agent', state.nextAgentId);
+  localStorage.setItem('bs_next_briefing', state.nextBriefingId);
+}
+
+/* ---- HELPERS ---- */
+function getInitials(name) { return name.split(' ').map(w=>w[0]).join('').slice(0,2); }
+function getColor(id) { return COLORS[(id-1) % COLORS.length]; }
+function tsNow() {
+  const n = new Date();
+  return `${n.getDate()}/${n.getMonth()+1}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+
+/* ---- API KEY ---- */
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('AIza')) { alert('מפתח לא תקין. מפתח Gemini מתחיל ב-AIza'); return; }
+  localStorage.setItem('bs_api_key', key);
+  document.getElementById('api-key-status').style.display = 'block';
+  document.getElementById('api-key-status').textContent = 'מפתח Gemini נשמר בהצלחה ✓';
+  document.getElementById('api-key-input').value = '••••••••••••••••';
+}
+window.addEventListener('load', () => {
+  if (localStorage.getItem('bs_api_key')) {
+    document.getElementById('api-key-input').value = '••••••••••••••••';
+    document.getElementById('api-key-status').style.display = 'block';
+    document.getElementById('api-key-status').textContent = 'מפתח פעיל ✓';
+  }
+});
+
+/* ---- TABS ---- */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['manager','agent','tracking','settings'][i]===name));
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='tracking') renderTracking();
+  if (name==='settings') { lockSettings(); renderSettings(); }
+  if (name==='agent') renderAgentLogin();
+}
+
+/* ---- SETTINGS ---- */
+function addAgent() {
+  const inp = document.getElementById('new-agent-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (state.agents.find(a=>a.name===name)) { alert('נציג זה כבר קיים'); return; }
+  state.agents.push({id: state.nextAgentId++, name});
+  save(); inp.value='';
+  renderSettings(); renderAgentLogin();
+}
+
+function removeAgent(id) {
+  if (!confirm('למחוק נציג זה?')) return;
+  state.agents = state.agents.filter(a => a.id!==id);
+  save(); renderSettings(); renderAgentLogin();
+}
+
+function renderSettings() {
+  const el = document.getElementById('agents-list-settings');
+  if (!state.agents.length) { el.innerHTML='<div style="font-size:14px;color:#888;padding:1rem 0">אין נציגים.</div>'; return; }
+  el.innerHTML = state.agents.map(a => {
+    const c = getColor(a.id);
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="flex-between">
+        <div class="row">
+          <div class="avatar" style="background:${c.bg};color:${c.fg}">${getInitials(a.name)}</div>
+          <span style="font-size:14px;font-weight:600">${a.name}</span>
+        </div>
+        <button class="btn btn-danger" onclick="removeAgent(${a.id})">מחק</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---- ADMIN PASSWORD ---- */
+const ADMIN_PASSWORD = 'CHANGE_ME_PASSWORD';
+
+function checkAdminPassword() {
+  const input = document.getElementById('admin-password-input').value;
+  if (input === ADMIN_PASSWORD) {
+    document.getElementById('settings-lock').style.display = 'none';
+    document.getElementById('settings-content').style.display = 'block';
+    document.getElementById('admin-pw-error').style.display = 'none';
+    document.getElementById('admin-password-input').value = '';
+    renderSettings();
+  } else {
+    document.getElementById('admin-pw-error').style.display = 'block';
+    document.getElementById('admin-password-input').value = '';
+  }
+}
+
+function lockSettings() {
+  document.getElementById('settings-lock').style.display = 'block';
+  document.getElementById('settings-content').style.display = 'none';
+  document.getElementById('admin-password-input').value = '';
+  document.getElementById('admin-pw-error').style.display = 'none';
+}
+
+/* ---- MANAGER ---- */
+async function generateQuiz() {
+  const title = document.getElementById('briefing-title').value.trim();
+  const content = document.getElementById('briefing-content').value.trim();
+  if (!title || !content) { alert('יש למלא כותרת ותוכן'); return; }
+
+  const apiKey = localStorage.getItem('bs_api_key');
+  if (!apiKey) { alert('יש להכניס מפתח API למעלה'); return; }
+
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('loading-ind').style.display = 'flex';
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('pub-confirm').style.display = 'none';
+
+  try {
+    const prompt = `החזר JSON בלבד ללא מרכאות קוד ולא backtick. פורמט מדויק:
+{"questions":[{"q":"שאלה","options":["א","ב","ג","ד"],"correct":0,"hint":"הסבר"}]}
+3 שאלות בעברית, 4 אפשרויות לכל שאלה, correct הוא אינדקס 0-3, hint הוא הסבר קצר.
+
+כותרת: ${title}
+תוכן:
+${content}
+
+צור 3 שאלות מבדק.`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1000 }
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const raw = data.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(raw);
+    state.currentBriefing = {title, content, questions: parsed.questions};
+    showPreview();
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+  }
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('loading-ind').style.display = 'none';
+}
+
+function showPreview() {
+  document.getElementById('preview-title').textContent = state.currentBriefing.title;
+  document.getElementById('preview-qs').innerHTML = state.currentBriefing.questions.map((q,i) => `
+    <div class="q-block">
+      <div class="q-text">${i+1}. ${q.q}</div>
+      ${q.options.map((o,j) => `<div class="opt" style="cursor:default;${j===q.correct?'background:#EAF3DE;border-color:#3B6D11;color:#27500A':''}">${o}${j===q.correct?' ✓':''}</div>`).join('')}
+      <div class="hint-box">${q.hint}</div>
+    </div>`).join('');
+  document.getElementById('preview-section').style.display = 'block';
+}
+
+function publishBriefing() {
+  const b = {
+    id: state.nextBriefingId++,
+    title: state.currentBriefing.title,
+    content: state.currentBriefing.content,
+    questions: state.currentBriefing.questions,
+    publishedAt: tsNow(),
+    weekDate: new Date().toISOString(),
+    completions: {}
+  };
+  state.briefings.push(b);
+  save();
+  document.getElementById('preview-section').style.display = 'none';
+  document.getElementById('pub-confirm').style.display = 'block';
+  document.getElementById('pub-msg').textContent = `"${b.title}" פורסם ל-${state.agents.length} נציגים — ${b.publishedAt}`;
+  resetManager();
+}
+
+function resetManager() {
+  document.getElementById('briefing-title').value = '';
+  document.getElementById('briefing-content').value = '';
+  document.getElementById('preview-section').style.display = 'none';
+}
+
+/* ---- AGENT LOGIN ---- */
+function renderAgentLogin() {
+  const el = document.getElementById('agent-select-grid');
+  const noMsg = document.getElementById('no-agents-msg');
+  if (!state.agents.length) {
+    el.innerHTML=''; noMsg.style.display='block'; return;
+  }
+  noMsg.style.display='none';
+  el.innerHTML = state.agents.map(a => {
+    const c = getColor(a.id);
+    return `<div class="agent-select-card" onclick="selectAgent(${a.id})">
+      <div class="avatar" style="background:${c.bg};color:${c.fg};margin:0 auto 10px">${getInitials(a.name)}</div>
+      <div style="font-size:13px;font-weight:600">${a.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectAgent(id) {
+  state.currentAgent = state.agents.find(a=>a.id===id);
+  document.getElementById('agent-login').style.display='none';
+  document.getElementById('agent-briefings').style.display='block';
+  document.getElementById('agent-flow').style.display='none';
+  document.getElementById('logged-agent-name').textContent = state.currentAgent.name;
+  renderAgentBriefings();
+}
+
+function logoutAgent() {
+  state.currentAgent = null;
+  document.getElementById('agent-login').style.display='block';
+  document.getElementById('agent-briefings').style.display='none';
+  document.getElementById('agent-flow').style.display='none';
+}
+
+function renderAgentBriefings() {
+  const el = document.getElementById('agent-briefing-list');
+  const pending = state.briefings.filter(b => !b.completions[state.currentAgent.id]);
+  document.getElementById('no-briefings').style.display = pending.length ? 'none' : 'block';
+  el.innerHTML = pending.map(b => `
+    <div class="card" style="cursor:pointer" onclick="openBriefing(${b.id})">
+      <div class="flex-between">
+        <div>
+          <div style="font-size:14px;font-weight:600">${b.title}</div>
+          <div style="font-size:12px;color:#888;margin-top:3px">פורסם: ${b.publishedAt}</div>
+        </div>
+        <span class="badge b-amber">ממתין ←</span>
+      </div>
+    </div>`).join('');
+}
+
+function openBriefing(id) {
+  state.activeBriefing = state.briefings.find(b=>b.id===id);
+  state.currentAgentAnswers = [];
+  document.getElementById('agent-briefings').style.display='none';
+  document.getElementById('agent-flow').style.display='block';
+  document.getElementById('flow-title').textContent = state.activeBriefing.title;
+  document.getElementById('flow-content').textContent = state.activeBriefing.content;
+  document.getElementById('sig-briefing-title').textContent = state.activeBriefing.title;
+  document.getElementById('sign-done').style.display='none';
+  document.getElementById('sign-btn').style.display='inline-flex';
+  goStep('read');
+}
+
+function goStep(step) {
+  ['read','quiz','sign'].forEach(s => document.getElementById('step-'+s).style.display = s===step?'block':'none');
+  if (step==='quiz') renderQuizQuestions();
+}
+
+function renderQuizQuestions() {
+  const el = document.getElementById('quiz-qs');
+  el.innerHTML = state.activeBriefing.questions.map((q,qi) => `
+    <div class="q-block">
+      <div class="q-text">${qi+1}. ${q.q}</div>
+      <div id="opts-${qi}">
+        ${q.options.map((o,oi) => `<div class="opt" onclick="answerQ(${qi},${oi})">${o}</div>`).join('')}
+      </div>
+      <div class="hint-box" id="hint-${qi}" style="display:none">${q.hint}</div>
+    </div>`).join('');
+  document.getElementById('submit-btn').style.display='none';
+}
+
+function answerQ(qi, oi) {
+  if (state.currentAgentAnswers[qi] !== undefined) return;
+  state.currentAgentAnswers[qi] = oi;
+  const correct = state.activeBriefing.questions[qi].correct;
+  document.querySelectorAll(`#opts-${qi} .opt`).forEach((o,i) => {
+    o.onclick = null;
+    if (i===correct) o.classList.add('show-correct');
+    else if (i===oi && oi!==correct) o.classList.add('wrong');
+  });
+  document.getElementById(`hint-${qi}`).style.display='block';
+  if (state.currentAgentAnswers.filter(x=>x!==undefined).length === state.activeBriefing.questions.length)
+    document.getElementById('submit-btn').style.display='inline-flex';
+}
+
+function submitQuiz() {
+  const qs = state.activeBriefing.questions;
+  const correct = state.currentAgentAnswers.filter((a,i) => a===qs[i].correct).length;
+  state.lastScore = Math.round(correct/qs.length*100);
+  document.getElementById('score-big').textContent = state.lastScore+'%';
+  document.getElementById('score-label').textContent = `${correct} מתוך ${qs.length} תשובות נכונות`;
+  goStep('sign');
+}
+
+function signBriefing() {
+  const ts = tsNow();
+  const b = state.briefings.find(b=>b.id===state.activeBriefing.id);
+  b.completions[state.currentAgent.id] = {score: state.lastScore, ts, name: state.currentAgent.name};
+  save();
+  document.getElementById('sign-btn').style.display='none';
+  document.getElementById('sign-done').style.display='block';
+  document.getElementById('sign-done-txt').textContent = `${state.currentAgent.name} — ציון ${state.lastScore}% — ${ts}`;
+}
+
+function backToBriefings() {
+  document.getElementById('agent-flow').style.display='none';
+  document.getElementById('agent-briefings').style.display='block';
+  renderAgentBriefings();
+}
+
+/* ---- TRACKING ---- */
+function getWeekBriefings() {
+  const now = new Date(); const day = now.getDay();
+  const monday = new Date(now); monday.setDate(now.getDate() - (day===0?6:day-1)); monday.setHours(0,0,0,0);
+  return state.briefings.filter(b => new Date(b.weekDate) >= monday);
+}
+
+function renderTracking() {
+  const wb = getWeekBriefings();
+  const totalAgents = state.agents.length;
+  const totalExpected = wb.length * totalAgents;
+  const totalDone = wb.reduce((sum,b) => sum + Object.keys(b.completions).length, 0);
+  const pct = totalExpected ? Math.round(totalDone/totalExpected*100) : 0;
+
+  document.getElementById('week-stats').innerHTML = `
+    <div class="week-stat"><div class="wlbl">תדריכים השבוע</div><div class="num">${wb.length}</div></div>
+    <div class="week-stat"><div class="wlbl">נציגים</div><div class="num">${totalAgents}</div></div>
+    <div class="week-stat"><div class="wlbl">השלמות</div><div class="num">${totalDone}/${totalExpected}</div></div>
+    <div class="week-stat"><div class="wlbl">אחוז עמידה</div><div class="num">${pct}%</div></div>`;
+
+  const bwEl = document.getElementById('briefings-week-list');
+  if (!wb.length) {
+    bwEl.innerHTML='<div style="font-size:14px;color:#888;padding:0.5rem 0">לא פורסמו תדריכים השבוע.</div>';
+  } else {
+    bwEl.innerHTML = wb.map(b => {
+      const done = Object.keys(b.completions).length;
+      return `<div class="card" style="margin-bottom:8px">
+        <div class="flex-between" style="margin-bottom:4px">
+          <div style="font-size:14px;font-weight:600">${b.title}</div>
+          <span class="badge ${done===totalAgents?'b-green':'b-amber'}">${done}/${totalAgents}</span>
+        </div>
+        <div style="font-size:12px;color:#888">${b.publishedAt}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const taEl = document.getElementById('tracking-agents-list');
+  taEl.innerHTML = state.agents.map(a => {
+    const c = getColor(a.id);
+    const doneBriefings = state.briefings.filter(b => b.completions[a.id]);
+    const pendingCount = state.briefings.filter(b => !b.completions[a.id]).length;
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="row" style="margin-bottom:10px">
+        <div class="avatar" style="background:${c.bg};color:${c.fg}">${getInitials(a.name)}</div>
+        <div style="flex:1">
+          <div class="flex-between">
+            <span style="font-size:14px;font-weight:600">${a.name}</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="badge b-green">${doneBriefings.length} הושלמו</span>
+              ${pendingCount ? `<span class="badge b-amber">${pendingCount} ממתינים</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      ${doneBriefings.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${doneBriefings.map(b => {
+          const comp = b.completions[a.id];
+          return `<div style="background:#EAF3DE;border-radius:8px;padding:6px 10px;font-size:12px;color:#27500A">
+            <div style="font-weight:600">${b.title}</div>
+            <div style="color:#3B6D11;margin-top:2px">ציון: ${comp.score}% · ${comp.ts}</div>
+          </div>`;
+        }).join('')}
+      </div>` : '<div style="font-size:12px;color:#aaa">טרם השלים תדריכים</div>'}
+    </div>`;
+  }).join('');
+}
+
+/* ---- INIT ---- */
+renderSettings();
+renderAgentLogin();
+renderTracking();
+</script>
+</body>
+</html>
