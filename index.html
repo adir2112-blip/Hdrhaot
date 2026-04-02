@@ -534,16 +534,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
     <nav class="nav">
       <button class="nav-btn active" onclick="switchTab('manager')" id="nav-manager">
-        <span class="nav-icon">✦</span><span class="nav-label">תדריך</span>
-      </button>
-      <button class="nav-btn" onclick="switchTab('agent')" id="nav-agent">
-        <span class="nav-icon">◉</span><span class="nav-label">נציג</span>
+        <span class="nav-icon">✦</span><span class="nav-label">בניית תדריך</span>
       </button>
       <button class="nav-btn" onclick="switchTab('tracking')" id="nav-tracking">
         <span class="nav-icon">◈</span><span class="nav-label">דשבורד</span>
       </button>
       <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
+        <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
     </nav>
   </div>
@@ -554,14 +554,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <button class="bnav-btn active" id="bnav-manager" onclick="switchTab('manager')">
       <span class="bni">✦</span><span class="bnl">תדריך</span>
     </button>
-    <button class="bnav-btn" id="bnav-agent" onclick="switchTab('agent')">
-      <span class="bni">👤</span><span class="bnl">כניסה</span>
-    </button>
     <button class="bnav-btn" id="bnav-tracking" onclick="switchTab('tracking')">
       <span class="bni">📊</span><span class="bnl">דשבורד</span>
     </button>
     <button class="bnav-btn" id="bnav-settings" onclick="switchTab('settings')">
       <span class="bni">⚙️</span><span class="bnl">ניהול</span>
+    </button>
+    <button class="bnav-btn" id="bnav-agent" onclick="switchTab('agent')">
+      <span class="bni">👤</span><span class="bnl">כניסה</span>
     </button>
   </div>
 </div>
@@ -936,24 +936,34 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 
 /* API KEY */
 window.addEventListener('load',()=>{
-  if(!localStorage.getItem('bs_api_key')) document.getElementById('api-modal').classList.remove('hidden');
+  // API key loaded from Supabase in appInit - no local check here
 });
-function openApiModal(){document.getElementById('api-modal').classList.remove('hidden');}
+function openApiModal(){
+  const stored=localStorage.getItem('bs_api_key')||'';
+  document.getElementById('api-modal-key').value=stored?'••••••••••••••••':'';
+  document.getElementById('api-modal').classList.remove('hidden');
+}
 function closeApiModal(){document.getElementById('api-modal').classList.add('hidden');}
-function saveApiKey(){
+async function saveApiKey(){
   const k=document.getElementById('api-modal-key').value.trim();
+  if(k==='••••••••••••••••'){closeApiModal();return;}
   if(!k.startsWith('AIza')){
     document.getElementById('api-modal-err').style.display='block';
     document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-AIza';
     return;
   }
+  // Save to Supabase settings table
+  await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
   localStorage.setItem('bs_api_key',k);
   closeApiModal();
 }
 
 /* TABS */
 function switchTab(name){
-  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['manager','agent','tracking','settings'][i]===name));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    const tabId=b.id?b.id.replace('nav-',''):'';
+    b.classList.toggle('active',tabId===name);
+  });
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
@@ -1586,6 +1596,19 @@ async function saveEditPin(){
 }
 
 async function appInit(){
+  // Load API key from Supabase (works across all devices)
+  try{
+    const {data}=await _sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
+    if(data&&data.value){
+      localStorage.setItem('bs_api_key',data.value);
+    } else if(!localStorage.getItem('bs_api_key')){
+      // First time only - show modal
+      document.getElementById('api-modal').classList.remove('hidden');
+    }
+  } catch(e){
+    if(!localStorage.getItem('bs_api_key'))
+      document.getElementById('api-modal').classList.remove('hidden');
+  }
   await loadAll();
   renderSettings();renderAgentLogin();renderTracking();initBriefingDeptPicker();
 }
