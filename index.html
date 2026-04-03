@@ -1268,6 +1268,7 @@ async function dbAgents(){
       a.depts=ad;
     }catch(e){a.depts=[];}
     a.last_login=a.last_login||null;
+    a.active=a.active===false?false:true; // default true
     return a;
   });
 }
@@ -1521,7 +1522,10 @@ function renderSettings(){
             <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.pin?`קוד: ****`:'ללא קוד'}</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <button onclick="toggleActive(${a.id})" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid ${a.active!==false?'rgba(26,158,110,0.3)':'rgba(217,64,64,0.3)'};background:${a.active!==false?'rgba(26,158,110,0.08)':'rgba(217,64,64,0.08)'};color:${a.active!==false?'var(--ok)':'var(--danger)'};font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">
+            ${a.active!==false?'● פעיל':'○ לא פעיל'}
+          </button>
           <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
           <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
         </div>
@@ -1549,6 +1553,16 @@ async function toggleDept(id,dept){
   if(idx>-1)a.depts.splice(idx,1);else a.depts.push(dept);
   await _sb.from('agents').update({depts:JSON.stringify(a.depts)}).eq('id',id);
   renderSettings();
+}
+
+async function toggleActive(id){
+  const a=S.agents.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  const newActive=a.active===false?true:false;
+  await _sb.from('agents').update({active:newActive}).eq('id',id);
+  a.active=newActive;
+  renderSettings();
+  renderAgentLogin();
 }
 
 function toggleNewDept(i,btn){
@@ -1630,8 +1644,8 @@ function setC(qi,oi){S.eq[qi].correct=oi;renderEQ();}
 async function publishBriefing(){
   const targetDepts=DEPTS.filter((_,i)=>{const btn=document.getElementById('bdl-'+i);return btn&&btn.dataset.checked==='1';});
   const targetAgents=targetDepts.length
-    ? S.agents.filter(a=>(a.depts||[]).some(d=>targetDepts.includes(d)))
-    : S.agents;
+    ? S.agents.filter(a=>a.active!==false&&(a.depts||[]).some(d=>targetDepts.includes(d)))
+    : S.agents.filter(a=>a.active!==false);
   const ts=now();
   const deadlineVal=document.getElementById('briefing-deadline').value||null;
   const row={
@@ -1674,7 +1688,7 @@ function setAgentGroup(key,btn){
 function renderAgentLogin(){
   const el=document.getElementById('agent-select-grid');
   const noMsg=document.getElementById('no-agents-msg');
-  let visible=S.agents;
+  let visible=S.agents.filter(a=>a.active!==false);
   if(_agentGroupFilter!=='all'){
     const grp=GROUPS.find(g=>g.key===_agentGroupFilter);
     if(grp) visible=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
@@ -1927,8 +1941,9 @@ function getWeek(){
   return S.briefings.filter(b=>new Date(b.weekDate)>=m);
 }
 function filterAgents(){
-  if(S.filterDept==='all') return S.agents;
-  return S.agents.filter(a=>(a.depts||[]).includes(S.filterDept));
+  const active=S.agents.filter(a=>a.active!==false);
+  if(S.filterDept==='all') return active;
+  return active.filter(a=>(a.depts||[]).includes(S.filterDept));
 }
 function renderFilterBar(){
   const bar=document.getElementById('dept-filter-bar');
@@ -2266,10 +2281,10 @@ async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
 /* ── WHATSAPP SEND ───────────────────────────── */
 function sendWhatsApp(){
   const deptKey=document.getElementById('pdf-dept-select')?.value||'all';
-  let agents=S.agents;
+  let agents=S.agents.filter(a=>a.active!==false);
   if(deptKey!=='all'){
     const grp=GROUPS.find(g=>g.key===deptKey);
-    if(grp) agents=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+    if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
   }
 
   const today=new Date().toLocaleDateString('he-IL');
@@ -2525,10 +2540,10 @@ function toggleAlertDetail(id){
 /* ── PDF DOWNLOAD ─────────────────────────────── */
 function downloadPDF(){
   const deptKey=document.getElementById('pdf-dept-select')?.value||'all';
-  let agents=S.agents;
+  let agents=S.agents.filter(a=>a.active!==false);
   if(deptKey!=='all'){
     const grp=GROUPS.find(g=>g.key===deptKey);
-    if(grp) agents=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+    if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
   }
 
   const today=new Date().toLocaleDateString('he-IL');
