@@ -2699,41 +2699,42 @@ function sendWhatsApp(){
 
 /* ── WEAK QUESTIONS ANALYSIS ─────────────────── */
 function calcWeakQuestions(){
-
-  // Collect all wrong answers per question across all briefings
   const qStats=[];
   S.briefings.forEach(b=>{
     if(!b.questions||!b.questions.length) return;
     b.questions.forEach((q,qi)=>{
       let wrong=0, total=0;
-      Object.values(b.completions).forEach(comp=>{
-        if(!comp.answers||!comp.answers[qi]) return;
+      const wrongAgents=[];
+      Object.entries(b.completions).forEach(([agentId,comp])=>{
+        if(!comp.answers||!Array.isArray(comp.answers)||comp.answers[qi]===undefined) return;
         total++;
-        if(comp.answers[qi].chosen!==comp.answers[qi].correct) wrong++;
+        const ans=comp.answers[qi];
+        if(typeof ans!=='object'||ans===null) return;
+        const chosen=ans.chosen;
+        const correct=ans.correct;
+        // Skip if answer data incomplete
+        if(chosen===undefined||chosen===null||correct===undefined) return;
+        if(Number(chosen)!==Number(correct)){
+          wrong++;
+          const agent=S.agents.find(a=>String(a.id)===String(agentId));
+          wrongAgents.push(agent?agent.name:comp.name||('נציג '+agentId));
+        }
       });
       if(total>0&&wrong>0){
         qStats.push({
-          briefingTitle: b.title,
-          question: q.q,
-          options: q.options,
-          correct: q.correct,
-          wrong, total,
-          pct: Math.round(wrong/total*100)
+          briefingTitle:b.title,
+          question:q.q,
+          options:q.options||[],
+          correct:q.correct,
+          wrong,total,
+          pct:Math.round(wrong/total*100),
+          wrongAgents
         });
       }
     });
   });
-
-  if(!qStats.length){
-    el.innerHTML='<div style="font-size:13px;color:var(--ice3);padding:0.5rem 0">אין עדיין נתוני טעויות.</div>';
-    return;
-  }
-
-  // Sort by most wrong percentage
   qStats.sort((a,b)=>b.pct-a.pct);
-  const top=qStats.slice(0,5);
-
-  return top;
+  return qStats.slice(0,8);
 }
 
 function renderWeakBadge(){
@@ -2777,11 +2778,13 @@ function openWeakQuestionsPage(){
         <div style="height:100%;width:${s.pct}%;background:${color};border-radius:4px"></div>
       </div>
       <div style="margin-bottom:12px">
-        <div style="font-size:13px;color:#888;margin-bottom:6px">${s.wrong} מתוך ${s.total} נציגים טעו בשאלה זו
-          ${(s.wrongAgents||[]).length?`— <span style="font-size:12px;color:#C0392B;cursor:pointer;font-weight:700;text-decoration:underline" onclick="var d=document.getElementById('wq-names-${i}');d.style.display=d.style.display==='flex'?'none':'flex'">הצג שמות ▾</span>`:''}
-        </div>
-        <div id="wq-names-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:6px">
-          ${(s.wrongAgents||[]).map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(192,57,43,0.25);color:#C0392B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')}
+        <button id="wq-btn-${i}" style="background:none;border:none;cursor:pointer;font-size:13px;color:#888;margin-bottom:6px;padding:0;text-align:right;width:100%;font-family:inherit" onclick="wqToggle(${i})">
+          ${s.wrong} מתוך ${s.total} נציגים טעו — <span style="color:#C0392B;font-weight:700">הצג שמות ▾</span>
+        </button>
+        <div id="wq-names-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+          ${(s.wrongAgents||[]).length
+            ? (s.wrongAgents||[]).map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(192,57,43,0.25);color:#C0392B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')
+            : '<span style="font-size:12px;color:#888">אין נתוני שמות לתדריך זה</span>'}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
@@ -2820,6 +2823,11 @@ function openWeakQuestionsPage(){
         <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(184,134,42,0.3)">◀ חזור לדשבורד</button>
       </div>
     </div>`;
+}
+
+function wqToggle(i){
+  const d=document.getElementById('wq-names-'+i);
+  if(d) d.style.display=d.style.display==='none'?'flex':'none';
 }
 
 function populateResetSelects(){
