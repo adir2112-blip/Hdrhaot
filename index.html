@@ -1131,10 +1131,19 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div class="prog-track"><div class="prog-bar" style="width:33%"></div></div>
         </div>
         <div class="card">
-          <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ice);margin-bottom:16px" id="flow-title"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:10px">
+            <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ice)" id="flow-title"></div>
+            <button id="tts-btn" onclick="ttsToggle()" title="האזן לתדריך" style="flex-shrink:0;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:8px 14px;font-size:20px;cursor:pointer;transition:all 0.2s" title="האזן לנוהל">🔊</button>
+          </div>
+          <div id="tts-status" style="display:none;font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span id="tts-dot" style="width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse-gold 1s infinite;flex-shrink:0"></span>
+            <span id="tts-label">מקריא...</span>
+          </div>
           <div style="font-size:14px;line-height:1.9;color:var(--ice2);white-space:pre-wrap" id="flow-content"></div>
         </div>
-        <button class="btn btn-gold" onclick="goStep('quiz')">קראתי — עבור לשאלות ◂</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="goStep('quiz');ttsStop()">קראתי — עבור לשאלות ◂</button>
+        </div>
       </div>
 
       <div id="step-quiz" style="display:none">
@@ -1193,15 +1202,20 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div class="sec-title">דשבורד <em>מעקב</em></div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <div style="display:flex;gap:6px;align-items:center">
-            <label style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;font-weight:600">PDF לפי מחלקה:</label>
-            <select id="pdf-dept-select" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:14px;padding:6px 14px">
+            <span style="font-size:16px">🏷️</span>
+            <select id="pdf-dept-select" onchange="onDashboardFilterChange()"
+              style="font-size:13px;font-weight:700;font-family:'Sora',sans-serif;direction:rtl;cursor:pointer;
+                     background:transparent;border:none;color:var(--gold);outline:none;min-width:120px;
+                     appearance:none;-webkit-appearance:none">
               <option value="all">כל הנציגים</option>
               <option value="מובמנט">מובמנט</option>
               <option value="פריפיט">פריפיט</option>
               <option value="סחר">סחר</option>
               <option value="מאוחדת">מאוחדת</option>
+              <option value="מעוף לעמית">מעוף לעמית</option>
             </select>
+            <span style="font-size:12px;color:var(--gold);pointer-events:none">▾</span>
           </div>
           <button class="btn btn-outline btn-sm" onclick="downloadPDF()" style="display:flex;align-items:center;gap:6px;font-weight:600">
             <span>📄</span> הורד דוח PDF
@@ -1218,13 +1232,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <!-- WEAK QUESTIONS BADGE — top of dashboard -->
     <div id="weak-questions-badge" style="margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
-    <div class="eyebrow">תדריכים השבוע</div>
+    <div class="section-divider"><div class="section-divider-inner">📋 תדריכים</div></div>
     <div id="briefings-week-list"></div>
     <div class="div"></div>
     <div class="dept-filter-bar" id="dept-filter-bar"></div>
-    <div class="eyebrow">🏆 לוח תחרות — ציון ממוצע</div>
+    <div class="section-divider"><div class="section-divider-inner">🏆 לוח תחרות</div></div>
     <div id="leaderboard-list" style="margin-bottom:1.5rem"></div>
-    <div class="eyebrow">סטטוס נציגים</div>
+    <div class="section-divider"><div class="section-divider-inner">👥 סטטוס נציגים</div></div>
     <div id="tracking-agents-list"></div>
   </div>
 
@@ -2095,6 +2109,7 @@ function closeSearchDetail(){
 }
 
 function logoutAgent(){
+  ttsStop();
   S.agent=null;
   document.getElementById('agent-login').style.display='block';
   document.getElementById('agent-briefings').style.display='none';
@@ -2233,6 +2248,7 @@ function openBriefing(id){
 }
 function goStep(s){
   ['read','quiz','sign'].forEach(x=>document.getElementById('step-'+x).style.display=x===s?'block':'none');
+  if(s!=='read') ttsStop();
   if(s==='quiz')renderQuiz();
 }
 function renderQuiz(){
@@ -2301,15 +2317,38 @@ function getWeek(){
 function filterAgents(){
   const active=S.agents.filter(a=>a.active!==false);
   if(S.filterDept==='all') return active;
+  if(S.filterDept==='__group__'&&S._filterGroup){
+    return active.filter(a=>(a.depts||[]).some(d=>S._filterGroup.depts.includes(d)));
+  }
   return active.filter(a=>(a.depts||[]).includes(S.filterDept));
 }
 function renderFilterBar(){
+  // Hide the old pill filter bar — replaced by the dropdown
   const bar=document.getElementById('dept-filter-bar');
-  if(!bar)return;
-  bar.innerHTML=`<button class="dept-filter-btn ${S.filterDept==='all'?'active':''}" onclick="setFilter('all')">כל המחלקות</button>`
-    +DEPTS.map(d=>`<button class="dept-filter-btn ${S.filterDept===d?'active':''}" onclick="setFilter('${d}')">${d}</button>`).join('');
+  if(bar) bar.style.display='none';
 }
 function setFilter(d){S.filterDept=d;renderTracking();}
+
+function onDashboardFilterChange(){
+  const sel=document.getElementById('pdf-dept-select');
+  const val=sel?sel.value:'all';
+  // Map group key to dept filter
+  if(val==='all'){
+    S.filterDept='all';
+  } else {
+    const grp=GROUPS.find(g=>g.key===val);
+    if(grp){
+      // Filter by group — override filterAgents to use group depts
+      S.filterDept='__group__';
+      S._filterGroup=grp;
+    } else {
+      // Direct dept (like מעוף לעמית)
+      S.filterDept=val;
+      S._filterGroup=null;
+    }
+  }
+  renderTracking();
+}
 function renderLeaderboard(targetEl, highlightId, agentFilter){
   const el=document.getElementById(targetEl);
   if(!el) return;
@@ -2375,46 +2414,91 @@ function renderTracking(){
     <div class="kpi"><div class="kpi-val">${done}</div><div class="kpi-label">השלמות</div></div>
     <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז עמידה</div></div>`;
   const bwEl=document.getElementById('briefings-week-list');
-  // Show ALL briefings, not just this week
   const allBriefings=[...S.briefings].reverse();
-  bwEl.innerHTML=!allBriefings.length
-    ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">לא פורסמו תדריכים עדיין.</div>'
-    :allBriefings.map(b=>{
-      const activeIds=new Set(S.agents.filter(a=>a.active!==false).map(a=>String(a.id)));
-      const doneCount=Object.keys(b.completions).filter(id=>activeIds.has(id)).length;
+  // Filter briefings relevant to selected group
+  const visibleBriefings=allBriefings.filter(b=>{
+    if(S.filterDept==='all') return true;
+    if(!b.targetDepts||b.targetDepts.length===0) return true;
+    return filteredAgents.some(a=>(a.depts||[]).some(d=>b.targetDepts.map(x=>x.trim().toLowerCase()).includes(d.trim().toLowerCase())));
+  });
+  bwEl.innerHTML=!visibleBriefings.length
+    ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">אין תדריכים לקבוצה זו.</div>'
+    :visibleBriefings.map(b=>{
+      const filteredIds=new Set(filteredAgents.map(a=>String(a.id)));
+      const doneCount=Object.keys(b.completions).filter(id=>filteredIds.has(id)).length;
       const doneNames=Object.values(b.completions).map(c=>c.name||'');
+      // who completed (in filtered agents), sorted by score desc
+      const completedList=filteredAgents
+        .filter(a=>{
+          if(!b.completions[String(a.id)]) return false;
+          if(!b.targetDepts||b.targetDepts.length===0) return true;
+          const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+          return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
+        })
+        .map(a=>({name:a.name,score:b.completions[String(a.id)].score,ts:b.completions[String(a.id)].ts,aid:a.id}))
+        .sort((x,y)=>y.score-x.score);
+      // who didn't complete (in filtered agents)
+      const pendingList=filteredAgents.filter(a=>{
+        if(b.completions[String(a.id)]) return false;
+        if(!b.targetDepts||b.targetDepts.length===0) return true;
+        const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+        return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
+      });
+      const bid=b.id;
+
       return`
       <div class="track-row" style="margin-bottom:10px">
-        <div class="between" style="margin-bottom:8px">
+        <div class="between" style="margin-bottom:10px">
           <div>
             <div style="font-size:14px;font-weight:600;color:var(--ice)">${b.title}</div>
             <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:3px">${b.publishedAt}</div>
             ${deadlineChip(b.deadline)}
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <span class="chip ${doneCount===tot?'chip-ok':'chip-warn'}">${doneCount}/${tot} השלימו</span>
-            <button class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px" onclick="deleteBriefingFromDashboard(${b.id})">🗑 מחק</button>
+            <button onclick="toggleBriefingDetails('bd-done-${bid}')" style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--ok);cursor:pointer;font-family:'Sora',sans-serif">✓ ${doneCount} השלימו</button>
+            <button onclick="toggleBriefingDetails('bd-pend-${bid}')" style="background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--warn);cursor:pointer;font-family:'Sora',sans-serif">⏳ ${pendingList.length} ממתינים</button>
+            <button class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px" onclick="deleteBriefingFromDashboard(${bid})">🗑</button>
           </div>
         </div>
         ${b.targetDepts&&b.targetDepts.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join('')}</div>`:''}
-        ${doneNames.length?`<div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${Object.entries(b.completions).map(([aid,comp])=>`
-            <div style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:8px;padding:5px 10px;font-size:11px;display:flex;align-items:center;gap:8px">
-              <span style="color:var(--ok);font-weight:600">${comp.name||aid}</span>
-              <span style="color:var(--ice3);font-family:'DM Mono',monospace">${comp.score}% · ${comp.ts}</span>
-              <button onclick="resetSingleCompletion(${b.id},${aid})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:11px;padding:0;line-height:1" title="בטל חתימה">✕</button>
-            </div>`).join('')}
-        </div>`:'<div style="font-size:11px;color:var(--ice3)">טרם נחתם על ידי אף נציג</div>'}
+
+        <!-- Completed list (hidden by default) -->
+        <div id="bd-done-${bid}" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--ok);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">✓ הושלם — לפי ציון</div>
+          ${completedList.length?completedList.map((c,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--ok-bg);margin-bottom:6px">
+              <span style="font-size:13px;color:var(--ice3);font-weight:700;min-width:20px">#${i+1}</span>
+              <span style="font-size:14px;font-weight:600;color:var(--ice);flex:1">${c.name}</span>
+              <span style="font-size:14px;font-weight:800;color:${c.score>=80?'var(--ok)':c.score>=60?'var(--warn)':'var(--danger)'}">${c.score}%</span>
+              <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">${c.ts}</span>
+              <button onclick="resetSingleCompletion(${bid},'${c.aid}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:12px;padding:0" title="בטל חתימה">✕</button>
+            </div>`).join(''):'<div style="font-size:13px;color:var(--ice3)">טרם הושלם</div>'}
+        </div>
+
+        <!-- Pending list (hidden by default) -->
+        <div id="bd-pend-${bid}" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+          <div style="font-size:11px;font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">⏳ טרם השלימו</div>
+          ${pendingList.length?pendingList.map(a=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--warn-bg);margin-bottom:6px">
+              <span style="font-size:14px;font-weight:600;color:var(--ice);flex:1">${a.name}</span>
+              <span style="font-size:11px;color:var(--ice3)">${(a.depts||[]).join(', ')||'—'}</span>
+            </div>`).join(''):'<div style="font-size:13px;color:var(--ok)">כולם השלימו! 🎉</div>'}
+        </div>
       </div>`;
     }).join('');
-  renderLeaderboard('leaderboard-list', null);
-  renderWeakBadge();
+  renderLeaderboard('leaderboard-list', null, filteredAgents.length<S.agents.length?filteredAgents:null);
+  renderWeakBadge(filteredAgents);
   document.getElementById('tracking-agents-list').innerHTML=filteredAgents.map(a=>{
     const c=col(a.id);
-    const done=S.briefings.filter(b=>b.completions[a.id]);
-    const pend=S.briefings.filter(b=>!b.completions[a.id]).length;
+    const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+    const relevantBriefings=S.briefings.filter(b=>{
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
+    });
+    const done=relevantBriefings.filter(b=>b.completions[a.id]||b.completions[String(a.id)]);
+    const pend=relevantBriefings.filter(b=>!b.completions[a.id]&&!b.completions[String(a.id)]).length;
     const depts=(a.depts||[]);
-    const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[a.id].score,0)/done.length):null;
+    const avg=done.length?Math.round(done.reduce((s,b)=>s+(b.completions[a.id]||b.completions[String(a.id)]).score,0)/done.length):null;
     const donePills=done.map(b=>{
       const comp=b.completions[a.id]||b.completions[String(a.id)];
       const score=comp?comp.score:0;
@@ -2645,6 +2729,7 @@ function sendWhatsApp(){
   if(deptKey!=='all'){
     const grp=GROUPS.find(g=>g.key===deptKey);
     if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+    else agents=agents.filter(a=>(a.depts||[]).includes(deptKey));
   }
 
   const today=new Date().toLocaleDateString('he-IL');
@@ -2698,7 +2783,9 @@ function sendWhatsApp(){
 }
 
 /* ── WEAK QUESTIONS ANALYSIS ─────────────────── */
-function calcWeakQuestions(){
+function calcWeakQuestions(agentPool){
+  const dashAgents=agentPool||filterAgents();
+  const dashAgentIds=new Set(dashAgents.map(a=>String(a.id)));
   const qStats=[];
   S.briefings.forEach(b=>{
     if(!b.questions||!b.questions.length) return;
@@ -2706,13 +2793,14 @@ function calcWeakQuestions(){
       let wrong=0, total=0;
       const wrongAgents=[];
       Object.entries(b.completions).forEach(([agentId,comp])=>{
+        // Only count agents in current filter
+        if(!dashAgentIds.has(String(agentId))) return;
         if(!comp.answers||!Array.isArray(comp.answers)||comp.answers[qi]===undefined) return;
         total++;
         const ans=comp.answers[qi];
         if(typeof ans!=='object'||ans===null) return;
         const chosen=ans.chosen;
         const correct=ans.correct;
-        // Skip if answer data incomplete
         if(chosen===undefined||chosen===null||correct===undefined) return;
         if(Number(chosen)!==Number(correct)){
           wrong++;
@@ -2737,10 +2825,10 @@ function calcWeakQuestions(){
   return qStats.slice(0,8);
 }
 
-function renderWeakBadge(){
+function renderWeakBadge(agentPool){
   const el=document.getElementById('weak-questions-badge');
   if(!el) return;
-  const stats=calcWeakQuestions();
+  const stats=calcWeakQuestions(agentPool);
   const count=stats.length;
   const worst=count>0?stats[0]:null;
 
@@ -2758,7 +2846,7 @@ function renderWeakBadge(){
 }
 
 function openWeakQuestionsPage(){
-  const stats=calcWeakQuestions();
+  const stats=calcWeakQuestions(filterAgents());
   const today=new Date().toLocaleDateString('he-IL');
 
   const rows=stats.map((s,i)=>{
@@ -2828,6 +2916,12 @@ function openWeakQuestionsPage(){
 function wqToggle(i){
   const d=document.getElementById('wq-names-'+i);
   if(d) d.style.display=d.style.display==='none'?'flex':'none';
+}
+
+function toggleBriefingDetails(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.display=el.style.display==='block'?'none':'block';
 }
 
 function populateResetSelects(){
@@ -2935,14 +3029,16 @@ function renderAlertBanner(){
   if(!el) return;
   const today=new Date(); today.setHours(0,0,0,0);
 
+  // Use same filtered agents as dashboard
+  const dashAgents=filterAgents();
+
   // Find overdue briefings with incomplete agents
   const overdueAlerts=[];
   S.briefings.forEach(b=>{
     if(!b.deadline) return;
     const dl=new Date(b.deadline); dl.setHours(0,0,0,0);
-    if(dl>=today) return; // not overdue
-    const incomplete=S.agents.filter(a=>{
-      if(a.active===false) return false;
+    if(dl>=today) return;
+    const incomplete=dashAgents.filter(a=>{
       if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
       const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
       const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
@@ -2958,8 +3054,7 @@ function renderAlertBanner(){
     if(!b.deadline) return;
     const days=deadlineDays(b.deadline);
     if(days===null||days<0||days>1) return;
-    const incomplete=S.agents.filter(a=>{
-      if(a.active===false) return false;
+    const incomplete=dashAgents.filter(a=>{
       if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
       const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
       const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
@@ -3039,6 +3134,7 @@ function downloadPDF(){
   if(deptKey!=='all'){
     const grp=GROUPS.find(g=>g.key===deptKey);
     if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+    else agents=agents.filter(a=>(a.depts||[]).includes(deptKey));
   }
 
   const today=new Date().toLocaleDateString('he-IL');
@@ -3116,6 +3212,65 @@ function downloadPDF(){
   </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),500);
+}
+
+/* ── TEXT TO SPEECH ──────────────────────────── */
+let _ttsUtter=null;
+let _ttsSpeaking=false;
+
+function ttsToggle(){
+  if(_ttsSpeaking){ ttsStop(); return; }
+  ttsSpeak();
+}
+
+function ttsSpeak(){
+  if(!window.speechSynthesis){ alert('הדפדפן שלך לא תומך בקריאה קולית'); return; }
+  const content=document.getElementById('flow-content')?.textContent||'';
+  const title=document.getElementById('flow-title')?.textContent||'';
+  if(!content) return;
+
+  ttsStop();
+  _ttsUtter=new SpeechSynthesisUtterance(title+'. '+content);
+
+  // Find best Hebrew voice
+  const voices=window.speechSynthesis.getVoices();
+  const heVoice=voices.find(v=>v.lang==='he-IL')||
+                voices.find(v=>v.lang.startsWith('he'))||
+                voices.find(v=>v.name.includes('Hebrew'))||
+                null;
+  if(heVoice) _ttsUtter.voice=heVoice;
+  _ttsUtter.lang='he-IL';
+  _ttsUtter.rate=0.9;
+  _ttsUtter.pitch=1;
+
+  _ttsUtter.onstart=()=>{
+    _ttsSpeaking=true;
+    const btn=document.getElementById('tts-btn');
+    const status=document.getElementById('tts-status');
+    if(btn){ btn.textContent='⏹'; btn.style.background='var(--danger-bg)'; btn.style.borderColor='var(--danger-line)'; btn.style.color='var(--danger)'; }
+    if(status) status.style.display='flex';
+  };
+  _ttsUtter.onend=_ttsUtter.onerror=()=>{ ttsReset(); };
+  window.speechSynthesis.speak(_ttsUtter);
+}
+
+function ttsStop(){
+  window.speechSynthesis?.cancel();
+  ttsReset();
+}
+
+function ttsReset(){
+  _ttsSpeaking=false;
+  const btn=document.getElementById('tts-btn');
+  const status=document.getElementById('tts-status');
+  if(btn){ btn.textContent='🔊'; btn.style.background='var(--gold-bg)'; btn.style.borderColor='var(--gold-line)'; btn.style.color='var(--gold)'; }
+  if(status) status.style.display='none';
+}
+
+// Load voices (Chrome needs this trigger)
+if(window.speechSynthesis){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener('voiceschanged',()=>window.speechSynthesis.getVoices());
 }
 
 async function appInit(){
