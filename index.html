@@ -1105,6 +1105,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button class="btn btn-outline btn-sm" onclick="downloadPDF()" style="display:flex;align-items:center;gap:6px;font-weight:600">
             <span>📄</span> הורד דוח PDF
           </button>
+          <button class="btn btn-sm" onclick="sendWhatsApp()" style="background:#25D366;border:none;color:#fff;display:flex;align-items:center;gap:6px;font-weight:700;border-radius:10px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.524 5.845L.058 23.547a.5.5 0 0 0 .612.612l5.702-1.466A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.686-.526-5.204-1.438l-.374-.223-3.881.998.998-3.881-.223-.374A9.955 9.955 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            שלח ל-WhatsApp
+          </button>
         </div>
       </div>
     </div>
@@ -2249,6 +2253,64 @@ async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
   delete b.completions[sid];
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   renderTracking();
+}
+
+/* ── WHATSAPP SEND ───────────────────────────── */
+function sendWhatsApp(){
+  const deptKey=document.getElementById('pdf-dept-select')?.value||'all';
+  let agents=S.agents;
+  if(deptKey!=='all'){
+    const grp=GROUPS.find(g=>g.key===deptKey);
+    if(grp) agents=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+  }
+
+  const today=new Date().toLocaleDateString('he-IL');
+  const deptLabel=deptKey==='all'?'כל הנציגים':deptKey;
+
+  // Build list of pending agents per briefing
+  const pendingLines=[];
+  S.briefings.forEach(b=>{
+    const pending=agents.filter(a=>{
+      if(b.completions[String(a.id)]) return false;
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      return agDepts.some(d=>brDepts.includes(d));
+    });
+    if(pending.length>0){
+      const dl=b.deadline?` (דדליין: ${new Date(b.deadline).toLocaleDateString('he-IL')})`:'';
+      pendingLines.push(`📋 *${b.title}*${dl}\n${pending.map(a=>`   • ${a.name}`).join('\n')}`);
+    }
+  });
+
+  let msg;
+  if(!pendingLines.length){
+    msg=`✅ *מערכת תדריכים — ${deptLabel}*\n📅 ${today}\n\nכל הנציגים השלימו את כל התדריכים! 🎉`;
+  } else {
+    const totalPending=agents.filter(a=>S.briefings.some(b=>{
+      if(b.completions[String(a.id)]) return false;
+      if(!b.targetDepts||!b.targetDepts.length) return true;
+      return (a.depts||[]).map(d=>d.toLowerCase()).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d));
+    })).length;
+    msg=`⚠️ *תזכורת — מערכת תדריכים*\n📅 ${today} | ${deptLabel}\n\n*נציגים שטרם השלימו תדריכים:*\n\n${pendingLines.join('\n\n')}\n\n_נא להשלים בהקדם האפשרי_ 🙏`;
+  }
+
+  const encoded=encodeURIComponent(msg);
+  // Open WhatsApp — works on mobile (app) and desktop (web)
+  const isMobile=/iPhone|iPad|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    // Mobile: open WhatsApp app directly
+    window.location.href=`whatsapp://send?text=${encoded}`;
+  } else {
+    // Desktop: reuse existing WhatsApp Web tab if open, otherwise open new one
+    const url=`https://web.whatsapp.com/send?text=${encoded}`;
+    if(!window._waTab||window._waTab.closed){
+      window._waTab=window.open(url,'whatsapp_tab');
+    } else {
+      window._waTab.location.href=url;
+      window._waTab.focus();
+    }
+  }
 }
 
 function populateResetSelects(){
