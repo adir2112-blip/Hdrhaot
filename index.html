@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-<!-- v5.1 welcome-light-pending -->
+<!-- v5.2 pdf-alerts -->
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1058,10 +1058,31 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
     <div id="tracking-content" style="display:none">
-    <div class="sec-header">
-      <div class="sec-eyebrow">Analytics Dashboard</div>
-      <div class="sec-title">דשבורד <em>מעקב</em></div>
+    <div class="sec-header" style="margin-bottom:1.5rem">
+      <div class="between" style="align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="sec-eyebrow">Analytics Dashboard</div>
+          <div class="sec-title">דשבורד <em>מעקב</em></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;gap:6px;align-items:center">
+            <label style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;font-weight:600">PDF לפי מחלקה:</label>
+            <select id="pdf-dept-select" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+              <option value="all">כל הנציגים</option>
+              <option value="מובמנט">מובמנט</option>
+              <option value="פריפיט">פריפיט</option>
+              <option value="סחר">סחר</option>
+              <option value="מאוחדת">מאוחדת</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="downloadPDF()" style="display:flex;align-items:center;gap:6px;font-weight:600">
+            <span>📄</span> הורד דוח PDF
+          </button>
+        </div>
+      </div>
     </div>
+    <!-- ALERT BANNER -->
+    <div id="tracking-alert-banner" style="display:none;margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
     <div class="eyebrow">תדריכים השבוע</div>
     <div id="briefings-week-list"></div>
@@ -1728,7 +1749,14 @@ function renderAgentBriefings(){
   });
   console.log('Pending count:', pending.length);
   // Show personal leaderboard
-  renderLeaderboard('agent-leaderboard', S.agent?String(S.agent.id):null);
+  // Show only agents in same group as current agent
+  const _agGroup=agentGroup(S.agent);
+  let _groupAgents=S.agents;
+  if(_agGroup){
+    const _grp=GROUPS.find(g=>g.key===_agGroup);
+    if(_grp) _groupAgents=S.agents.filter(a=>(a.depts||[]).some(d=>_grp.depts.includes(d)));
+  }
+  renderLeaderboard('agent-leaderboard', S.agent?String(S.agent.id):null, _groupAgents);
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
 
   // Pending hero banner
@@ -1871,11 +1899,13 @@ function renderFilterBar(){
     +DEPTS.map(d=>`<button class="dept-filter-btn ${S.filterDept===d?'active':''}" onclick="setFilter('${d}')">${d}</button>`).join('');
 }
 function setFilter(d){S.filterDept=d;renderTracking();}
-function renderLeaderboard(targetEl, highlightId){
+function renderLeaderboard(targetEl, highlightId, agentFilter){
   const el=document.getElementById(targetEl);
   if(!el) return;
+  // Filter agents if needed
+  const agentPool=agentFilter?agentFilter:S.agents;
   // Build stats per agent — include ALL agents
-  const stats=S.agents.map(a=>{
+  const stats=agentPool.map(a=>{
     const completed=S.briefings.filter(b=>b.completions[String(a.id)]);
     if(!completed.length) return {a,avg:null,count:0};
     const avg=Math.round(completed.reduce((s,b)=>s+b.completions[String(a.id)].score,0)/completed.length);
@@ -1893,7 +1923,7 @@ function renderLeaderboard(targetEl, highlightId){
   const medals=['🥇','🥈','🥉'];
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden">
     <div style="padding:16px 20px 10px;border-bottom:1px solid var(--line)">
-      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace">🏆 לוח תחרות</div>
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace">🏆 לוח תחרות${agentFilter&&agentFilter.length<S.agents.length?' — '+( GROUPS.find(g=>agentFilter.some(a=>(a.depts||[]).some(d=>g.depts.includes(d))))?.label||'המחלקה שלך'):' — כל הנציגים'}</div>
     </div>
     ${stats.slice(0,10).map((s,i)=>{
       const c=col(s.a.id);
@@ -1921,6 +1951,7 @@ function renderLeaderboard(targetEl, highlightId){
 
 function renderTracking(){
   renderFilterBar();
+  renderAlertBanner();
   const wb=getWeek();
   const filteredAgents=filterAgents();
   const tot=filteredAgents.length;
@@ -2174,6 +2205,194 @@ async function saveEditPin(){
   a.pin=newPin;
   closeEditPin();
   renderSettings();
+}
+
+/* ── ALERT BANNER ─────────────────────────────── */
+function renderAlertBanner(){
+  const el=document.getElementById('tracking-alert-banner');
+  if(!el) return;
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  // Find overdue briefings with incomplete agents
+  const overdueAlerts=[];
+  S.briefings.forEach(b=>{
+    if(!b.deadline) return;
+    const dl=new Date(b.deadline); dl.setHours(0,0,0,0);
+    if(dl>=today) return; // not overdue
+    const incomplete=S.agents.filter(a=>{
+      // check if agent should have done it
+      if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
+      const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!agDepts.some(d=>brDepts.includes(d))) return false;
+      return !b.completions[String(a.id)];
+    });
+    if(incomplete.length>0) overdueAlerts.push({b,incomplete});
+  });
+
+  // Find briefings expiring today or tomorrow
+  const urgentAlerts=[];
+  S.briefings.forEach(b=>{
+    if(!b.deadline) return;
+    const days=deadlineDays(b.deadline);
+    if(days===null||days<0||days>1) return;
+    const incomplete=S.agents.filter(a=>{
+      if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
+      const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!agDepts.some(d=>brDepts.includes(d))) return false;
+      return !b.completions[String(a.id)];
+    });
+    if(incomplete.length>0) urgentAlerts.push({b,incomplete,days});
+  });
+
+  if(!overdueAlerts.length&&!urgentAlerts.length){
+    el.style.display='none'; return;
+  }
+
+  el.style.display='block';
+  let html='';
+  let alertIdx=0;
+
+  const makeExpandable=(id,icon,bgColor,borderColor,titleColor,title,items)=>{
+    const itemsHtml=items.map(({label,names,extra})=>`
+      <div style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);last-child{border:none}">
+        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleAlertDetail('ad-${id}-${alertIdx++}')">
+          <div style="font-size:13px;font-weight:600;color:var(--ice)">📋 ${label} ${extra?`<span style="font-size:11px;font-weight:400;color:var(--ice3)">— ${extra}</span>`:''}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:700;color:${titleColor}">${names.length} ממתינים</span>
+            <span style="font-size:11px;color:var(--ice3)">▼</span>
+          </div>
+        </div>
+        <div id="ad-${id}-${alertIdx-1}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.07)">
+          <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-family:'DM Mono',monospace">נציגים שטרם ביצעו:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${names.map(n=>`<span style="background:rgba(0,0,0,0.05);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;color:var(--ice2)">${n}</span>`).join('')}
+          </div>
+        </div>
+      </div>`).join('');
+    return`<div style="background:${bgColor};border:1.5px solid ${borderColor};border-radius:16px;margin-bottom:10px;overflow:hidden">
+      <div style="padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid ${borderColor}">
+        <div style="font-size:24px;flex-shrink:0">${icon}</div>
+        <div style="font-size:14px;font-weight:700;color:${titleColor}">${title}</div>
+      </div>
+      ${itemsHtml}
+    </div>`;
+  };
+
+  if(overdueAlerts.length){
+    const totalMissing=overdueAlerts.reduce((s,x)=>s+x.incomplete.length,0);
+    html+=makeExpandable('ov','🚨','var(--danger-bg)','var(--danger-line)','var(--danger)',
+      `${totalMissing} נציגים לא השלימו תדריכים שפג תוקפם`,
+      overdueAlerts.map(x=>({label:x.b.title,names:x.incomplete.map(a=>a.name),extra:'פג תוקף'}))
+    );
+  }
+
+  if(urgentAlerts.length){
+    const label=urgentAlerts.some(x=>x.days===0)?'תדריכים שפוקעים היום!':'תדריכים שפוקעים מחר';
+    html+=makeExpandable('ur','⏰','var(--warn-bg)','var(--warn-line)','var(--warn)',
+      label,
+      urgentAlerts.map(x=>({label:x.b.title,names:x.incomplete.map(a=>a.name),extra:x.days===0?'היום האחרון!':'מחר'}))
+    );
+  }
+
+  el.innerHTML=html;
+}
+
+function toggleAlertDetail(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  // rotate arrow
+  const arrow=el.previousElementSibling?.querySelector('span:last-child');
+  if(arrow) arrow.textContent=open?'▼':'▲';
+}
+
+/* ── PDF DOWNLOAD ─────────────────────────────── */
+function downloadPDF(){
+  const deptKey=document.getElementById('pdf-dept-select')?.value||'all';
+  let agents=S.agents;
+  if(deptKey!=='all'){
+    const grp=GROUPS.find(g=>g.key===deptKey);
+    if(grp) agents=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+  }
+
+  const today=new Date().toLocaleDateString('he-IL');
+  const deptLabel=deptKey==='all'?'כל הנציגים':deptKey;
+
+  // Build HTML for print
+  const rows=agents.map(a=>{
+    const done=S.briefings.filter(b=>b.completions[String(a.id)]);
+    const pending=S.briefings.filter(b=>!b.completions[String(a.id)]).length;
+    const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[String(a.id)].score,0)/done.length):null;
+    const depts=(a.depts||[]).join(', ')||'—';
+    return`<tr>
+      <td>${a.name}</td>
+      <td>${depts}</td>
+      <td style="text-align:center">${done.length}</td>
+      <td style="text-align:center;color:${pending>0?'#C0392B':'#1A9E6E'}">${pending}</td>
+      <td style="text-align:center;font-weight:700;color:${avg===null?'#888':avg>=80?'#1A9E6E':avg>=60?'#D4820A':'#C0392B'}">${avg!==null?avg+'%':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const completedRows=S.briefings.slice().reverse().map(b=>{
+    const doneCount=Object.keys(b.completions).length;
+    const dl=b.deadline?new Date(b.deadline).toLocaleDateString('he-IL'):'—';
+    return`<tr>
+      <td>${b.title}</td>
+      <td>${(b.targetDepts||[]).join(', ')||'כולם'}</td>
+      <td>${b.publishedAt}</td>
+      <td>${dl}</td>
+      <td style="text-align:center;font-weight:700;color:${doneCount===S.agents.length?'#1A9E6E':'#D4820A'}">${doneCount}/${S.agents.length}</td>
+    </tr>`;
+  }).join('');
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head>
+    <meta charset="UTF-8">
+    <title>דוח תדריכים — ${deptLabel}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Heebo',sans-serif;color:#1A1814;background:#fff;padding:32px;direction:rtl}
+      .header{border-bottom:3px solid #B8862A;padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
+      .title{font-size:24px;font-weight:700;color:#1A1814}
+      .subtitle{font-size:13px;color:#888;margin-top:4px}
+      .meta{font-size:12px;color:#888;text-align:left;font-family:monospace}
+      .section-title{font-size:14px;font-weight:700;color:#B8862A;text-transform:uppercase;letter-spacing:0.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid #EDE9E0}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      th{background:#F7F3EC;padding:10px 12px;text-align:right;font-weight:700;color:#3D3830;border-bottom:2px solid #EDE9E0}
+      td{padding:9px 12px;border-bottom:1px solid #F0EDE6;vertical-align:middle}
+      tr:last-child td{border-bottom:none}
+      tr:nth-child(even){background:#FAFAF7}
+      .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #EDE9E0;padding-top:12px}
+      .gold{color:#B8862A;font-weight:700}
+      @media print{body{padding:16px}.no-print{display:none}button{display:none}}
+    </style>
+  </head><body>
+    <div class="header">
+      <div>
+        <div class="title">📋 דוח מערכת תדריכים</div>
+        <div class="subtitle">מחלקה: <strong>${deptLabel}</strong> · ${agents.length} נציגים</div>
+      </div>
+      <div class="meta">${today}</div>
+    </div>
+    <button onclick="window.print()" class="no-print" style="background:#B8862A;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:600;margin-bottom:20px">🖨️ הדפס / שמור PDF</button>
+    <div class="section-title">סטטוס נציגים</div>
+    <table>
+      <thead><tr><th>שם נציג</th><th>מחלקה</th><th>הושלמו</th><th>ממתינים</th><th>ממוצע</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="section-title">תדריכים</div>
+    <table>
+      <thead><tr><th>כותרת</th><th>פעילויות</th><th>פורסם</th><th>דדליין</th><th>השלמות</th></tr></thead>
+      <tbody>${completedRows}</tbody>
+    </table>
+    <div class="footer">כל הזכויות שמורות לאדיר לוי · מערכת תדריכים</div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
 }
 
 async function appInit(){
