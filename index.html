@@ -2022,7 +2022,8 @@ function renderTracking(){
   bwEl.innerHTML=!allBriefings.length
     ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">לא פורסמו תדריכים עדיין.</div>'
     :allBriefings.map(b=>{
-      const doneCount=Object.keys(b.completions).length;
+      const activeIds=new Set(S.agents.filter(a=>a.active!==false).map(a=>String(a.id)));
+      const doneCount=Object.keys(b.completions).filter(id=>activeIds.has(id)).length;
       const doneNames=Object.values(b.completions).map(c=>c.name||'');
       return`
       <div class="track-row" style="margin-bottom:10px">
@@ -2294,6 +2295,7 @@ function sendWhatsApp(){
   const pendingLines=[];
   S.briefings.forEach(b=>{
     const pending=agents.filter(a=>{
+      if(a.active===false) return false;
       if(b.completions[String(a.id)]) return false;
       if(!b.targetDepts||b.targetDepts.length===0) return true;
       const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
@@ -2448,7 +2450,7 @@ function renderAlertBanner(){
     const dl=new Date(b.deadline); dl.setHours(0,0,0,0);
     if(dl>=today) return; // not overdue
     const incomplete=S.agents.filter(a=>{
-      // check if agent should have done it
+      if(a.active===false) return false;
       if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
       const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
       const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
@@ -2465,6 +2467,7 @@ function renderAlertBanner(){
     const days=deadlineDays(b.deadline);
     if(days===null||days<0||days>1) return;
     const incomplete=S.agents.filter(a=>{
+      if(a.active===false) return false;
       if(!b.targetDepts||b.targetDepts.length===0) return !b.completions[String(a.id)];
       const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
       const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
