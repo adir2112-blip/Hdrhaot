@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-<!-- v5.0 premium-redesign -->
+<!-- v5.1 welcome-light-pending -->
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -963,24 +963,28 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
     <div id="agent-briefings" style="display:none">
       <!-- WELCOME BANNER -->
-      <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:20px;overflow:hidden;position:relative;background:linear-gradient(135deg,#1A1814 0%,#3D3428 50%,#1A1814 100%);padding:24px 22px 20px">
-        <div style="position:absolute;top:0;right:0;left:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2280%22 cy=%2220%22 r=%2240%22 fill=%22rgba(184,134,42,0.08)%22/><circle cx=%2220%22 cy=%2280%22 r=%2230%22 fill=%22rgba(184,134,42,0.05)%22/></svg>');background-size:cover;opacity:0.7;border-radius:20px"></div>
+      <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 24px rgba(184,134,42,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
+        <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(184,134,42,0.07) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:radial-gradient(circle,rgba(184,134,42,0.05) 0%,transparent 70%);pointer-events:none"></div>
         <div style="position:relative">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
             <div>
-              <div style="font-size:12px;color:rgba(184,134,42,0.8);font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">ברוך הבא</div>
-              <div style="font-family:'Playfair Display',serif;font-size:26px;color:#F7F3EC;font-weight:400" id="logged-agent-name"></div>
+              <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">ברוך הבא 👋</div>
+              <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--ice);font-weight:500;line-height:1.1" id="logged-agent-name"></div>
             </div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן" style="color:rgba(247,243,236,0.6);border-color:rgba(255,255,255,0.15)">↻</button>
-              <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="color:rgba(247,243,236,0.6);border-color:rgba(255,255,255,0.15)">החלף ▸</button>
+              <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן" style="color:var(--ice3);border-color:rgba(184,134,42,0.2)">↻</button>
+              <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="color:var(--ice3);border-color:rgba(184,134,42,0.2)">החלף ▸</button>
             </div>
           </div>
           <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
         </div>
       </div>
+
+      <!-- PENDING COUNT HERO -->
+      <div id="agent-pending-hero" style="display:none;margin-bottom:16px"></div>
+
       <!-- BRIEFINGS -->
-      <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:10px">תדריכים ממתינים</div>
       <div id="agent-briefing-list"></div>
       <div id="no-briefings" style="display:none">
         <div class="card" style="text-align:center;padding:3.5rem">
@@ -1697,14 +1701,14 @@ function renderAgentBriefings(){
   }).length+1;
   const _welcomeStats=document.getElementById('agent-welcome-stats');
   if(_welcomeStats){
-    const statItem=(val,lbl,color='#D4A847')=>`<div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+    const statItem=(val,lbl,color='var(--gold)')=>`<div style="background:rgba(184,134,42,0.06);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(184,134,42,0.14)">
       <div style="font-size:22px;font-weight:700;color:${color};font-family:'Playfair Display',serif">${val}</div>
-      <div style="font-size:10px;color:rgba(247,243,236,0.55);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em">${lbl}</div>
+      <div style="font-size:10px;color:var(--ice3);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;font-family:'DM Mono',monospace">${lbl}</div>
     </div>`;
     _welcomeStats.innerHTML=
-      statItem(_done.length,'הושלמו','#D4A847')+
-      statItem(_avg!==null?_avg+'%':'—','ממוצע',_avg!==null?(_avg>=80?'#1A9E6E':_avg>=60?'#D4820A':'#D94040'):'rgba(247,243,236,0.4)')+
-      statItem('#'+_rank,'דירוג','#B8A0D8');
+      statItem(_done.length,'הושלמו','var(--gold)')+
+      statItem(_avg!==null?_avg+'%':'—','ממוצע',_avg!==null?(_avg>=80?'var(--ok)':_avg>=60?'var(--warn)':'var(--danger)'):'var(--ice3)')+
+      statItem('#'+_rank,'דירוג','#8A68C8');
   }
   console.log('=== AGENT BRIEFINGS DEBUG ===');
   console.log('Agent:', S.agent.name, 'id:', S.agent.id);
@@ -1726,24 +1730,57 @@ function renderAgentBriefings(){
   // Show personal leaderboard
   renderLeaderboard('agent-leaderboard', S.agent?String(S.agent.id):null);
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
+
+  // Pending hero banner
+  const heroEl=document.getElementById('agent-pending-hero');
+  if(heroEl){
+    if(pending.length>0){
+      const firstId=pending[0].id;
+      heroEl.style.display='block';
+      heroEl.innerHTML=`
+        <div style="background:linear-gradient(135deg,#0F4C2A 0%,#1A7A45 100%);border-radius:20px;padding:22px 22px 18px;position:relative;overflow:hidden;box-shadow:0 8px 28px rgba(26,122,69,0.25)">
+          <div style="position:absolute;top:-20px;left:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>
+          <div style="position:absolute;bottom:-30px;right:20px;width:100px;height:100px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+            <div>
+              <div style="font-size:48px;font-weight:800;color:#FFFFFF;line-height:1;font-family:'Playfair Display',serif">${pending.length}</div>
+              <div style="font-size:14px;color:rgba(255,255,255,0.75);margin-top:4px;font-weight:500">תדריכים ממתינים לביצוע</div>
+            </div>
+            <button onclick="openBriefing(${firstId})" style="background:#FFFFFF;border:none;border-radius:14px;padding:14px 22px;font-size:14px;font-weight:700;color:#0F4C2A;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.2)'">
+              <span style="font-size:18px">▶</span> התחל תדריך כעת
+            </button>
+          </div>
+        </div>`;
+    } else {
+      heroEl.style.display='none';
+    }
+  }
   // sort by deadline: overdue first, then soonest
   pending.sort((a,b)=>{
     const da=a.deadline?new Date(a.deadline):new Date('2099-01-01');
     const db=b.deadline?new Date(b.deadline):new Date('2099-01-01');
     return da-db;
   });
-  el.innerHTML=pending.map(b=>{
+  el.innerHTML=pending.map((b,idx)=>{
     const days=deadlineDays(b.deadline);
     const urgent=b.deadline&&days!==null&&days<=2;
-    return`<div class="brief-row" onclick="openBriefing(${b.id})" style="${urgent?'border-color:var(--warn-border);':''}">
+    const isFirst=idx===0;
+    return`<div class="brief-row" onclick="openBriefing(${b.id})" style="cursor:pointer;${urgent?'border-color:var(--warn-line);background:var(--warn-bg);':isFirst?'border-color:rgba(26,158,110,0.3);':''}">
       <div style="flex:1">
-        <div style="font-size:15px;font-weight:700;color:var(--ice)">${b.title}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap">
+          ${isFirst&&!urgent?`<span style="background:var(--ok);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">▶ הבא בתור</span>`:''}
+          ${urgent?`<span style="background:var(--warn);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">⚡ דחוף</span>`:''}
+        </div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)">${b.title}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center">
           ${deadlineChip(b.deadline)}
           ${b.targetDepts&&b.targetDepts.length?b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join(''):''}
         </div>
       </div>
-      <span class="chip chip-warn" style="flex-shrink:0">ממתין ◂</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-right:4px">
+        <span class="chip chip-warn">ממתין</span>
+        <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">לחץ →</span>
+      </div>
     </div>`;
   }).join('');
 }
