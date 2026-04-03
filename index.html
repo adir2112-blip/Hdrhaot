@@ -2031,22 +2031,37 @@ function renderTracking(){
     const pend=S.briefings.filter(b=>!b.completions[a.id]).length;
     const depts=(a.depts||[]);
     const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[a.id].score,0)/done.length):null;
-    return`<div class="track-row agent-row-clickable" style="margin-bottom:10px" onclick="openAgentStats('${a.id}')">
-      <div class="between" style="margin-bottom:8px">
+    const donePills=done.map(b=>{
+      const comp=b.completions[a.id]||b.completions[String(a.id)];
+      const score=comp?comp.score:0;
+      return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(184,134,42,0.12);border-radius:12px;padding:8px 12px;margin-bottom:6px;gap:8px">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
+        </div>
+        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\'")}','${b.title.replace(/'/g,"\'")}')"
+          style="background:rgba(212,130,10,0.1);border:1.5px solid rgba(212,130,10,0.3);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sora',sans-serif;flex-shrink:0">
+          🔄 מבחן חוזר
+        </button>
+      </div>`;
+    }).join('');
+
+    return`<div class="track-row" style="margin-bottom:12px">
+      <div class="between" style="margin-bottom:${done.length?'12px':'0'};cursor:pointer" onclick="openAgentStats('${a.id}')">
         <div class="row">
           <div class="av" style="width:38px;height:38px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
           <div>
-            <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}</div>
+            <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}</div>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           ${avg!==null?`<span style="font-size:16px;font-weight:700;color:${avg>=80?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)'}">${avg}%</span>`:''}
           <span class="chip chip-ok">${done.length} ✓</span>
           ${pend?`<span class="chip chip-warn">${pend} ממתינים</span>`:''}
-          <span style="font-size:11px;color:var(--ice3)">לחץ לפרטים →</span>
         </div>
       </div>
+      ${donePills}
     </div>`;
   }).join('');
 }
@@ -2222,6 +2237,18 @@ function toggleHistory(id){
   const bi=id.split('-')[1];
   const arr=document.getElementById('harr-'+bi);
   if(arr) arr.textContent=open?'▼':'▲';
+}
+
+/* ── RETAKE BRIEFING ─────────────────────────── */
+async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
+  if(!confirm(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
+הציון הנוכחי יימחק.`)) return;
+  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
+  if(!b) return;
+  const sid=String(agentId);
+  delete b.completions[sid];
+  await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+  renderTracking();
 }
 
 function populateResetSelects(){
