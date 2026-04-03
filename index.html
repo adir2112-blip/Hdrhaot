@@ -445,6 +445,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .ld { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: blink 1.4s infinite ease-in-out; }
 .ld:nth-child(2){animation-delay:.2s} .ld:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.15;transform:scale(0.7)}40%{opacity:1;transform:scale(1)}}
+@keyframes slide-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 /* DIVIDER */
 .div { height: 1px; background: var(--line); margin: 2rem 0; }
@@ -982,6 +983,18 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">תאריך דדליין (אחרון להשלמה)</label>
         <input type="date" id="briefing-deadline" style="direction:ltr;color-scheme:light">
       </div>
+      <div style="margin-top:14px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none">
+          <div id="featured-toggle" onclick="toggleFeatured()" style="width:48px;height:26px;border-radius:13px;background:var(--line2);position:relative;transition:background 0.2s;cursor:pointer;flex-shrink:0">
+            <div id="featured-knob" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.2)"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--ice)">⭐ נוהל השבוע</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">יודגש בבנר מיוחד אצל הנציגים</div>
+          </div>
+        </label>
+        <input type="hidden" id="briefing-featured" value="0">
+      </div>
       <div class="field" style="margin-top:16px">
         <label class="field-label">כמה שאלות לייצר?</label>
         <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
@@ -1083,6 +1096,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div id="briefing-search-results" style="display:none;position:absolute;top:calc(100% + 8px);right:0;left:0;z-index:50;background:#fff;border:1.5px solid rgba(201,168,76,0.25);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.12);max-height:70vh;overflow-y:auto;padding:8px"></div>
       </div>
 
+      <!-- FEATURED BRIEFING BANNER -->
+      <div id="agent-featured-banner" style="display:none;margin-bottom:16px"></div>
       <!-- PENDING COUNT HERO -->
       <div id="agent-pending-hero" style="display:none;margin-bottom:16px"></div>
 
@@ -1122,6 +1137,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
       </div>
       <div id="agent-leaderboard" style="margin-top:1.5rem"></div>
+      <div id="agent-achievements" style="margin-top:1rem"></div>
     </div>
 
     <div id="agent-flow" style="display:none">
@@ -1170,11 +1186,25 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button class="btn btn-gold" id="sign-btn" onclick="signBriefing()">✓ חתום ואשר</button>
         </div>
         <div id="sign-done" style="display:none">
-          <div class="success-bar">
-            <div class="success-bar-t">✓ נחתם ונרשם בהצלחה</div>
-            <div class="success-bar-s" id="sign-done-txt"></div>
+          <!-- CELEBRATION SCREEN -->
+          <div id="celebration-screen" style="text-align:center;padding:1rem 0">
+            <div id="celebration-emoji" style="font-size:64px;margin-bottom:12px;animation:float 2s ease-in-out infinite">🎉</div>
+            <div id="celebration-title" style="font-family:'Playfair Display',serif;font-size:26px;color:var(--ice);margin-bottom:6px;font-weight:500"></div>
+            <div id="celebration-sub" style="font-size:14px;color:var(--ice3);margin-bottom:20px;line-height:1.6"></div>
+            <!-- Badges row -->
+            <div id="celebration-badges" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px"></div>
+            <!-- Rank change -->
+            <div id="celebration-rank" style="display:none;background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:16px;padding:14px 20px;margin-bottom:16px">
+              <div id="celebration-rank-text" style="font-size:15px;font-weight:700;color:var(--gold)"></div>
+            </div>
+            <!-- Feedback -->
+            <div class="card" style="text-align:right;margin-bottom:14px">
+              <div class="card-label">הערה / משוב על התדריך</div>
+              <textarea id="agent-feedback" placeholder="האם הנוהל ברור? יש משהו שלא הובן? (אופציונלי)" style="min-height:80px;font-size:14px"></textarea>
+              <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">המשוב יישלח למנהל</div>
+            </div>
+            <button class="btn btn-gold" style="width:100%" onclick="backToBriefingsWithFeedback()">חזור לתדריכים ◂</button>
           </div>
-          <button class="btn btn-outline" style="margin-top:14px" onclick="backToBriefings()">חזור לתדריכים ◂</button>
         </div>
       </div>
     </div>
@@ -1414,6 +1444,7 @@ async function dbBriefings(){
     }catch(e){b.targetDepts=[];}
     try{ b.completions=b.completions?(typeof b.completions==='string'?JSON.parse(b.completions):b.completions):{}; }catch(e){b.completions={};}
     b.deadline=b.deadline||null;
+    b.featured=b.featured===true||b.featured==='true'||false;
     return b;
   });
 }
@@ -1860,12 +1891,14 @@ async function publishBriefing(){
     : S.agents.filter(a=>a.active!==false);
   const ts=now();
   const deadlineVal=document.getElementById('briefing-deadline').value||null;
+  const featuredVal=document.getElementById('briefing-featured').value==='1';
   const row={
     title:S.cur.title, content:S.cur.content,
     questions:JSON.stringify(S.eq),
     targetDepts:JSON.stringify(targetDepts),
     publishedAt:ts, weekDate:new Date().toISOString(),
     deadline:deadlineVal,
+    featured:featuredVal||false,
     completions:JSON.stringify({})
   };
   const {data,error}=await _sb.from('briefings').insert(row).select().single();
@@ -1874,6 +1907,7 @@ async function publishBriefing(){
   data.targetDepts=targetDepts;
   data.completions={};
   data.deadline=deadlineVal;
+  data.featured=featuredVal||false;
   S.briefings.push(data);
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
@@ -1885,6 +1919,10 @@ function resetManager(){
   document.getElementById('briefing-title').value='';
   document.getElementById('briefing-content').value='';
   document.getElementById('briefing-deadline').value='';
+  document.getElementById('briefing-featured').value='0';
+  const tog=document.getElementById('featured-toggle');
+  const knob=document.getElementById('featured-knob');
+  if(tog){tog.style.background='var(--line2)';knob.style.transform='translateX(0)';}
   document.getElementById('preview-section').style.display='none';
   document.querySelectorAll('[id^=bdl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';}});
 }
@@ -2108,6 +2146,58 @@ function closeSearchDetail(){
   document.getElementById('agent-briefings').style.display='block';
 }
 
+function renderAchievements(){
+  const el=document.getElementById('agent-achievements');
+  if(!el||!S.agent) return;
+  const agId=String(S.agent.id);
+  const done=S.briefings.filter(b=>b.completions[agId]);
+  const scores=done.map(b=>b.completions[agId].score);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+  const best=scores.length?Math.max(...scores):null;
+  const streak=done.length;
+
+  const allBadges=[
+    {icon:'🌟',label:'תדריך ראשון',desc:'השלמת את התדריך הראשון שלך',earned:done.length>=1},
+    {icon:'📚',label:'מתמיד',desc:'השלמת 5 תדריכים',earned:done.length>=5},
+    {icon:'🎓',label:'בוגר',desc:'השלמת 10 תדריכים',earned:done.length>=10},
+    {icon:'⭐',label:'מושלם',desc:'קיבלת 100% בתדריך',earned:scores.some(s=>s===100)},
+    {icon:'🎯',label:'מצטיין',desc:'ממוצע מעל 90%',earned:avg!==null&&avg>=90},
+    {icon:'🔥',label:'בוער',desc:'השלמת 3+ תדריכים',earned:streak>=3},
+    {icon:'💎',label:'יהלום',desc:'ממוצע מעל 80%',earned:avg!==null&&avg>=80},
+    {icon:'🏅',label:'אלוף',desc:'השלמת 20 תדריכים',earned:done.length>=20},
+  ];
+
+  const earnedBadges=allBadges.filter(b=>b.earned);
+  const lockedBadges=allBadges.filter(b=>!b.earned);
+
+  if(!earnedBadges.length&&!lockedBadges.length){el.innerHTML='';return;}
+
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px 18px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <div class="card-label" style="margin:0">🏅 הישגים</div>
+      <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace">${earnedBadges.length}/${allBadges.length} הושגו</div>
+    </div>
+    <div style="padding:14px 18px">
+      ${earnedBadges.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:${lockedBadges.length?'14px':'0'}">
+        ${earnedBadges.map(b=>`<div style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px;animation:slide-up 0.4s ease">
+          <span style="font-size:22px">${b.icon}</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--gold)">${b.label}</div>
+            <div style="font-size:10px;color:var(--ice3)">${b.desc}</div>
+          </div>
+        </div>`).join('')}
+      </div>`:''}
+      ${lockedBadges.length?`<div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">ממתינים לפתיחה</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${lockedBadges.map(b=>`<div style="background:rgba(0,0,0,0.03);border:1px dashed var(--line2);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:6px;opacity:0.5">
+            <span style="font-size:18px;filter:grayscale(1)">${b.icon}</span>
+            <div style="font-size:11px;color:var(--ice3)">${b.desc}</div>
+          </div>`).join('')}
+        </div>`:''}
+    </div>
+  </div>`;
+}
+
 function logoutAgent(){
   ttsStop();
   S.agent=null;
@@ -2171,6 +2261,29 @@ function renderAgentBriefings(){
     return match;
   });
   console.log('Pending count:', pending.length);
+  // Featured briefing banner
+  const featuredEl=document.getElementById('agent-featured-banner');
+  if(featuredEl){
+    const agId=String(S.agent.id);
+    const agentDepts=(S.agent.depts||[]).map(d=>d.trim().toLowerCase());
+    const featured=S.briefings.find(b=>{
+      if(!b.featured) return false;
+      if(b.completions[agId]) return false; // already done
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.includes(d));
+    });
+    if(featured){
+      featuredEl.style.display='block';
+      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(184,134,42,0.2)">
+        <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.06;pointer-events:none">⭐</div>
+        <div style="font-size:11px;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⭐ נוהל השבוע</div>
+        <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">${featured.title}</div>
+        <div style="font-size:13px;color:rgba(247,243,236,0.55)">${deadlineChip(featured.deadline)||'לחץ להתחלה →'}</div>
+      </div>`;
+    } else {
+      featuredEl.style.display='none';
+    }
+  }
   // Show personal leaderboard
   // Show only agents in same group as current agent
   const _agGroup=agentGroup(S.agent);
@@ -2180,6 +2293,7 @@ function renderAgentBriefings(){
     if(_grp) _groupAgents=S.agents.filter(a=>(a.depts||[]).some(d=>_grp.depts.includes(d)));
   }
   renderLeaderboard('agent-leaderboard', S.agent?String(S.agent.id):null, _groupAgents);
+  renderAchievements();
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
 
   // Pending hero banner
@@ -2300,7 +2414,95 @@ async function signBriefing(){
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
-  document.getElementById('sign-done-txt').textContent=`${S.agent.name}  ·  ציון ${S.score}%  ·  ${ts}`;
+  showCelebration();
+}
+
+function showCelebration(){
+  const agId=String(S.agent.id);
+  const score=S.score;
+
+  // Calculate rank BEFORE and AFTER (simulate with current data)
+  const allCompleted=S.briefings.filter(b=>b.completions[agId]);
+  const totalDone=allCompleted.length;
+  const scores=allCompleted.map(b=>b.completions[agId].score);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):score;
+
+  // Previous rank (before this completion)
+  const prevScores=scores.slice(0,-1);
+  const prevAvg=prevScores.length?Math.round(prevScores.reduce((a,b)=>a+b,0)/prevScores.length):null;
+
+  // Rank among group agents
+  const groupKey=agentGroup(S.agent);
+  const grp=GROUPS.find(g=>g.key===groupKey);
+  const groupAgents=grp?S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d))):S.agents;
+  const ranks=groupAgents.map(a=>{
+    const done=S.briefings.filter(b=>b.completions[String(a.id)]);
+    const sc=done.length?Math.round(done.reduce((s,b)=>s+b.completions[String(a.id)].score,0)/done.length):null;
+    return{id:String(a.id),avg:sc};
+  }).filter(x=>x.avg!==null).sort((a,b)=>b.avg-a.avg);
+  const myRank=ranks.findIndex(r=>r.id===agId)+1||null;
+  const prevRank=prevAvg!==null?ranks.findIndex(r=>r.id!==agId&&r.avg<=prevAvg)+2:null;
+
+  // Title & emoji
+  let emoji='✨', title='', sub='';
+  if(score===100){ emoji='🏆'; title='מושלם לחלוטין!'; sub='ענית נכון על כל השאלות — עבודה מצוינת!'; }
+  else if(score>=80){ emoji='🎉'; title='כל הכבוד!'; sub=`ציון מצוין — ${score}%. כך ממשיכים!`; }
+  else if(score>=60){ emoji='👍'; title='עבודה טובה!'; sub=`ציון ${score}%. יש מקום להשתפר — נסה שוב!`; }
+  else { emoji='💪'; title='תמשיך להתאמץ!'; sub=`ציון ${score}%. כדאי לקרוא שוב את הנוהל.`; }
+
+  document.getElementById('celebration-emoji').textContent=emoji;
+  document.getElementById('celebration-title').textContent=title;
+  document.getElementById('celebration-sub').textContent=sub;
+
+  // Badges
+  const badges=[];
+  if(score===100) badges.push({icon:'⭐',label:'מושלם'});
+  if(score>=80) badges.push({icon:'🎯',label:'מצוין'});
+  // Streak badge
+  const streak=calcStreak(agId);
+  if(streak>=3) badges.push({icon:'🔥',label:`${streak} ברצף`});
+  if(totalDone===1) badges.push({icon:'🌟',label:'תדריך ראשון'});
+  if(totalDone>=5) badges.push({icon:'📚',label:'מתמיד'});
+
+  const badgesEl=document.getElementById('celebration-badges');
+  badgesEl.innerHTML=badges.map(b=>`
+    <div style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:6px;animation:slide-up 0.4s ease">
+      <span style="font-size:20px">${b.icon}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--gold)">${b.label}</span>
+    </div>`).join('');
+
+  // Rank change
+  const rankEl=document.getElementById('celebration-rank');
+  const rankTxt=document.getElementById('celebration-rank-text');
+  if(myRank&&prevRank&&myRank<prevRank){
+    rankEl.style.display='block';
+    rankTxt.textContent=`⬆️ עלית מדירוג #${prevRank} ל-#${myRank} בקבוצה שלך!`;
+  } else if(myRank===1){
+    rankEl.style.display='block';
+    rankTxt.textContent=`🥇 אתה במקום הראשון בקבוצה שלך!`;
+  } else { rankEl.style.display='none'; }
+}
+
+function calcStreak(agId){
+  // Count consecutive completed briefings (ordered by date)
+  const done=S.briefings
+    .filter(b=>b.completions[agId])
+    .sort((a,b)=>new Date(b.completions[agId].ts)-new Date(a.completions[agId].ts));
+  return done.length;
+}
+
+async function backToBriefingsWithFeedback(){
+  // Save feedback if entered
+  const fb=document.getElementById('agent-feedback')?.value?.trim();
+  if(fb&&S.active&&S.agent){
+    const b=S.briefings.find(x=>x.id===S.active.id);
+    if(b&&b.completions[String(S.agent.id)]){
+      b.completions[String(S.agent.id)].feedback=fb;
+      await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+    }
+  }
+  document.getElementById('agent-feedback').value='';
+  backToBriefings();
 }
 function backToBriefings(){
   document.getElementById('agent-flow').style.display='none';
@@ -2610,6 +2812,7 @@ function openAgentStats(agentId){
         <div>
           <div style="font-size:13px;font-weight:600;color:var(--ice)">${b.title}</div>
           <div style="font-size:11px;color:var(--ice3);margin-top:2px;font-family:'DM Mono',monospace">${comp.ts}</div>
+          ${comp.feedback?`<div style="font-size:11px;color:var(--gold);margin-top:4px;font-style:italic">💬 ${comp.feedback}</div>`:''}
         </div>
         <div style="font-size:18px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'}">${comp.score}%</div>
       </div>`;
@@ -3271,6 +3474,16 @@ function ttsReset(){
 if(window.speechSynthesis){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.addEventListener('voiceschanged',()=>window.speechSynthesis.getVoices());
+}
+
+function toggleFeatured(){
+  const inp=document.getElementById('briefing-featured');
+  const tog=document.getElementById('featured-toggle');
+  const knob=document.getElementById('featured-knob');
+  const on=inp.value==='1';
+  inp.value=on?'0':'1';
+  tog.style.background=on?'var(--line2)':'var(--gold)';
+  knob.style.transform=on?'translateX(0)':'translateX(-22px)';
 }
 
 async function appInit(){
