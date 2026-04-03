@@ -7,7 +7,8 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
-<!-- v4.2 reload-on-login -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<!-- v4.7 keyboard-pin -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1171,7 +1172,12 @@ async function dbAgents(){
   const {data,error}=await _sb.from('agents').select('*').order('id');
   if(error){console.error('agents load',error);return[];}
   return (data||[]).map(a=>{
-    a.depts=typeof a.depts==='string'?JSON.parse(a.depts||'[]'):a.depts||[];
+    try{
+      let ad=a.depts;
+      if(typeof ad==='string') ad=JSON.parse(ad||'[]');
+      if(!Array.isArray(ad)) ad=ad?[ad]:[];
+      a.depts=ad;
+    }catch(e){a.depts=[];}
     return a;
   });
 }
@@ -1181,7 +1187,12 @@ async function dbBriefings(){
   // parse JSON fields
   return (data||[]).map(b=>{
     b.questions=typeof b.questions==='string'?JSON.parse(b.questions):b.questions;
-    try{ b.targetDepts=b.targetDepts?(typeof b.targetDepts==='string'?JSON.parse(b.targetDepts):b.targetDepts):[]; }catch(e){b.targetDepts=[];}
+    try{
+      let td=b.targetDepts;
+      if(typeof td==='string') td=JSON.parse(td);
+      if(!Array.isArray(td)) td=td?[td]:[];
+      b.targetDepts=td;
+    }catch(e){b.targetDepts=[];}
     try{ b.completions=b.completions?(typeof b.completions==='string'?JSON.parse(b.completions):b.completions):{}; }catch(e){b.completions={};}
     return b;
   });
@@ -1236,10 +1247,10 @@ function switchTab(name){
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='tracking')lockTracking();
-  if(name==='settings'){lockSettings();renderSettings();}
-  if(name==='agent')renderAgentLogin();
-  if(name==='manager')lockManager();
+  if(name==='tracking'){ lockTracking(); }
+  if(name==='settings'){ if(!_adminUnlocked) lockSettings(); else renderSettings(); }
+  if(name==='agent') renderAgentLogin();
+  if(name==='manager'){ if(!_adminUnlocked) lockManager(); }
 }
 
 /* PASSWORD */
@@ -1287,23 +1298,51 @@ function checkTrackingPw(){ checkAdminInput('tracking-pw-input','tracking-pw-err
 function checkPw(){ checkAdminInput('admin-pw-input','admin-pw-error'); }
 function lockManager(){ if(!_adminUnlocked){ document.getElementById('manager-lock').style.display='flex'; document.getElementById('manager-content').style.display='none'; } }
 function lockTracking(){ if(!_adminUnlocked){ document.getElementById('tracking-lock').style.display='flex'; document.getElementById('tracking-content').style.display='none'; } }
-function lockSettings(){ lockAll(); }
+function lockSettings(){
+  // Only lock settings panel, don't touch other panels
+  _adminUnlocked = false;
+  ['manager','tracking','settings'].forEach(panel=>{
+    const lock=document.getElementById(panel+'-lock');
+    const content=document.getElementById(panel+'-content');
+    if(lock) lock.style.display='flex';
+    if(content) content.style.display='none';
+  });
+  ['manager-pw-input','tracking-pw-input','admin-pw-input'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['manager-pw-error','tracking-pw-error','admin-pw-error'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
 
 /* SETTINGS */
 /* ── PIN MODAL ─────────────────────────────────────── */
 let _pinAgentId=null, _pinVal='';
 function showPinModal(id){
-  const a=S.agents.find(x=>x.id===id);
-  if(!a)return;
-  // if no pin set, allow direct entry
-  if(!a.pin){selectAgent(id);return;}
+  const sid=String(id);
+  const a=S.agents.find(x=>String(x.id)===sid);
+  if(!a){console.error('showPinModal: agent not found, id=',id,'agents=',S.agents.map(x=>x.id));return;}
+  if(!a.pin){selectAgent(sid);return;}
   _pinAgentId=id;_pinVal='';
   document.getElementById('pin-agent-name').textContent=a.name;
   document.getElementById('pin-error').style.display='none';
   updatePinDots();
   document.getElementById('pin-modal').style.display='flex';
+  // Enable keyboard input on desktop
+  document.addEventListener('keydown', _pinKeyHandler);
 }
-function closePinModal(){document.getElementById('pin-modal').style.display='none';_pinVal='';_pinAgentId=null;}
+function _pinKeyHandler(e){
+  if(document.getElementById('pin-modal').style.display==='none') return;
+  if(e.key>='0'&&e.key<='9'){ e.preventDefault(); pinPress(e.key); }
+  else if(e.key==='Backspace'){ e.preventDefault(); pinClear(); }
+  else if(e.key==='Enter'){ e.preventDefault(); pinConfirm(); }
+  else if(e.key==='Escape'){ e.preventDefault(); closePinModal(); }
+}
+function closePinModal(){
+  document.getElementById('pin-modal').style.display='none';
+  document.removeEventListener('keydown', _pinKeyHandler);
+  _pinVal='';_pinAgentId=null;
+}
 function pinPress(d){if(_pinVal.length>=4)return;_pinVal+=d;updatePinDots();if(_pinVal.length===4)setTimeout(pinConfirm,150);}
 function pinClear(){_pinVal=_pinVal.slice(0,-1);updatePinDots();}
 function updatePinDots(){
@@ -1313,11 +1352,12 @@ function updatePinDots(){
   }
 }
 function pinConfirm(){
-  const a=S.agents.find(x=>x.id===_pinAgentId);
+  const sid=String(_pinAgentId);
+  const a=S.agents.find(x=>String(x.id)===sid);
   if(!a)return;
   if(_pinVal===String(a.pin)){
     closePinModal();
-    selectAgent(_pinAgentId);
+    selectAgent(sid);
   } else {
     document.getElementById('pin-error').style.display='block';
     _pinVal='';updatePinDots();
@@ -1557,7 +1597,7 @@ function renderAgentLogin(){
   el.innerHTML=visible.map(a=>{
     const c=col(a.id);
     const g=agentGroup(a);
-    return`<div class="agent-pick" onclick="showPinModal(${a.id})">
+    return`<div class="agent-pick" onclick="showPinModal('${a.id}')">
       <div class="av" style="width:46px;height:46px;margin:0 auto;background:${c.bg};color:${c.c};font-size:14px">${ini(a.name)}</div>
       <div class="agent-pick-name">${a.name}</div>
       ${g?`<div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-top:4px">${g}</div>`:''}
@@ -1565,12 +1605,17 @@ function renderAgentLogin(){
   }).join('');
 }
 async function selectAgent(id){
-  S.agent=S.agents.find(a=>a.id===id);
+  const sid=String(id);
+  S.agent=S.agents.find(a=>String(a.id)===sid);
+  if(!S.agent){
+    S.agents=await dbAgents();
+    S.agent=S.agents.find(a=>String(a.id)===sid);
+  }
+  if(!S.agent){alert('שגיאה: נציג לא נמצא (id='+sid+')');return;}
   document.getElementById('agent-login').style.display='none';
   document.getElementById('agent-briefings').style.display='block';
   document.getElementById('agent-flow').style.display='none';
   document.getElementById('logged-agent-name').textContent=S.agent.name;
-  // Always reload fresh briefings from Supabase on login
   S.briefings=await dbBriefings();
   renderAgentBriefings();
 }
@@ -1586,16 +1631,24 @@ function logoutAgent(){
 }
 function renderAgentBriefings(){
   const el=document.getElementById('agent-briefing-list');
-  const pending=S.briefings.filter(b=>{
-    // Check completion by both string and number id
-    if(b.completions[S.agent.id]||b.completions[String(S.agent.id)]) return false;
-    // No target depts = show to everyone
-    if(!b.targetDepts||!Array.isArray(b.targetDepts)||b.targetDepts.length===0) return true;
-    // Match agent depts against briefing target depts (case-insensitive)
-    const agentDepts=(S.agent.depts||[]).map(d=>String(d).trim());
-    const briefDepts=b.targetDepts.map(d=>String(d).trim());
-    return agentDepts.some(d=>briefDepts.includes(d));
+  if(!S.agent){console.warn('renderAgentBriefings: no agent');return;}
+  console.log('=== AGENT BRIEFINGS DEBUG ===');
+  console.log('Agent:', S.agent.name, 'id:', S.agent.id);
+  console.log('Agent depts raw:', S.agent.depts);
+  console.log('Total briefings:', S.briefings.length);
+  S.briefings.forEach(b=>{
+    console.log('Briefing:', b.title, '| targetDepts:', b.targetDepts, '| type:', typeof b.targetDepts, '| isArray:', Array.isArray(b.targetDepts));
   });
+  const pending=S.briefings.filter(b=>{
+    const agId=String(S.agent.id); if(b.completions[agId]) return false;
+    if(!b.targetDepts||!Array.isArray(b.targetDepts)||b.targetDepts.length===0) return true;
+    const agentDepts=(S.agent.depts||[]).map(d=>String(d).trim().toLowerCase());
+    const briefDepts=b.targetDepts.map(d=>String(d).trim().toLowerCase());
+    const match=agentDepts.some(d=>briefDepts.includes(d));
+    console.log('  Match check:', b.title, '| agentDepts:', agentDepts, '| briefDepts:', briefDepts, '| match:', match);
+    return match;
+  });
+  console.log('Pending count:', pending.length);
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
   el.innerHTML=pending.map(b=>`
     <div class="brief-row" onclick="openBriefing(${b.id})">
@@ -1665,7 +1718,7 @@ function submitQuiz(){
 async function signBriefing(){
   const ts=now();
   const b=S.briefings.find(b=>b.id===S.active.id);
-  b.completions[String(S.agent.id)]={score:S.score,ts,name:S.agent.name};
+  const _agId=String(S.agent.id); b.completions[_agId]={score:S.score,ts,name:S.agent.name};
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
