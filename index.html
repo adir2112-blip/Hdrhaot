@@ -8,9 +8,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-<!-- v4.7 keyboard-pin -->
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<!-- v5.0 premium-redesign -->
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
@@ -46,7 +47,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Sora', sans-serif;
   background: var(--ink);
   color: var(--ice);
   direction: rtl;
@@ -74,10 +75,11 @@ body::after {
 /* TOP BAR */
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(245,244,240,0.9);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-bottom: 1px solid rgba(184,134,42,0.15);
+  box-shadow: 0 1px 20px rgba(0,0,0,0.06);
 }
 .topbar-inner {
   max-width: 980px; margin: 0 auto;
@@ -106,7 +108,7 @@ body::after {
 .nav { display: flex; gap: 2px; }
 .nav-btn {
   position: relative;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 12px; font-weight: 500;
   padding: 7px 16px; cursor: pointer;
   border: none; background: none;
@@ -117,11 +119,11 @@ body::after {
 }
 .nav-btn .nav-icon { font-size: 13px; }
 .nav-btn:hover { color: var(--ice); background: rgba(255,255,255,0.04); }
-.nav-btn.active { color: var(--ice); }
+.nav-btn.active { color: var(--gold); background: var(--gold-bg); }
 .nav-btn.active::after {
   content: '';
   position: absolute; bottom: -1px; right: 12px; left: 12px;
-  height: 1px;
+  height: 2px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 
@@ -170,21 +172,23 @@ body::after {
 
 /* CARDS */
 .card {
-  background: var(--ink2);
-  border: 1px solid var(--line);
+  background: #FFFFFF;
+  border: 1px solid rgba(184,134,42,0.12);
   border-radius: var(--r2);
   padding: 1.75rem;
   margin-bottom: 16px;
   position: relative; overflow: hidden;
-  transition: border-color 0.2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
-.card:hover { border-color: var(--line2); }
+.card:hover { border-color: rgba(184,134,42,0.25); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
 .card::before {
   content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 60%);
-  border-radius: inherit;
+  position: absolute; top:0; right:0; left:0; height:2px; pointer-events:none;
+  background: linear-gradient(90deg, var(--gold), transparent 70%);
+  opacity: 0; transition: opacity 0.2s; border-radius: inherit;
 }
+.card:hover::before { opacity: 0.6; }
 .card-label { font-size: 10px; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'DM Mono', monospace; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
 .card-label::before { content: ''; width: 16px; height: 1px; background: var(--gold); display: inline-block; }
 
@@ -203,7 +207,7 @@ input[type=text], input[type=password], textarea {
   border: 1px solid var(--line2);
   border-radius: var(--r);
   padding: 11px 15px;
-  font-size: 14px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-family: 'Sora', sans-serif;
   color: var(--ice); direction: rtl;
   transition: border-color 0.2s, background 0.2s;
   outline: none;
@@ -218,7 +222,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
 /* BUTTONS */
 .btn {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Sora', sans-serif;
   font-size: 13px; font-weight: 500;
   border-radius: var(--r);
   padding: 10px 22px; cursor: pointer;
@@ -264,6 +268,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .chip-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-line); }
 
 /* AVATAR */
+.agent-row-clickable { cursor:pointer; transition:background 0.15s; }
+.agent-row-clickable:hover { background:var(--ink3); border-color:var(--gold-line); }
 .av { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; font-family: 'DM Mono', monospace; letter-spacing: 0; }
 
 /* STATS */
@@ -373,31 +379,35 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 /* AGENT SELECT */
 .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 12px; margin-top: 18px; }
 .agent-pick {
-  background: var(--ink2); border: 1px solid var(--line);
-  border-radius: var(--r2); padding: 20px 14px;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(184,134,42,0.12);
+  border-radius: 20px; padding: 22px 14px;
   cursor: pointer; text-align: center;
   transition: all 0.2s;
   position: relative; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.agent-pick::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(201,168,76,0) 0%, rgba(201,168,76,0.05) 100%); opacity: 0; transition: opacity 0.2s; }
-.agent-pick:hover { border-color: var(--gold-line); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+.agent-pick::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(184,134,42,0.04) 0%, transparent 60%); opacity: 0; transition: opacity 0.2s; border-radius:inherit; }
+.agent-pick:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 36px rgba(184,134,42,0.15); }
 .agent-pick:hover::before { opacity: 1; }
-.agent-pick-name { font-size: 13px; font-weight: 500; color: var(--ice2); margin-top: 10px; }
+.agent-pick-name { font-size: 13px; font-weight: 600; color: var(--ice); margin-top: 12px; }
 
 /* BRIEFING ROW */
 .brief-row {
-  background: var(--ink2); border: 1px solid var(--line);
+  background: #FFFFFF;
+  border: 1px solid rgba(184,134,42,0.1);
   border-radius: var(--r2); padding: 18px 22px;
   margin-bottom: 10px; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
   transition: all 0.2s; position: relative; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .brief-row::before { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 3px; background: transparent; transition: background 0.2s; }
 .brief-row:hover { border-color: var(--line2); background: var(--ink3); }
 .brief-row:hover::before { background: var(--gold); }
 
 /* TRACKING AGENT */
-.track-row { background: var(--ink2); border: 1px solid var(--line); border-radius: var(--r2); padding: 18px 22px; margin-bottom: 10px; }
+.track-row { background: #FFFFFF; border: 1px solid rgba(184,134,42,0.1); border-radius: var(--r2); padding: 18px 22px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
 .done-pill { background: var(--ink3); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
 .done-pill-title { color: var(--ice2); font-weight: 500; }
 .done-pill-meta { color: var(--ok); font-size: 11px; margin-top: 2px; font-family: 'DM Mono', monospace; }
@@ -405,10 +415,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 /* LOCK */
 .lock-scene { display: flex; align-items: center; justify-content: center; min-height: 360px; }
 .lock-box {
-  background: var(--ink2); border: 1px solid var(--line2);
+  background: #FFFFFF;
+  border: 1px solid rgba(184,134,42,0.15);
   border-radius: 24px; padding: 3rem 2.5rem;
   width: 360px; text-align: center;
   position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
 }
 .lock-box::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .lock-ico { font-size: 36px; margin-bottom: 18px; filter: drop-shadow(0 0 12px rgba(201,168,76,0.3)); }
@@ -450,6 +462,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .dept-cb input[type=checkbox] { accent-color:var(--gold);width:13px;height:13px;cursor:pointer; }
 .dept-cb.checked { border-color:var(--gold-line);background:var(--gold-bg);color:var(--gold); }
 /* SCROLLBAR */
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.chip-muted { background:var(--surface2);color:var(--ice3);border:1px solid var(--line); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
@@ -460,7 +474,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .bottom-nav {
   display: none;
   position: fixed; bottom: 0; right: 0; left: 0; z-index: 200;
-  background: rgba(250,249,246,0.96);
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 -1px 0 rgba(184,134,42,0.1);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   backdrop-filter: saturate(180%) blur(24px);
   border-top: 0.5px solid rgba(0,0,0,0.12);
@@ -470,7 +485,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .bnav-btn {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 4px 8px; cursor: pointer; border: none; background: none;
-  color: #A0A0A8; font-family: 'DM Sans', sans-serif;
+  color: #A0A0A8; font-family: 'Sora', sans-serif;
   flex: 1; border-radius: 0; transition: color 0.18s;
   -webkit-tap-highlight-color: transparent;
   min-width: 0;
@@ -496,25 +511,27 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 @media(max-width:640px){
   :root {
     --r: 16px; --r2: 22px;
-    --bg: #F2EFE8;
-    --surface: #FFFFFF;
-    --surface2: #F7F5F0;
-    --surface3: #EDE9E0;
-    --ink: #1C1B18;
-    --ink2: #FFFFFF;
-    --ink3: #F2EFE8;
-    --ink4: #E2DDD4;
-    --ice: #1C1B18;
-    --ice2: #3D3B35;
-    --ice3: #888078;
+    --gold: #B8862A;
+    --gold2: #D4A847;
+    --gold-bg: rgba(184,134,42,0.08);
+    --gold-line: rgba(184,134,42,0.22);
+    --ice: #1A1814;
+    --ice2: #3D3830;
+    --ice3: #8A8278;
     --ice4: #C0BAB0;
-    --line: rgba(0,0,0,0.07);
-    --line2: rgba(0,0,0,0.12);
-    --line3: rgba(0,0,0,0.2);
+    --ok: #1A9E6E;
+    --ok-bg: rgba(26,158,110,0.08);
+    --ok-line: rgba(26,158,110,0.22);
+    --warn: #D4820A;
+    --warn-bg: rgba(212,130,10,0.08);
+    --warn-line: rgba(212,130,10,0.22);
+    --danger: #D94040;
+    --danger-bg: rgba(217,64,64,0.08);
+    --danger-line: rgba(217,64,64,0.22);
   }
 
   /* ── base ── */
-  body { background: var(--bg); font-size: 16px; }
+  body { background: #EDE9E0; font-size: 16px; font-family: 'Sora', sans-serif; }
   * { -webkit-tap-highlight-color: transparent; }
 
   /* ── hide desktop nav ── */
@@ -870,6 +887,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">אם לא תבחר — התדריך יופיע לכל הנציגים</div>
       </div>
       <div class="field" style="margin-top:16px">
+        <label class="field-label">תאריך דדליין (אחרון להשלמה)</label>
+        <input type="date" id="briefing-deadline" style="direction:ltr;color-scheme:light">
+      </div>
+      <div class="field" style="margin-top:16px">
         <label class="field-label">כמה שאלות לייצר?</label>
         <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
           <input type="range" id="num-questions" min="3" max="15" value="5" step="1"
@@ -941,16 +962,25 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
 
     <div id="agent-briefings" style="display:none">
-      <div class="agent-logged-header">
-        <div>
-          <div class="agent-logged-name" id="logged-agent-name"></div>
-          <div class="agent-logged-sub">תדריכים הממתינים לחתימתך</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן">↻</button>
-          <button class="btn btn-ghost btn-sm" onclick="logoutAgent()">החלף ▸</button>
+      <!-- WELCOME BANNER -->
+      <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:20px;overflow:hidden;position:relative;background:linear-gradient(135deg,#1A1814 0%,#3D3428 50%,#1A1814 100%);padding:24px 22px 20px">
+        <div style="position:absolute;top:0;right:0;left:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2280%22 cy=%2220%22 r=%2240%22 fill=%22rgba(184,134,42,0.08)%22/><circle cx=%2220%22 cy=%2280%22 r=%2230%22 fill=%22rgba(184,134,42,0.05)%22/></svg>');background-size:cover;opacity:0.7;border-radius:20px"></div>
+        <div style="position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+            <div>
+              <div style="font-size:12px;color:rgba(184,134,42,0.8);font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">ברוך הבא</div>
+              <div style="font-family:'Playfair Display',serif;font-size:26px;color:#F7F3EC;font-weight:400" id="logged-agent-name"></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן" style="color:rgba(247,243,236,0.6);border-color:rgba(255,255,255,0.15)">↻</button>
+              <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="color:rgba(247,243,236,0.6);border-color:rgba(255,255,255,0.15)">החלף ▸</button>
+            </div>
+          </div>
+          <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
         </div>
       </div>
+      <!-- BRIEFINGS -->
+      <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace;margin-bottom:10px">תדריכים ממתינים</div>
       <div id="agent-briefing-list"></div>
       <div id="no-briefings" style="display:none">
         <div class="card" style="text-align:center;padding:3.5rem">
@@ -959,6 +989,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div style="font-size:13px;color:var(--ice3);margin-top:6px">אין תדריכים ממתינים</div>
         </div>
       </div>
+      <div id="agent-leaderboard" style="margin-top:1.5rem"></div>
     </div>
 
     <div id="agent-flow" style="display:none">
@@ -1032,6 +1063,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="briefings-week-list"></div>
     <div class="div"></div>
     <div class="dept-filter-bar" id="dept-filter-bar"></div>
+    <div class="eyebrow">🏆 לוח תחרות — ציון ממוצע</div>
+    <div id="leaderboard-list" style="margin-bottom:1.5rem"></div>
     <div class="eyebrow">סטטוס נציגים</div>
     <div id="tracking-agents-list"></div>
   </div>
@@ -1096,7 +1129,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="field" style="margin-bottom:14px">
           <label class="field-label">מחק תדריכים לנציג ספציפי</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <select id="reset-agent-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+            <select id="reset-agent-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
               <option value="">בחר נציג...</option>
             </select>
             <button class="btn btn-danger-soft" onclick="resetAgentBriefings()">מחק סימונים לנציג</button>
@@ -1106,7 +1139,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="field">
           <label class="field-label">מחק תדריכים לקבוצה שלמה</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <select id="reset-group-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+            <select id="reset-group-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
               <option value="">בחר קבוצה...</option>
               <option value="מובמנט">מובמנט</option>
               <option value="פריפיט">פריפיט</option>
@@ -1122,7 +1155,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="field">
           <label class="field-label">מחק תדריך ספציפי לגמרי</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <select id="reset-briefing-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ice);direction:rtl">
+            <select id="reset-briefing-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
               <option value="">בחר תדריך...</option>
             </select>
             <button class="btn btn-danger-soft" onclick="deleteBriefing()">מחק תדריך</button>
@@ -1194,6 +1227,7 @@ async function dbBriefings(){
       b.targetDepts=td;
     }catch(e){b.targetDepts=[];}
     try{ b.completions=b.completions?(typeof b.completions==='string'?JSON.parse(b.completions):b.completions):{}; }catch(e){b.completions={};}
+    b.deadline=b.deadline||null;
     return b;
   });
 }
@@ -1542,11 +1576,13 @@ async function publishBriefing(){
     ? S.agents.filter(a=>(a.depts||[]).some(d=>targetDepts.includes(d)))
     : S.agents;
   const ts=now();
+  const deadlineVal=document.getElementById('briefing-deadline').value||null;
   const row={
     title:S.cur.title, content:S.cur.content,
     questions:JSON.stringify(S.eq),
     targetDepts:JSON.stringify(targetDepts),
     publishedAt:ts, weekDate:new Date().toISOString(),
+    deadline:deadlineVal,
     completions:JSON.stringify({})
   };
   const {data,error}=await _sb.from('briefings').insert(row).select().single();
@@ -1554,6 +1590,7 @@ async function publishBriefing(){
   data.questions=S.eq;
   data.targetDepts=targetDepts;
   data.completions={};
+  data.deadline=deadlineVal;
   S.briefings.push(data);
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
@@ -1564,6 +1601,7 @@ async function publishBriefing(){
 function resetManager(){
   document.getElementById('briefing-title').value='';
   document.getElementById('briefing-content').value='';
+  document.getElementById('briefing-deadline').value='';
   document.getElementById('preview-section').style.display='none';
   document.querySelectorAll('[id^=bdl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';}});
 }
@@ -1629,9 +1667,45 @@ function logoutAgent(){
   document.getElementById('agent-briefings').style.display='none';
   document.getElementById('agent-flow').style.display='none';
 }
+/* ── DEADLINE HELPERS ─────────────────────────── */
+function deadlineDays(dl){
+  if(!dl) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(dl); d.setHours(0,0,0,0);
+  return Math.round((d-today)/(1000*60*60*24));
+}
+function deadlineChip(dl){
+  if(!dl) return '';
+  const days=deadlineDays(dl);
+  if(days<0) return `<span class="chip chip-danger" style="font-size:11px">⏰ פג תוקף לפני ${Math.abs(days)} ימים</span>`;
+  if(days===0) return `<span class="chip chip-danger" style="font-size:11px;animation:pulse-red 1s infinite">⏰ היום האחרון!</span>`;
+  if(days<=2) return `<span class="chip chip-warn" style="font-size:11px">⏰ נותרו ${days} ימים</span>`;
+  return `<span class="chip chip-muted" style="font-size:11px">📅 עד ${new Date(dl).toLocaleDateString('he-IL')}</span>`;
+}
+
 function renderAgentBriefings(){
   const el=document.getElementById('agent-briefing-list');
   if(!S.agent){console.warn('renderAgentBriefings: no agent');return;}
+  // Render welcome stats
+  const _agId=String(S.agent.id);
+  const _done=S.briefings.filter(b=>b.completions[_agId]);
+  const _avg=_done.length?Math.round(_done.reduce((s,b)=>s+b.completions[_agId].score,0)/_done.length):null;
+  const _rank=S.agents.filter(a=>{
+    const ad=S.briefings.filter(b=>b.completions[String(a.id)]);
+    const aa=ad.length?Math.round(ad.reduce((s,b)=>s+b.completions[String(a.id)].score,0)/ad.length):null;
+    return aa!==null&&(_avg===null||aa>_avg);
+  }).length+1;
+  const _welcomeStats=document.getElementById('agent-welcome-stats');
+  if(_welcomeStats){
+    const statItem=(val,lbl,color='#D4A847')=>`<div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(255,255,255,0.1)">
+      <div style="font-size:22px;font-weight:700;color:${color};font-family:'Playfair Display',serif">${val}</div>
+      <div style="font-size:10px;color:rgba(247,243,236,0.55);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em">${lbl}</div>
+    </div>`;
+    _welcomeStats.innerHTML=
+      statItem(_done.length,'הושלמו','#D4A847')+
+      statItem(_avg!==null?_avg+'%':'—','ממוצע',_avg!==null?(_avg>=80?'#1A9E6E':_avg>=60?'#D4820A':'#D94040'):'rgba(247,243,236,0.4)')+
+      statItem('#'+_rank,'דירוג','#B8A0D8');
+  }
   console.log('=== AGENT BRIEFINGS DEBUG ===');
   console.log('Agent:', S.agent.name, 'id:', S.agent.id);
   console.log('Agent depts raw:', S.agent.depts);
@@ -1649,16 +1723,29 @@ function renderAgentBriefings(){
     return match;
   });
   console.log('Pending count:', pending.length);
+  // Show personal leaderboard
+  renderLeaderboard('agent-leaderboard', S.agent?String(S.agent.id):null);
   document.getElementById('no-briefings').style.display=pending.length?'none':'block';
-  el.innerHTML=pending.map(b=>`
-    <div class="brief-row" onclick="openBriefing(${b.id})">
-      <div>
-        <div style="font-size:14px;font-weight:500;color:var(--ice)">${b.title}</div>
-        <div style="font-size:11px;color:var(--ice3);margin-top:4px;font-family:'DM Mono',monospace">${b.publishedAt}</div>
-        ${b.targetDepts&&b.targetDepts.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join('')}</div>`:''}
+  // sort by deadline: overdue first, then soonest
+  pending.sort((a,b)=>{
+    const da=a.deadline?new Date(a.deadline):new Date('2099-01-01');
+    const db=b.deadline?new Date(b.deadline):new Date('2099-01-01');
+    return da-db;
+  });
+  el.innerHTML=pending.map(b=>{
+    const days=deadlineDays(b.deadline);
+    const urgent=b.deadline&&days!==null&&days<=2;
+    return`<div class="brief-row" onclick="openBriefing(${b.id})" style="${urgent?'border-color:var(--warn-border);':''}">
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;color:var(--ice)">${b.title}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center">
+          ${deadlineChip(b.deadline)}
+          ${b.targetDepts&&b.targetDepts.length?b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join(''):''}
+        </div>
       </div>
-      <span class="chip chip-warn">ממתין ◂</span>
-    </div>`).join('');
+      <span class="chip chip-warn" style="flex-shrink:0">ממתין ◂</span>
+    </div>`;
+  }).join('');
 }
 function openBriefing(id){
   S.active=S.briefings.find(b=>b.id===id);S.answers=[];
@@ -1747,6 +1834,54 @@ function renderFilterBar(){
     +DEPTS.map(d=>`<button class="dept-filter-btn ${S.filterDept===d?'active':''}" onclick="setFilter('${d}')">${d}</button>`).join('');
 }
 function setFilter(d){S.filterDept=d;renderTracking();}
+function renderLeaderboard(targetEl, highlightId){
+  const el=document.getElementById(targetEl);
+  if(!el) return;
+  // Build stats per agent — include ALL agents
+  const stats=S.agents.map(a=>{
+    const completed=S.briefings.filter(b=>b.completions[String(a.id)]);
+    if(!completed.length) return {a,avg:null,count:0};
+    const avg=Math.round(completed.reduce((s,b)=>s+b.completions[String(a.id)].score,0)/completed.length);
+    return {a,avg,count:completed.length};
+  }).sort((x,y)=>{
+    // completed first, then by avg desc, then by count desc
+    if(x.count===0&&y.count===0) return x.a.name.localeCompare(y.a.name,'he');
+    if(x.count===0) return 1;
+    if(y.count===0) return -1;
+    return y.avg-x.avg||y.count-x.count;
+  });
+
+  if(!stats.length){el.innerHTML='<div style="font-size:13px;color:var(--ice3);padding:1rem 0">אין נציגים עדיין.</div>';return;}
+
+  const medals=['🥇','🥈','🥉'];
+  el.innerHTML=`<div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:16px 20px 10px;border-bottom:1px solid var(--line)">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;font-family:'DM Mono',monospace">🏆 לוח תחרות</div>
+    </div>
+    ${stats.slice(0,10).map((s,i)=>{
+      const c=col(s.a.id);
+      const isTop=i<3;
+      const rankLabel=s.count===0?'—':medals[i]||`#${i+1}`;
+      const isTopRank=s.count>0&&i<3;
+      const isMe=highlightId&&String(s.a.id)===String(highlightId);
+      return`<div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);${isMe?'background:var(--accent-bg);border-right:3px solid var(--gold);':isTopRank?'background:var(--gold-bg)':''}">
+        <div style="width:28px;text-align:center;font-size:${isTopRank?18:13}px;flex-shrink:0;opacity:${s.count===0?0.4:1}">${rankLabel}</div>
+        <div class="av" style="width:32px;height:32px;background:${c.bg};color:${c.c};font-size:11px;flex-shrink:0;opacity:${s.count===0?0.5:1}">${ini(s.a.name)}</div>
+        <div style="flex:1;min-width:0;opacity:${s.count===0?0.5:1}">
+          <div style="font-size:14px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.a.name}</div>
+          <div style="font-size:11px;color:var(--ice3);margin-top:1px">${s.count?s.count+' תדריכים הושלמו':'טרם השלים תדריך'}</div>
+        </div>
+        <div style="text-align:center;flex-shrink:0">
+          ${s.avg!==null
+            ?`<div style="font-size:20px;font-weight:700;color:${s.avg>=80?'var(--ok)':s.avg>=60?'var(--warn)':'var(--danger)'}">${s.avg}%</div>
+               <div style="font-size:10px;color:var(--ice3)">ממוצע</div>`
+            :`<div style="font-size:13px;color:var(--ice3)">—</div>`}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 function renderTracking(){
   renderFilterBar();
   const wb=getWeek();
@@ -1774,6 +1909,7 @@ function renderTracking(){
           <div>
             <div style="font-size:14px;font-weight:600;color:var(--ice)">${b.title}</div>
             <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:3px">${b.publishedAt}</div>
+            ${deadlineChip(b.deadline)}
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span class="chip ${doneCount===tot?'chip-ok':'chip-warn'}">${doneCount}/${tot} השלימו</span>
@@ -1791,12 +1927,14 @@ function renderTracking(){
         </div>`:'<div style="font-size:11px;color:var(--ice3)">טרם נחתם על ידי אף נציג</div>'}
       </div>`;
     }).join('');
+  renderLeaderboard('leaderboard-list', null);
   document.getElementById('tracking-agents-list').innerHTML=filteredAgents.map(a=>{
     const c=col(a.id);
     const done=S.briefings.filter(b=>b.completions[a.id]);
     const pend=S.briefings.filter(b=>!b.completions[a.id]).length;
     const depts=(a.depts||[]);
-    return`<div class="track-row" style="margin-bottom:10px">
+    const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[a.id].score,0)/done.length):null;
+    return`<div class="track-row agent-row-clickable" style="margin-bottom:10px" onclick="openAgentStats('${a.id}')">
       <div class="between" style="margin-bottom:8px">
         <div class="row">
           <div class="av" style="width:38px;height:38px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
@@ -1805,19 +1943,101 @@ function renderTracking(){
             <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${avg!==null?`<span style="font-size:16px;font-weight:700;color:${avg>=80?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)'}">${avg}%</span>`:''}
           <span class="chip chip-ok">${done.length} ✓</span>
           ${pend?`<span class="chip chip-warn">${pend} ממתינים</span>`:''}
+          <span style="font-size:11px;color:var(--ice3)">לחץ לפרטים →</span>
         </div>
       </div>
-      ${done.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
-        ${done.map(b=>{const comp=b.completions[a.id];return`<div class="done-pill">
-          <div class="done-pill-title">${b.title}</div>
-          <div class="done-pill-meta">ציון: ${comp.score}% · ${comp.ts}</div>
-        </div>`;}).join('')}
-      </div>`:''}
     </div>`;
   }).join('');
+}
+
+/* ── AGENT STATS MODAL ─────────────────────────── */
+let _chartInstance=null;
+function openAgentStats(agentId){
+  const sid=String(agentId);
+  const a=S.agents.find(x=>String(x.id)===sid);
+  if(!a) return;
+  const done=S.briefings.filter(b=>b.completions[sid]).sort((x,y)=>new Date(x.completions[sid].ts)-new Date(y.completions[sid].ts));
+  const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[sid].score,0)/done.length):null;
+  const best=done.length?Math.max(...done.map(b=>b.completions[sid].score)):null;
+  const pend=S.briefings.filter(b=>!b.completions[sid]).length;
+
+  document.getElementById('modal-agent-name').textContent=a.name;
+
+  // KPIs
+  document.getElementById('modal-kpis').innerHTML=`
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:26px;font-weight:700;color:${avg!==null?(avg>=80?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)'):'var(--ice3)'}">${avg!==null?avg+'%':'—'}</div>
+      <div style="font-size:10px;color:var(--ice3);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em">ממוצע</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:26px;font-weight:700;color:var(--ok)">${done.length}</div>
+      <div style="font-size:10px;color:var(--ice3);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em">הושלמו</div>
+    </div>
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:26px;font-weight:700;color:${best!==null?(best>=80?'var(--ok)':best>=60?'var(--warn)':'var(--danger)'):'var(--ice3)'}">${best!==null?best+'%':'—'}</div>
+      <div style="font-size:10px;color:var(--ice3);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em">שיא</div>
+    </div>`;
+
+  // Chart
+  if(_chartInstance){_chartInstance.destroy();_chartInstance=null;}
+  const ctx=document.getElementById('modal-chart').getContext('2d');
+  if(done.length>=2){
+    const labels=done.map(b=>b.title.length>14?b.title.slice(0,14)+'…':b.title);
+    const scores=done.map(b=>b.completions[sid].score);
+    _chartInstance=new Chart(ctx,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          data:scores,
+          borderColor:'#C9A84C',
+          backgroundColor:'rgba(201,168,76,0.1)',
+          borderWidth:2.5,
+          pointBackgroundColor:'#C9A84C',
+          pointRadius:5,
+          pointHoverRadius:7,
+          tension:0.3,
+          fill:true
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}},
+        scales:{
+          y:{min:0,max:100,ticks:{color:'#888',callback:v=>v+'%',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'}},
+          x:{ticks:{color:'#888',font:{size:10},maxRotation:30},grid:{display:false}}
+        }
+      }
+    });
+  } else {
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.fillStyle='#888';ctx.font='13px DM Sans';ctx.textAlign='center';
+    ctx.fillText(done.length===1?'השלים תדריך אחד — נדרש יותר נתונים לגרף':'טרם השלים תדריכים',ctx.canvas.width/2,80);
+  }
+
+  // Briefings list
+  document.getElementById('modal-briefings-list').innerHTML=done.length
+    ?done.reverse().map(b=>{
+      const comp=b.completions[sid];
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ice)">${b.title}</div>
+          <div style="font-size:11px;color:var(--ice3);margin-top:2px;font-family:'DM Mono',monospace">${comp.ts}</div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'}">${comp.score}%</div>
+      </div>`;
+    }).join('')
+    :'<div style="font-size:13px;color:var(--ice3)">טרם השלים תדריכים</div>';
+
+  document.getElementById('agent-stats-modal').style.display='flex';
+}
+function closeAgentStats(){
+  document.getElementById('agent-stats-modal').style.display='none';
+  if(_chartInstance){_chartInstance.destroy();_chartInstance=null;}
 }
 
 function populateResetSelects(){
@@ -1985,7 +2205,7 @@ function toggleBriefingDept(i,btn){
   </div>
 </div>
 <style>
-.pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:12px;padding:14px;font-size:20px;font-weight:600;color:var(--ice);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.1s;}
+.pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:12px;padding:14px;font-size:20px;font-weight:600;color:var(--ice);cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.1s;}
 .pin-key:hover{background:var(--ink4);border-color:var(--gold-line);}
 .pin-key:active{transform:scale(0.93);}
 </style>
@@ -2006,6 +2226,35 @@ function toggleBriefingDept(i,btn){
     <div style="display:flex;gap:10px">
       <button class="btn btn-gold" style="flex:1" onclick="saveEditPin()">שמור</button>
       <button class="btn btn-outline" onclick="closeEditPin()">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- AGENT STATS MODAL -->
+<div id="agent-stats-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative">
+    <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">פרופיל נציג</div>
+        <div style="font-size:18px;font-weight:700;color:var(--ice)" id="modal-agent-name"></div>
+      </div>
+      <button onclick="closeAgentStats()" style="background:var(--surface3);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:20px 22px">
+      <!-- KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px" id="modal-kpis"></div>
+      <!-- Score chart -->
+      <div style="margin-bottom:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:12px">ציונים לאורך זמן</div>
+        <div style="background:var(--surface2);border-radius:14px;padding:16px;position:relative;height:180px">
+          <canvas id="modal-chart"></canvas>
+        </div>
+      </div>
+      <!-- Completed briefings list -->
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:12px">תדריכים שהושלמו</div>
+        <div id="modal-briefings-list"></div>
+      </div>
     </div>
   </div>
 </div>
