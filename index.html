@@ -1267,6 +1267,7 @@ async function dbAgents(){
       if(!Array.isArray(ad)) ad=ad?[ad]:[];
       a.depts=ad;
     }catch(e){a.depts=[];}
+    a.last_login=a.last_login||null;
     return a;
   });
 }
@@ -1710,6 +1711,10 @@ async function selectAgent(id){
   document.getElementById('agent-briefings').style.display='block';
   document.getElementById('agent-flow').style.display='none';
   document.getElementById('logged-agent-name').textContent=S.agent.name;
+  // Save last login timestamp
+  const loginTs=now();
+  S.agent.last_login=loginTs;
+  _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id); // fire & forget
   S.briefings=await dbBriefings();
   renderAgentBriefings();
 }
@@ -2056,7 +2061,10 @@ function renderTracking(){
           <div class="av" style="width:38px;height:38px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
           <div>
             <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;align-items:center">
+              ${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}
+              ${a.last_login?`<span style="font-size:10px;color:var(--ice3);font-family:monospace;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:20px">🕐 ${a.last_login}</span>`:`<span style="font-size:10px;color:var(--ice3);opacity:0.6">טרם התחבר</span>`}
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
