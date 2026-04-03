@@ -816,7 +816,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
     <nav class="nav">
-      <button class="nav-btn active" onclick="switchTab('manager')" id="nav-manager">
+      <button class="nav-btn" onclick="switchTab('manager')" id="nav-manager">
         <span class="nav-icon">✦</span><span class="nav-label">בניית תדריך</span>
       </button>
       <button class="nav-btn" onclick="switchTab('tracking')" id="nav-tracking">
@@ -825,7 +825,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
       </button>
-      <button class="nav-btn" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
+      <button class="nav-btn active" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
         <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
     </nav>
@@ -834,7 +834,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
 <div class="bottom-nav">
   <div class="bottom-nav-inner">
-    <button class="bnav-btn active" id="bnav-manager" onclick="switchTab('manager')">
+    <button class="bnav-btn" id="bnav-manager" onclick="switchTab('manager')">
       <span class="bni">✦</span><span class="bnl">תדריך</span>
     </button>
     <button class="bnav-btn" id="bnav-tracking" onclick="switchTab('tracking')">
@@ -843,8 +843,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <button class="bnav-btn" id="bnav-settings" onclick="switchTab('settings')">
       <span class="bni">⚙️</span><span class="bnl">ניהול</span>
     </button>
-    <button class="bnav-btn" id="bnav-agent" onclick="switchTab('agent')">
-      <span class="bni">👤</span><span class="bnl">כניסה</span>
+    <button class="bnav-btn bnav-agent-special" id="bnav-agent" onclick="switchTab('agent')">
+      <span class="bni">👤</span><span class="bnl">כניסת עובד</span>
     </button>
   </div>
 </div>
@@ -852,7 +852,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 <div class="page">
 
   <!-- MANAGER -->
-  <div class="sec active" id="tab-manager">
+  <div class="sec" id="tab-manager">
     <div id="manager-lock" class="lock-scene" style="display:flex">
       <div class="lock-box">
         <div class="lock-ico">🔐</div>
@@ -938,7 +938,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
     </div><!-- /manager-content -->
   <!-- AGENT -->
-  <div class="sec" id="tab-agent">
+  <div class="sec active" id="tab-agent">
     <div id="agent-login">
       <div class="sec-header">
         <div class="sec-eyebrow">Agent Portal</div>
@@ -2527,6 +2527,8 @@ async function appInit(){
   }
   await loadAll();
   renderSettings();renderAgentLogin();renderTracking();initBriefingDeptPicker();
+  // Start on agent login screen
+  switchTab('agent');
 }
 appInit();
 function initBriefingDeptPicker(){
