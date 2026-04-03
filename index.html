@@ -1216,7 +1216,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <!-- ALERT BANNER -->
     <div id="tracking-alert-banner" style="display:none;margin-bottom:1.5rem"></div>
     <!-- WEAK QUESTIONS BADGE — top of dashboard -->
-    <div id="weak-questions-badge" style="margin-bottom:1.5rem;cursor:pointer"></div>
+    <div id="weak-questions-badge" style="margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
     <div class="eyebrow">תדריכים השבוע</div>
     <div id="briefings-week-list"></div>
@@ -2067,7 +2067,7 @@ function showSearchDetail(id){
   detailEl.style.display='block';
   detailEl.innerHTML=`
     <div class="sec-header" style="margin-bottom:1.5rem">
-      <button onclick="closeSearchDetail()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gold);font-size:14px;font-weight:700;font-family:'Sora',sans-serif;margin-bottom:14px;padding:0">
+      <button onclick="closeSearchDetail()" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);font-size:14px;font-weight:700;font-family:'Sora',sans-serif;margin-bottom:18px;padding:10px 18px;border-radius:12px;cursor:pointer;-webkit-tap-highlight-color:transparent">
         ◀ חזור לאזור האישי
       </button>
       <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-bottom:6px">${b.publishedAt}${b.deadline?' · עד '+new Date(b.deadline).toLocaleDateString('he-IL'):''}</div>
@@ -2743,7 +2743,9 @@ function renderWeakBadge(){
   const count=stats.length;
   const worst=count>0?stats[0]:null;
 
-  el.innerHTML=`<div onclick="openWeakQuestionsPage()" style="cursor:pointer;background:linear-gradient(135deg,#C0392B,#E74C3C);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(192,57,43,0.3);transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(192,57,43,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(192,57,43,0.3)'">
+  el.style.cursor='pointer';
+  el.onclick=openWeakQuestionsPage;
+  el.innerHTML=`<div style="background:linear-gradient(135deg,#C97050,#DA8A6A);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 18px rgba(201,112,80,0.22);pointer-events:none">
     <div style="font-size:36px;flex-shrink:0">⚠️</div>
     <div style="flex:1">
       <div style="font-size:13px;color:rgba(255,255,255,0.75);font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.05em;margin-bottom:4px">שאלות לתשומת לב</div>
@@ -2756,7 +2758,6 @@ function renderWeakBadge(){
 
 function openWeakQuestionsPage(){
   const stats=calcWeakQuestions();
-  const win=window.open('','_blank');
   const today=new Date().toLocaleDateString('he-IL');
 
   const rows=stats.map((s,i)=>{
@@ -2776,13 +2777,15 @@ function openWeakQuestionsPage(){
         <div style="height:100%;width:${s.pct}%;background:${color};border-radius:4px"></div>
       </div>
       <div style="margin-bottom:12px">
-        <div style="font-size:13px;color:#888;margin-bottom:6px">${s.wrong} מתוך ${s.total} נציגים טעו בשאלה זו — <span style="font-size:12px;color:#C0392B;cursor:pointer;font-weight:700;text-decoration:underline" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none'">הצג שמות ▾</span></div>
-        <div style="display:none;flex-wrap:wrap;gap:6px;margin-top:6px">
-          ${s.wrongAgents.map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(192,57,43,0.25);color:#C0392B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')}
+        <div style="font-size:13px;color:#888;margin-bottom:6px">${s.wrong} מתוך ${s.total} נציגים טעו בשאלה זו
+          ${(s.wrongAgents||[]).length?`— <span style="font-size:12px;color:#C0392B;cursor:pointer;font-weight:700;text-decoration:underline" onclick="var d=document.getElementById('wq-names-${i}');d.style.display=d.style.display==='flex'?'none':'flex'">הצג שמות ▾</span>`:''}
+        </div>
+        <div id="wq-names-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:6px">
+          ${(s.wrongAgents||[]).map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(192,57,43,0.25);color:#C0392B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        ${s.options.map((opt,oi)=>{
+        ${(s.options||[]).map((opt,oi)=>{
           const isCorrect=oi===s.correct;
           return`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:${isCorrect?'#E8F7F0':'#F7F5F0'};border:1px solid ${isCorrect?'rgba(26,158,110,0.3)':'rgba(0,0,0,0.06)'}">
             <span style="width:24px;height:24px;border-radius:6px;background:${isCorrect?'#1A9E6E':'rgba(0,0,0,0.06)'};color:${isCorrect?'#fff':'#888'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${['א','ב','ג','ד'][oi]}</span>
@@ -2794,27 +2797,29 @@ function openWeakQuestionsPage(){
     </div>`;
   }).join('');
 
-  win.document.write(`<!DOCTYPE html><html dir="rtl"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>שאלות לתשומת לב — ${today}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:'Sora',sans-serif;background:#F0EDE6;color:#1A1814;direction:rtl;padding:24px 16px 40px}
-      .header{background:linear-gradient(135deg,#C0392B,#E74C3C);border-radius:20px;padding:24px 20px;margin-bottom:24px;color:#fff;box-shadow:0 8px 28px rgba(192,57,43,0.25)}
-      .header-title{font-size:22px;font-weight:800;margin-bottom:6px}
-      .header-sub{font-size:13px;opacity:0.75;font-family:monospace}
-      .empty{text-align:center;padding:3rem;color:#888;font-size:16px}
-    </style>
-  </head><body>
-    <div class="header">
-      <div class="header-title">⚠️ שאלות לתשומת לב מנהל</div>
-      <div class="header-sub">${stats.length} שאלות בעייתיות · ${today}</div>
-    </div>
-    ${stats.length?rows:'<div class="empty">✓ אין שאלות בעייתיות — כל הנציגים מצטיינים!</div>'}
-    <div style="text-align:center;margin-top:2rem"><button onclick="window.close()" style="background:#B8862A;color:#fff;border:none;padding:12px 24px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700">סגור</button></div>
-  </body></html>`);
-  win.document.close();
+  // Show as full-screen overlay instead of popup (no popup blocker issues)
+  let modal=document.getElementById('weak-q-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='weak-q-modal';
+    modal.style.cssText='position:fixed;inset:0;z-index:400;overflow-y:auto;background:#F0EDE6;direction:rtl;padding:24px 16px 40px;animation:rise 0.25s ease';
+    document.body.appendChild(modal);
+  }
+  modal.style.display='block';
+  modal.innerHTML=`
+    <div style="max-width:600px;margin:0 auto">
+      <div style="background:linear-gradient(135deg,#C97050,#DA8A6A);border-radius:20px;padding:22px 20px;margin-bottom:20px;color:#fff;box-shadow:0 6px 24px rgba(201,112,80,0.2);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:20px;font-weight:800;margin-bottom:4px">⚠️ שאלות לתשומת לב מנהל</div>
+          <div style="font-size:12px;opacity:0.75;font-family:monospace">${stats.length} שאלות בעייתיות · ${today}</div>
+        </div>
+        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:rgba(255,255,255,0.2);border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      ${stats.length?rows:'<div style="text-align:center;padding:3rem;color:#888;font-size:16px">✓ אין שאלות בעייתיות — כל הנציגים מצטיינים!</div>'}
+      <div style="text-align:center;margin-top:1.5rem">
+        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(184,134,42,0.3)">◀ חזור לדשבורד</button>
+      </div>
+    </div>`;
 }
 
 function populateResetSelects(){
