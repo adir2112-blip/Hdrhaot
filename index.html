@@ -973,8 +973,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--ice);font-weight:500;line-height:1.1" id="logged-agent-name"></div>
             </div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-ghost btn-sm" onclick="refreshAgentBriefings()" title="רענן" style="color:var(--ice3);border-color:rgba(184,134,42,0.2)">↻</button>
-              <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="color:var(--ice3);border-color:rgba(184,134,42,0.2)">החלף ▸</button>
+              <button onclick="refreshAgentBriefings()" title="רענן" style="background:none;border:1px solid rgba(184,134,42,0.2);color:var(--ice3);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer">↻</button>
+              <button onclick="openHistoryModal()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📖 היסטוריה</button>
+              <button onclick="logoutAgent()" style="background:var(--danger-bg);border:1.5px solid var(--danger-line);color:var(--danger);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='var(--danger-bg)';this.style.color='var(--danger)'">✕ התנתקות</button>
             </div>
           </div>
           <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -987,10 +988,36 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- BRIEFINGS -->
       <div id="agent-briefing-list"></div>
       <div id="no-briefings" style="display:none">
-        <div class="card" style="text-align:center;padding:3.5rem">
-          <div style="font-size:44px;margin-bottom:14px">✦</div>
-          <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ice)">כל הכבוד!</div>
-          <div style="font-size:13px;color:var(--ice3);margin-top:6px">אין תדריכים ממתינים</div>
+        <div class="card" style="text-align:center;padding:3rem 2rem;background:linear-gradient(135deg,#FFFDF8,#FFF5DC);border-color:rgba(184,134,42,0.2)">
+          <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 16px;display:block">
+            <defs>
+              <linearGradient id="tg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5C842"/><stop offset="100%" stop-color="#E8890A"/></linearGradient>
+              <linearGradient id="tg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFE066"/><stop offset="100%" stop-color="#F5A623"/></linearGradient>
+              <linearGradient id="tg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7ED4F5"/><stop offset="100%" stop-color="#3B8FE8"/></linearGradient>
+            </defs>
+            <!-- base -->
+            <rect x="38" y="90" width="34" height="8" rx="4" fill="url(#tg1)"/>
+            <rect x="32" y="96" width="46" height="7" rx="3.5" fill="#E8890A"/>
+            <!-- stem -->
+            <rect x="50" y="78" width="10" height="14" rx="2" fill="url(#tg2)"/>
+            <!-- cup body -->
+            <path d="M22 20 L88 20 L80 72 Q78 80 55 80 Q32 80 30 72 Z" fill="url(#tg2)"/>
+            <!-- shine -->
+            <ellipse cx="42" cy="38" rx="7" ry="14" fill="rgba(255,255,255,0.28)" transform="rotate(-15 42 38)"/>
+            <!-- handles -->
+            <path d="M22 28 Q8 28 8 44 Q8 60 22 62" stroke="url(#tg1)" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M88 28 Q102 28 102 44 Q102 60 88 62" stroke="url(#tg1)" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <!-- stars -->
+            <circle cx="55" cy="10" r="5" fill="#FFE066"/>
+            <circle cx="38" cy="14" r="3.5" fill="#7ED4F5"/>
+            <circle cx="72" cy="14" r="3.5" fill="#F472B6"/>
+            <!-- star sparkles -->
+            <line x1="55" y1="4" x2="55" y2="16" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="49" y1="10" x2="61" y2="10" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--ice);font-weight:500;margin-bottom:6px">כל הכבוד! 🎉</div>
+          <div style="font-size:14px;color:var(--ice3)">סיימת את כל התדריכים</div>
+          <div style="font-size:12px;color:var(--gold);margin-top:8px;font-family:'DM Mono',monospace;font-weight:600">המשך כך ✦</div>
         </div>
       </div>
       <div id="agent-leaderboard" style="margin-top:1.5rem"></div>
@@ -1870,7 +1897,9 @@ function submitQuiz(){
 async function signBriefing(){
   const ts=now();
   const b=S.briefings.find(b=>b.id===S.active.id);
-  const _agId=String(S.agent.id); b.completions[_agId]={score:S.score,ts,name:S.agent.name};
+  const _agId=String(S.agent.id);
+  const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
+  b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord};
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
@@ -2106,6 +2135,93 @@ function openAgentStats(agentId){
 function closeAgentStats(){
   document.getElementById('agent-stats-modal').style.display='none';
   if(_chartInstance){_chartInstance.destroy();_chartInstance=null;}
+}
+
+/* ── HISTORY MODAL ────────────────────────────── */
+function openHistoryModal(){
+  if(!S.agent) return;
+  const agId=String(S.agent.id);
+  const done=S.briefings.filter(b=>b.completions[agId]).sort((a,b)=>new Date(b.completions[agId].ts)-new Date(a.completions[agId].ts));
+  document.getElementById('history-modal-name').textContent=S.agent.name;
+
+  if(!done.length){
+    document.getElementById('history-modal-content').innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">טרם הושלמו תדריכים</div>';
+    document.getElementById('history-modal').style.display='flex';
+    return;
+  }
+
+  document.getElementById('history-modal-content').innerHTML=done.map((b,bi)=>{
+    const comp=b.completions[agId];
+    const answers=comp.answers||[];
+    const correct=answers.filter(a=>a.chosen===a.correct).length;
+    const pct=comp.score;
+    const LETTERS=['א','ב','ג','ד'];
+
+    const questionsHtml=answers.length?answers.map((a,qi)=>{
+      const isRight=a.chosen===a.correct;
+      return`<div style="border-radius:12px;padding:14px 16px;margin-bottom:10px;background:${isRight?'rgba(26,158,110,0.06)':'rgba(217,64,64,0.06)'};border:1px solid ${isRight?'rgba(26,158,110,0.2)':'rgba(217,64,64,0.2)'}">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px">
+          <span style="font-size:16px;flex-shrink:0">${isRight?'✅':'❌'}</span>
+          <div style="font-size:14px;font-weight:600;color:var(--ice);line-height:1.5">${a.q}</div>
+        </div>
+        ${a.options.map((opt,oi)=>{
+          const isCorrectOpt=oi===a.correct;
+          const isChosenOpt=oi===a.chosen;
+          let bg='transparent',border='rgba(0,0,0,0.08)',color='var(--ice2)',weight='400';
+          if(isCorrectOpt){bg='rgba(26,158,110,0.1)';border='rgba(26,158,110,0.3)';color='var(--ok)';weight='700';}
+          else if(isChosenOpt&&!isRight){bg='rgba(217,64,64,0.1)';border='rgba(217,64,64,0.3)';color='var(--danger)';weight='600';}
+          return`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:9px;margin-bottom:6px;background:${bg};border:1px solid ${border}">
+            <span style="width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${color};flex-shrink:0">${LETTERS[oi]}</span>
+            <span style="font-size:13px;color:${color};font-weight:${weight}">${opt}</span>
+            ${isCorrectOpt?'<span style="margin-right:auto;font-size:11px;color:var(--ok);font-weight:700">✓ נכון</span>':''}
+            ${isChosenOpt&&!isRight?'<span style="margin-right:auto;font-size:11px;color:var(--danger);font-weight:700">✗ הבחירה שלך</span>':''}
+          </div>`;
+        }).join('')}
+        ${a.hint?`<div style="font-size:12px;color:var(--ice3);background:rgba(0,0,0,0.04);border-radius:8px;padding:8px 12px;margin-top:6px;border-right:3px solid var(--gold)">💡 ${a.hint}</div>`:''}
+      </div>`;
+    }).join(''):'<div style="font-size:13px;color:var(--ice3);padding:1rem 0">אין נתוני שאלות לתדריך זה</div>';
+
+    return`<div style="border:1px solid rgba(184,134,42,0.15);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
+      <div style="background:${pct>=80?'rgba(26,158,110,0.08)':pct>=60?'rgba(212,130,10,0.08)':'rgba(217,64,64,0.08)'};padding:16px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleHistory('hb-${bi}')">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--ice)">${b.title}</div>
+          <div style="font-size:11px;color:var(--ice3);margin-top:3px;font-family:'DM Mono',monospace">${comp.ts}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:700;color:${pct>=80?'var(--ok)':pct>=60?'var(--warn)':'var(--danger)'}">${pct}%</div>
+            <div style="font-size:10px;color:var(--ice3)">${correct}/${answers.length||'?'} נכון</div>
+          </div>
+          <span style="font-size:14px;color:var(--ice3)" id="harr-${bi}">▼</span>
+        </div>
+      </div>
+      <div id="hb-${bi}" style="display:none;padding:16px 18px">
+        ${questionsHtml}
+        <div style="background:rgba(184,134,42,0.06);border:1px solid rgba(184,134,42,0.15);border-radius:12px;padding:14px 16px;margin-top:4px">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.06em;font-family:'DM Mono',monospace;margin-bottom:8px">סיכום תשובות</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <span style="font-size:13px;color:var(--ok);font-weight:600">✅ נכון: ${correct}</span>
+            <span style="font-size:13px;color:var(--danger);font-weight:600">❌ שגוי: ${(answers.length||0)-correct}</span>
+            <span style="font-size:13px;color:var(--gold);font-weight:700">ציון: ${pct}%</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('history-modal').style.display='flex';
+}
+function closeHistoryModal(){
+  document.getElementById('history-modal').style.display='none';
+}
+function toggleHistory(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  const bi=id.split('-')[1];
+  const arr=document.getElementById('harr-'+bi);
+  if(arr) arr.textContent=open?'▼':'▲';
 }
 
 function populateResetSelects(){
@@ -2512,6 +2628,20 @@ function toggleBriefingDept(i,btn){
         <div id="modal-briefings-list"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div id="history-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:#FFFDF8;border:1px solid rgba(184,134,42,0.2);border-radius:24px;width:100%;max-width:600px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+    <div style="position:sticky;top:0;background:#FFFDF8;border-bottom:1px solid rgba(184,134,42,0.15);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📖 היסטוריית מבחנים</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)" id="history-modal-name"></div>
+      </div>
+      <button onclick="closeHistoryModal()" style="background:rgba(0,0,0,0.06);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:20px 22px" id="history-modal-content"></div>
   </div>
 </div>
 
