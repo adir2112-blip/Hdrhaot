@@ -1269,7 +1269,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <div class="sec-eyebrow" style="margin-bottom:6px">מבחן מילולי</div>
         <div class="sec-title" style="margin-bottom:20px">תשובות <em>מילוליות</em></div>
-        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
           <select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
             <option value="all">כל המחלקות</option>
             <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
@@ -1278,6 +1278,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </select>
           <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
             <option value="all">כל התדריכים</option>
+          </select>
+          <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל הזמנים</option>
+            <option value="7">שבוע אחרון</option>
+            <option value="30">חודש אחרון</option>
+            <option value="90">3 חודשים אחרונים</option>
+            <option value="180">חצי שנה אחרונה</option>
+            <option value="365">שנה אחרונה</option>
           </select>
         </div>
         <div id="verbal-panel-content"></div>
@@ -1835,6 +1843,7 @@ function renderSettings(){
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
             <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.pin?`קוד: ****`:'ללא קוד'}</div>
+            ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
@@ -2188,7 +2197,7 @@ async function selectAgent(id){
   // Save last login timestamp
   const loginTs=now();
   S.agent.last_login=loginTs;
-  _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id); // fire & forget
+  await _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id);
   S.briefings=await dbBriefings();
   renderAgentBriefings();
 }
@@ -3148,7 +3157,16 @@ function renderTracking(){
             <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
             <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;align-items:center">
               ${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}
-              ${a.last_login?`<span style="font-size:10px;color:var(--ice3);font-family:monospace;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:20px">🕐 ${a.last_login}</span>`:`<span style="font-size:10px;color:var(--ice3);opacity:0.6">טרם התחבר</span>`}
+              ${a.last_login
+                ?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:2px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--ok);flex-shrink:0"></span>
+                    ${a.last_login}
+                  </span>`
+                :`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:2px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--line2);flex-shrink:0"></span>
+                    טרם התחבר
+                  </span>`
+              }
             </div>
           </div>
         </div>
@@ -3599,7 +3617,11 @@ function openPanel(id){
   document.getElementById(id).style.display='block';
   window.scrollTo(0,0);
   // Populate briefing dropdowns
-  if(id==='panel-verbal') populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
+  if(id==='panel-verbal'){
+    const df=document.getElementById('verbal-date-filter');
+    if(df) df.value='all';
+    populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
+  }
   if(id==='panel-scores') populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
   if(id==='panel-pending') populatePanelBriefings('pending-briefing-filter','pending-dept-filter',renderPendingPanel);
   if(id==='panel-leaderboard') renderLeaderboardPanel();
@@ -3675,6 +3697,20 @@ function renderVerbalPanel(){
       if(agId.startsWith('_hist_')) return;
       if(!agentIds.has(String(agId))) return;
       if(comp.reverse_score===undefined||comp.reverse_score===null) return;
+      // Date filter
+      const days=parseInt(document.getElementById('verbal-date-filter')?.value||'all');
+      if(!isNaN(days)&&comp.ts){
+        const tsRaw=comp.ts; // format: "3/4/2026 22:30" (d/m/y h:m)
+        const parts=tsRaw.split(' ');
+        const dateParts=parts[0].split('/');
+        const timeParts=(parts[1]||'00:00').split(':');
+        const compDate=new Date(
+          parseInt(dateParts[2]),parseInt(dateParts[1])-1,parseInt(dateParts[0]),
+          parseInt(timeParts[0]),parseInt(timeParts[1])
+        );
+        const cutoff=new Date(Date.now()-days*24*60*60*1000);
+        if(compDate<cutoff) return;
+      }
       const agent=S.agents.find(a=>String(a.id)===String(agId));
       rows.push({
         briefing:b.title,
@@ -3683,7 +3719,8 @@ function renderVerbalPanel(){
         summary:comp.reverse_summary||'',
         correct:Array.isArray(comp.reverse_correct)?comp.reverse_correct:[],
         missing:Array.isArray(comp.reverse_missing)?comp.reverse_missing:[],
-        text:comp.reverse_text||comp.reverse_explanation||''
+        text:comp.reverse_text||comp.reverse_explanation||'',
+        ts:comp.ts||''
       });
     });
   });
@@ -3699,6 +3736,7 @@ function renderVerbalPanel(){
       <div style="flex:1">
         <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
         <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">📋 ${r.briefing}</div>
+        ${r.ts?`<div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">🕐 ${r.ts}</div>`:''}
       </div>
       <div style="font-size:24px;font-weight:800;color:${sc(r.score)};flex-shrink:0">${r.score}%</div>
     </div>
