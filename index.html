@@ -995,6 +995,18 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </label>
         <input type="hidden" id="briefing-featured" value="0">
       </div>
+      <div style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none">
+          <div id="reverse-toggle" onclick="toggleReverse()" style="width:48px;height:26px;border-radius:13px;background:var(--line2);position:relative;transition:background 0.2s;cursor:pointer;flex-shrink:0">
+            <div id="reverse-knob" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.2)"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--ice)">🔄 תדריך הפוך</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">הנציג יסביר במילים שלו — AI ינתח ויציין</div>
+          </div>
+        </label>
+        <input type="hidden" id="briefing-reverse" value="0">
+      </div>
       <div class="field" style="margin-top:16px">
         <label class="field-label">כמה שאלות לייצר?</label>
         <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
@@ -1191,37 +1203,41 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <div id="step-sign" style="display:none">
         <div class="prog-wrap">
-          <div class="prog-head"><span class="prog-title">שלב ③  אישור וחתימה</span><span class="prog-pct">100%</span></div>
-          <div class="prog-track"><div class="prog-bar" style="width:100%;background:var(--ok)"></div></div>
+          <div class="prog-head"><span class="prog-title" id="sign-step-label">שלב ③  אישור וחתימה</span><span class="prog-pct" id="sign-step-pct">100%</span></div>
+          <div class="prog-track"><div class="prog-bar" id="sign-step-bar" style="width:100%;background:var(--ok)"></div></div>
         </div>
-        <div class="score-display">
-          <div class="score-num" id="score-big"></div>
-          <div class="score-sub" id="score-label"></div>
+
+        <!-- PART A: Score + Sign button -->
+        <div id="sign-part-a">
+          <div class="score-display">
+            <div class="score-num" id="score-big"></div>
+            <div class="score-sub" id="score-label"></div>
+          </div>
+          <div class="sig-block">
+            <div style="font-size:13px;font-weight:600;color:var(--ice2);margin-bottom:10px">✍ אישור קריאה וחתימה</div>
+            <div style="font-size:13px;color:var(--ice3);margin-bottom:16px;line-height:1.7">אני מאשר/ת שקראתי את התדריך <span id="sig-briefing-title" style="color:var(--gold2);font-weight:500"></span> והבנתי את תוכנו במלואו.</div>
+            <button class="btn btn-gold" id="sign-btn" onclick="signBriefing()">✓ חתום ואשר</button>
+          </div>
         </div>
-        <div class="sig-block">
-          <div style="font-size:13px;font-weight:600;color:var(--ice2);margin-bottom:10px">✍ אישור קריאה וחתימה</div>
-          <div style="font-size:13px;color:var(--ice3);margin-bottom:16px;line-height:1.7">אני מאשר/ת שקראתי את התדריך <span id="sig-briefing-title" style="color:var(--gold2);font-weight:500"></span> והבנתי את תוכנו במלואו.</div>
-          <button class="btn btn-gold" id="sign-btn" onclick="signBriefing()">✓ חתום ואשר</button>
-        </div>
+
+        <!-- PART B: Celebration + Reverse (shown after sign) -->
         <div id="sign-done" style="display:none">
-          <!-- CELEBRATION SCREEN -->
           <div id="celebration-screen" style="text-align:center;padding:1rem 0">
             <div id="celebration-emoji" style="font-size:64px;margin-bottom:12px;animation:float 2s ease-in-out infinite">🎉</div>
             <div id="celebration-title" style="font-family:'Playfair Display',serif;font-size:26px;color:var(--ice);margin-bottom:6px;font-weight:500"></div>
             <div id="celebration-sub" style="font-size:14px;color:var(--ice3);margin-bottom:20px;line-height:1.6"></div>
-            <!-- Badges row -->
             <div id="celebration-badges" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:20px"></div>
-            <!-- Rank change -->
             <div id="celebration-rank" style="display:none;background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:16px;padding:14px 20px;margin-bottom:16px">
               <div id="celebration-rank-text" style="font-size:15px;font-weight:700;color:var(--gold)"></div>
             </div>
-            <!-- Feedback -->
             <div class="card" style="text-align:right;margin-bottom:14px">
               <div class="card-label">הערה / משוב על התדריך</div>
               <textarea id="agent-feedback" placeholder="האם הנוהל ברור? יש משהו שלא הובן? (אופציונלי)" style="min-height:80px;font-size:14px"></textarea>
               <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">המשוב יישלח למנהל</div>
             </div>
-            <button class="btn btn-gold" style="width:100%" onclick="backToBriefingsWithFeedback()">חזור לתדריכים ◂</button>
+
+            <button id="finish-btn-no-reverse" class="btn btn-gold" style="width:100%;margin-top:4px" onclick="backToBriefingsWithFeedback()">✓ סיים וחזור לתדריכים</button>
+            <button id="finish-btn-go-reverse" class="btn btn-gold" style="width:100%;margin-top:4px;display:none;background:linear-gradient(135deg,#1A4A7A,#2A6AAA);border-color:rgba(91,160,230,0.4)" onclick="openReverseModal()">🎤 המשך לחלק ב׳ — מבחן מילולי ◂</button>
           </div>
         </div>
       </div>
@@ -1243,6 +1259,106 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
     <div id="tracking-content" style="display:none">
+
+    <!-- SIDE PANEL PAGES (fullscreen overlays) -->
+    <div id="panel-verbal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
+      <div style="max-width:660px;margin:0 auto">
+        <div style="height:20px"></div>
+        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
+          <button onclick="closePanel('panel-verbal')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
+        </div>
+        <div class="sec-eyebrow" style="margin-bottom:6px">מבחן מילולי</div>
+        <div class="sec-title" style="margin-bottom:20px">תשובות <em>מילוליות</em></div>
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+          <select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+            <option value="מעוף לעמית">מעוף לעמית</option>
+          </select>
+          <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל התדריכים</option>
+          </select>
+        </div>
+        <div id="verbal-panel-content"></div>
+      </div>
+    </div>
+
+    <div id="panel-scores" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
+      <div style="max-width:660px;margin:0 auto">
+        <div style="height:20px"></div>
+        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
+          <button onclick="closePanel('panel-scores')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
+        </div>
+        <div class="sec-eyebrow" style="margin-bottom:6px">ציונים</div>
+        <div class="sec-title" style="margin-bottom:20px">ציונים <em>רגילים</em></div>
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+          <select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+            <option value="מעוף לעמית">מעוף לעמית</option>
+          </select>
+          <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל התדריכים</option>
+          </select>
+        </div>
+        <div id="scores-panel-content"></div>
+      </div>
+    </div>
+
+    <div id="panel-leaderboard" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
+      <div style="max-width:660px;margin:0 auto">
+        <div style="height:20px"></div>
+        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
+          <button onclick="closePanel('panel-leaderboard')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
+        </div>
+        <div class="sec-eyebrow" style="margin-bottom:6px">תחרות</div>
+        <div class="sec-title" style="margin-bottom:20px">לוח <em>תחרות</em></div>
+        <div style="margin-bottom:20px">
+          <select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+            <option value="מעוף לעמית">מעוף לעמית</option>
+          </select>
+        </div>
+        <div id="lb-panel-content"></div>
+      </div>
+    </div>
+
+    <div id="panel-pending" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
+      <div style="max-width:660px;margin:0 auto">
+        <div style="height:20px"></div>
+        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
+          <button onclick="closePanel('panel-pending')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
+        </div>
+        <div class="sec-eyebrow" style="margin-bottom:6px">ממתינים</div>
+        <div class="sec-title" style="margin-bottom:20px">נציגים <em>ממתינים</em></div>
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+          <select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+            <option value="מעוף לעמית">מעוף לעמית</option>
+          </select>
+          <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל התדריכים</option>
+          </select>
+        </div>
+        <div id="pending-panel-content"></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR MENU -->
+    <div id="dashboard-sidebar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:16px 18px;background:var(--ink3);border-radius:18px;border:1px solid var(--line2)">
+      <div style="font-size:10px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;width:100%;margin-bottom:6px">📊 דפי ניתוח</div>
+      <button onclick="openPanel('panel-verbal')" style="display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">🎤 מבחן מילולי</button>
+      <button onclick="openPanel('panel-scores')" style="display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📊 ציונים</button>
+      <button onclick="openPanel('panel-leaderboard')" style="display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">🏆 לוח תחרות</button>
+      <button onclick="openPanel('panel-pending')" style="display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">⏳ ממתינים</button>
+    </div>
+
     <div class="sec-header" style="margin-bottom:1.5rem">
       <div class="between" style="align-items:flex-start;flex-wrap:wrap;gap:12px">
         <div>
@@ -1464,6 +1580,7 @@ async function dbBriefings(){
     b.deadline=b.deadline||null;
     b.featured=b.featured===true||b.featured==='true'||false;
     b.refresh_requested=b.refresh_requested||null;
+    b.reverse_mode=b.reverse_mode===true||b.reverse_mode==='true'||false;
     return b;
   });
 }
@@ -1978,6 +2095,7 @@ async function publishBriefing(){
   const ts=now();
   const deadlineVal=document.getElementById('briefing-deadline').value||null;
   const featuredVal=document.getElementById('briefing-featured').value==='1';
+  const reverseVal=document.getElementById('briefing-reverse').value==='1';
   const row={
     title:S.cur.title, content:S.cur.content,
     questions:JSON.stringify(S.eq),
@@ -1985,6 +2103,7 @@ async function publishBriefing(){
     publishedAt:ts, weekDate:new Date().toISOString(),
     deadline:deadlineVal,
     featured:featuredVal||false,
+    reverse_mode:reverseVal||false,
     completions:JSON.stringify({})
   };
   const {data,error}=await _sb.from('briefings').insert(row).select().single();
@@ -1994,6 +2113,7 @@ async function publishBriefing(){
   data.completions={};
   data.deadline=deadlineVal;
   data.featured=featuredVal||false;
+  data.reverse_mode=reverseVal||false;
   S.briefings.push(data);
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
@@ -2006,9 +2126,13 @@ function resetManager(){
   document.getElementById('briefing-content').value='';
   document.getElementById('briefing-deadline').value='';
   document.getElementById('briefing-featured').value='0';
+  document.getElementById('briefing-reverse').value='0';
   const tog=document.getElementById('featured-toggle');
   const knob=document.getElementById('featured-knob');
   if(tog){tog.style.background='var(--line2)';knob.style.transform='translateX(0)';}
+  const rtog=document.getElementById('reverse-toggle');
+  const rknob=document.getElementById('reverse-knob');
+  if(rtog){rtog.style.background='var(--line2)';rknob.style.transform='translateX(0)';}
   document.getElementById('preview-section').style.display='none';
   document.querySelectorAll('[id^=bdl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';}});
 }
@@ -2504,6 +2628,16 @@ function openBriefing(id){
   document.getElementById('sign-done').style.display='none';
   document.getElementById('sign-btn').style.display='inline-flex';
   // Reset AI summary
+  const revModal=document.getElementById('reverse-modal');
+  if(revModal) revModal.style.display='none';
+  const revText=document.getElementById('reverse-briefing-text');
+  const revResult=document.getElementById('reverse-result');
+  const revBtn=document.getElementById('reverse-submit-btn');
+  const revFin=document.getElementById('reverse-finish-btn');
+  if(revText) revText.value='';
+  if(revResult){revResult.style.display='none';revResult.innerHTML='';}
+  if(revBtn){revBtn.disabled=false;revBtn.innerHTML='<span style="font-size:18px">✦</span> נתח את ההסבר שלי';}
+  if(revFin) revFin.style.display='none';
   const sumCard=document.getElementById('ai-summary-card');
   const sumBtn=document.getElementById('ai-summary-btn');
   if(sumCard) sumCard.style.display='none';
@@ -2640,6 +2774,16 @@ function showCelebration(){
     rankEl.style.display='block';
     rankTxt.textContent=`🥇 אתה במקום הראשון בקבוצה שלך!`;
   } else { rankEl.style.display='none'; }
+
+  const btnNoReverse=document.getElementById('finish-btn-no-reverse');
+  const btnGoReverse=document.getElementById('finish-btn-go-reverse');
+  if(S.active&&S.active.reverse_mode){
+    if(btnNoReverse) btnNoReverse.style.display='none';
+    if(btnGoReverse) btnGoReverse.style.display='block';
+  } else {
+    if(btnNoReverse) btnNoReverse.style.display='block';
+    if(btnGoReverse) btnGoReverse.style.display='none';
+  }
 }
 
 function calcStreak(agId){
@@ -2648,6 +2792,110 @@ function calcStreak(agId){
     .filter(b=>b.completions[agId])
     .sort((a,b)=>new Date(b.completions[agId].ts)-new Date(a.completions[agId].ts));
   return done.length;
+}
+
+/* ── REVERSE BRIEFING ───────────────────────── */
+function openReverseModal(){
+  const el=document.getElementById('reverse-modal');
+  const txt=document.getElementById('reverse-briefing-text');
+  const res=document.getElementById('reverse-result');
+  const fin=document.getElementById('reverse-finish-btn');
+  const btn=document.getElementById('reverse-submit-btn');
+  if(txt) txt.value='';
+  if(res){res.style.display='none';res.innerHTML='';}
+  if(fin) fin.style.display='none';
+  if(btn){btn.disabled=false;btn.innerHTML='<span style="font-size:18px">✦</span> נתח את ההסבר שלי';}
+  if(el) el.style.display='block';
+  window.scrollTo(0,0);
+}
+
+function finishReverseAndClose(){
+  const modal=document.getElementById('reverse-modal');
+  if(modal) modal.style.display='none';
+  backToBriefingsWithFeedback();
+}
+
+async function submitReverseBriefing(){
+  const explanation=document.getElementById('reverse-briefing-text')?.value?.trim();
+  if(!explanation){alert('כתוב הסבר קודם');return;}
+  const key=localStorage.getItem('bs_api_key');
+  if(!key){alert('נדרש מפתח Gemini API');return;}
+  const content=S.active?.content||'';
+  const title=S.active?.title||'';
+
+  const btn=document.getElementById('reverse-submit-btn');
+  const resultEl=document.getElementById('reverse-result');
+  btn.disabled=true; btn.innerHTML='<span>✦</span> מנתח...';
+  resultEl.style.display='none';
+
+  try{
+    const prompt=`אתה מעריך הבנה של עובד מוקד שירות.
+
+תוכן הנוהל המקורי:
+"${title}"
+${content.slice(0,3000)}
+
+הסבר העובד:
+"${explanation}"
+
+הערך את ההסבר ותן ציון מ-0 עד 100.
+החזר JSON בלבד ללא backtick:
+{
+  "score": 85,
+  "correct": ["נקודה שהייתה נכונה","נקודה נוספת"],
+  "missing": ["מה חסר","מה לא הוזכר"],
+  "summary": "משפט אחד קצר על ההבנה הכללית"
+}`;
+
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:600}})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const raw=data.candidates[0].content.parts[0].text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const parsed=JSON.parse(raw);
+    const score=parsed.score||0;
+    const scoreColor=score>=80?'#1A9E6E':score>=60?'#D4820A':'#D94040';
+
+    resultEl.style.display='block';
+    resultEl.innerHTML=`
+      <div style="text-align:center;margin-bottom:16px;padding:20px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06)">
+        <div style="font-size:56px;font-weight:900;color:${scoreColor};font-family:'Playfair Display',serif;line-height:1">${score}%</div>
+        <div style="font-size:14px;color:var(--ice3);margin-top:6px;line-height:1.5">${parsed.summary||''}</div>
+      </div>
+      ${parsed.correct&&parsed.correct.length?`<div style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:12px;padding:14px 16px;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--ok);margin-bottom:8px;font-family:'DM Mono',monospace">✅ מה היה נכון</div>
+        ${parsed.correct.map(c=>`<div style="font-size:14px;color:var(--ice);margin-bottom:5px;line-height:1.5">◆ ${c}</div>`).join('')}
+      </div>`:''}
+      ${parsed.missing&&parsed.missing.length?`<div style="background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:12px;padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:8px;font-family:'DM Mono',monospace">❌ מה חסר</div>
+        ${parsed.missing.map(m=>`<div style="font-size:14px;color:var(--ice);margin-bottom:5px;line-height:1.5">◆ ${m}</div>`).join('')}
+      </div>`:''}`;
+
+    // Save reverse score to Supabase
+    if(S.active&&S.agent){
+      const b=S.briefings.find(x=>x.id===S.active.id);
+      const agId=String(S.agent.id);
+      if(b&&b.completions[agId]){
+        b.completions[agId].reverse_score=score;
+        b.completions[agId].reverse_summary=parsed.summary||'';
+        b.completions[agId].reverse_correct=parsed.correct||[];
+        b.completions[agId].reverse_missing=parsed.missing||[];
+        b.completions[agId].reverse_text=explanation;
+        _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+      }
+    }
+
+  } catch(e){
+    resultEl.style.display='block';
+    resultEl.innerHTML=`<div style="color:#D94040;font-size:13px">שגיאה: ${e.message}</div>`;
+  } finally{
+    btn.disabled=false; btn.innerHTML='<span style="font-size:18px">✦</span> נתח שוב';
+    // Show finish button after any analysis (success or error doesn't hide it)
+    const finBtn=document.getElementById('reverse-finish-btn');
+    if(finBtn) finBtn.style.display='block';
+  }
 }
 
 async function backToBriefingsWithFeedback(){
@@ -2987,6 +3235,11 @@ function openAgentStats(agentId){
           <div style="font-size:13px;font-weight:600;color:var(--ice)">${b.title}</div>
           <div style="font-size:11px;color:var(--ice3);margin-top:2px;font-family:'DM Mono',monospace">${comp.ts}</div>
           ${comp.feedback?`<div style="font-size:11px;color:var(--gold);margin-top:4px;font-style:italic">💬 ${comp.feedback}</div>`:''}
+          ${comp.reverse_score!==undefined?`<div style="margin-top:8px;background:rgba(91,160,230,0.08);border:1px solid rgba(91,160,230,0.2);border-radius:10px;padding:8px 12px">
+            <div style="font-size:11px;font-weight:700;color:#5BA0E6;font-family:'DM Mono',monospace;margin-bottom:4px">🎤 מבחן מילולי — ${comp.reverse_score}%</div>
+            ${comp.reverse_summary?`<div style="font-size:12px;color:var(--ice3);margin-bottom:6px;font-style:italic">${comp.reverse_summary}</div>`:''}
+            ${comp.reverse_missing&&comp.reverse_missing.length?`<div style="font-size:11px;color:#D94040;font-family:'DM Mono',monospace">חסר: ${comp.reverse_missing.join(' · ')}</div>`:''}
+          </div>`:''}
         </div>
         <div style="font-size:18px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'}">${comp.score}%</div>
       </div>`;
@@ -3339,6 +3592,211 @@ function toggleBriefingDetails(id){
   el.style.display=el.style.display==='block'?'none':'block';
 }
 
+/* ── DASHBOARD SIDE PANELS ───────────────────── */
+function openPanel(id){
+  document.getElementById(id).style.display='block';
+  window.scrollTo(0,0);
+  // Populate briefing dropdowns
+  if(id==='panel-verbal') populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
+  if(id==='panel-scores') populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
+  if(id==='panel-pending') populatePanelBriefings('pending-briefing-filter','pending-dept-filter',renderPendingPanel);
+  if(id==='panel-leaderboard') renderLeaderboardPanel();
+  if(id==='panel-verbal') renderVerbalPanel();
+  if(id==='panel-scores') renderScoresPanel();
+  if(id==='panel-pending') renderPendingPanel();
+}
+
+function closePanel(id){
+  document.getElementById(id).style.display='none';
+}
+
+function populatePanelBriefings(selId, deptSelId, cb){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML='<option value="all">כל התדריכים</option>'+
+    S.briefings.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+}
+
+function getPanelAgents(deptSelId){
+  const dept=document.getElementById(deptSelId)?.value||'all';
+  const active=S.agents.filter(a=>a.active!==false);
+  if(dept==='all') return active;
+  const grp=GROUPS.find(g=>g.key===dept);
+  if(grp) return active.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+  return active.filter(a=>(a.depts||[]).includes(dept));
+}
+
+function getPanelBriefings(bSelId, agents){
+  const bid=document.getElementById(bSelId)?.value||'all';
+  let briefs=S.briefings;
+  if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
+  return briefs;
+}
+
+/* ── VERBAL PANEL ── */
+function renderVerbalPanel(){
+  const el=document.getElementById('verbal-panel-content');
+  if(!el) return;
+
+  const agents=getPanelAgents('verbal-dept-filter');
+  const agentIds=new Set(agents.map(a=>String(a.id)));
+  const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
+  const bid=document.getElementById('verbal-briefing-filter')?.value||'all';
+
+  // Update briefing dropdown — only briefings relevant to selected dept
+  const bSel=document.getElementById('verbal-briefing-filter');
+  if(bSel){
+    const cur=bSel.value;
+    const relevantBriefs=S.briefings.filter(b=>{
+      const dept=document.getElementById('verbal-dept-filter')?.value||'all';
+      if(dept==='all') return true;
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
+    });
+    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
+      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+    // restore or reset
+    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
+    else bSel.value='all';
+  }
+
+  const rows=[];
+  S.briefings.forEach(b=>{
+    if(bid!=='all'&&String(b.id)!==bid) return;
+    // Skip briefings not relevant to selected dept
+    if(b.targetDepts&&b.targetDepts.length>0){
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!brDepts.some(d=>agentDepts.has(d))) return;
+    }
+    Object.entries(b.completions).forEach(([agId,comp])=>{
+      if(!comp||typeof comp!=='object') return;
+      if(agId.startsWith('_hist_')) return;
+      if(!agentIds.has(String(agId))) return;
+      if(comp.reverse_score===undefined||comp.reverse_score===null) return;
+      const agent=S.agents.find(a=>String(a.id)===String(agId));
+      rows.push({
+        briefing:b.title,
+        name:agent?agent.name:(comp.name||agId),
+        score:Number(comp.reverse_score)||0,
+        summary:comp.reverse_summary||'',
+        correct:Array.isArray(comp.reverse_correct)?comp.reverse_correct:[],
+        missing:Array.isArray(comp.reverse_missing)?comp.reverse_missing:[],
+        text:comp.reverse_text||comp.reverse_explanation||''
+      });
+    });
+  });
+
+  if(!rows.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:14px">אין נתוני מבחן מילולי עדיין לסינון זה.</div>';
+    return;
+  }
+  rows.sort((a,b)=>b.score-a.score);
+  const sc=s=>s>=80?'var(--ok)':s>=60?'var(--warn)':'var(--danger)';
+  el.innerHTML=rows.map(r=>`<div class="track-row" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
+        <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">📋 ${r.briefing}</div>
+      </div>
+      <div style="font-size:24px;font-weight:800;color:${sc(r.score)};flex-shrink:0">${r.score}%</div>
+    </div>
+    ${r.summary?`<div style="font-size:13px;color:var(--ice3);margin-bottom:8px;font-style:italic;border-right:2px solid var(--gold);padding-right:8px">${r.summary}</div>`:''}
+    ${r.text?`<div style="background:rgba(0,0,0,0.03);border-right:3px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--ice2);line-height:1.7;white-space:pre-wrap">${r.text}</div>`:''}
+    ${r.correct&&r.correct.length?`<div style="background:var(--ok-bg);border-radius:10px;padding:8px 12px;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:700;color:var(--ok);margin-bottom:4px;font-family:'DM Mono',monospace">✅ נכון</div>
+      ${r.correct.map(c=>`<div style="font-size:13px;color:var(--ice)">◆ ${c}</div>`).join('')}
+    </div>`:''}
+    ${r.missing&&r.missing.length?`<div style="background:var(--danger-bg);border-radius:10px;padding:8px 12px">
+      <div style="font-size:11px;font-weight:700;color:var(--danger);margin-bottom:4px;font-family:'DM Mono',monospace">❌ חסר</div>
+      ${r.missing.map(m=>`<div style="font-size:13px;color:var(--ice)">◆ ${m}</div>`).join('')}
+    </div>`:''}
+  </div>`).join('');
+}
+
+/* ── SCORES PANEL ── */
+function renderScoresPanel(){
+  const el=document.getElementById('scores-panel-content');
+  if(!el) return;
+  const agents=getPanelAgents('scores-dept-filter');
+  const briefs=getPanelBriefings('scores-briefing-filter',agents);
+  const agentIds=new Set(agents.map(a=>String(a.id)));
+
+  const rows=[];
+  briefs.forEach(b=>{
+    Object.entries(b.completions).forEach(([agId,comp])=>{
+      if(agId.startsWith('_hist_')) return;
+      if(!agentIds.has(String(agId))) return;
+      if(comp.score===undefined||comp.score===null) return;
+      const agent=S.agents.find(a=>String(a.id)===agId);
+      rows.push({briefing:b.title,name:agent?agent.name:comp.name||agId,score:comp.score,ts:comp.ts});
+    });
+  });
+
+  if(!rows.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין ציונים עדיין.</div>';
+    return;
+  }
+  rows.sort((a,b)=>b.score-a.score);
+  const sc=s=>s>=80?'var(--ok)':s>=60?'var(--warn)':'var(--danger)';
+  el.innerHTML=rows.map((r,i)=>`<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
+    <div style="font-size:18px;font-weight:800;color:var(--ice3);min-width:28px;text-align:center">#${i+1}</div>
+    <div style="flex:1">
+      <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
+      <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">📋 ${r.briefing} · ${r.ts}</div>
+    </div>
+    <div style="font-size:24px;font-weight:800;color:${sc(r.score)}">${r.score}%</div>
+  </div>`).join('');
+}
+
+/* ── LEADERBOARD PANEL ── */
+function renderLeaderboardPanel(){
+  const el=document.getElementById('lb-panel-content');
+  if(!el) return;
+  const dept=document.getElementById('lb-dept-filter')?.value||'all';
+  let agents=S.agents.filter(a=>a.active!==false);
+  if(dept!=='all'){
+    const grp=GROUPS.find(g=>g.key===dept);
+    if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+    else agents=agents.filter(a=>(a.depts||[]).includes(dept));
+  }
+  renderLeaderboard('lb-panel-content',null,agents);
+}
+
+/* ── PENDING PANEL ── */
+function renderPendingPanel(){
+  const el=document.getElementById('pending-panel-content');
+  if(!el) return;
+  const agents=getPanelAgents('pending-dept-filter');
+  const bid=document.getElementById('pending-briefing-filter')?.value||'all';
+  let briefs=S.briefings;
+  if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
+
+  const agentIds=new Set(agents.map(a=>String(a.id)));
+  const rows=[];
+  briefs.forEach(b=>{
+    const pendingAgents=agents.filter(a=>{
+      if(b.completions[String(a.id)]) return false;
+      if(!b.targetDepts||!b.targetDepts.length) return true;
+      return (a.depts||[]).map(d=>d.toLowerCase()).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d));
+    });
+    if(pendingAgents.length) rows.push({briefing:b,agents:pendingAgents});
+  });
+
+  if(!rows.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ok);font-size:16px">✓ כולם השלימו! 🎉</div>';
+    return;
+  }
+  el.innerHTML=rows.map(r=>`<div class="track-row" style="margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:10px">📋 ${r.briefing.title} <span class="chip chip-warn" style="font-size:12px">${r.agents.length} ממתינים</span></div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${r.agents.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--warn-bg);border-radius:10px">
+        <div style="font-size:14px;font-weight:600;color:var(--ice);flex:1">${a.name}</div>
+        <div style="font-size:11px;color:var(--ice3)">${(a.depts||[]).join(', ')||'—'}</div>
+      </div>`).join('')}
+    </div>
+  </div>`).join('');
+}
+
 function populateResetSelects(){
   const agSel=document.getElementById('reset-agent-select');
   const brSel=document.getElementById('reset-briefing-select');
@@ -3688,6 +4146,16 @@ if(window.speechSynthesis){
   window.speechSynthesis.addEventListener('voiceschanged',()=>window.speechSynthesis.getVoices());
 }
 
+function toggleReverse(){
+  const inp=document.getElementById('briefing-reverse');
+  const tog=document.getElementById('reverse-toggle');
+  const knob=document.getElementById('reverse-knob');
+  const on=inp.value==='1';
+  inp.value=on?'0':'1';
+  tog.style.background=on?'var(--line2)':'#3A8FD4';
+  knob.style.transform=on?'translateX(0)':'translateX(-22px)';
+}
+
 function toggleFeatured(){
   const inp=document.getElementById('briefing-featured');
   const tog=document.getElementById('featured-toggle');
@@ -3792,6 +4260,33 @@ function toggleBriefingDept(i,btn){
 </div>
 
 <!-- AGENT STATS MODAL -->
+<!-- REVERSE BRIEFING FULLSCREEN -->
+<div id="reverse-modal" style="display:none;position:fixed;inset:0;z-index:350;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 16px 40px;direction:rtl">
+  <div style="max-width:560px;margin:0 auto">
+    <!-- Header -->
+    <div style="margin-bottom:22px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px">🎤 חלק ב׳ — מבחן מילולי</div>
+      <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--ice);font-weight:500;line-height:1.2">הסבר במילים שלך</div>
+    </div>
+    <!-- Instruction card -->
+    <div style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:16px;padding:16px 18px;margin-bottom:18px">
+      <div style="font-size:14px;color:var(--ice2);line-height:1.8">הסבר לנציג חדש, <strong style="color:var(--ice)">במילים שלך</strong>, את עיקרי הנוהל שזה עתה קראת. ה-AI ינתח ויציין אותך.</div>
+    </div>
+    <!-- Textarea -->
+    <textarea id="reverse-briefing-text" placeholder="לדוגמה: בתדריך הזה למדתי ש..." style="width:100%;min-height:150px;font-size:15px;background:#fff;border:1.5px solid rgba(184,134,42,0.2);color:var(--ice);border-radius:16px;padding:14px 16px;font-family:'Sora',sans-serif;line-height:1.8;resize:vertical;box-shadow:inset 0 2px 6px rgba(0,0,0,0.04)"></textarea>
+    <!-- Analyze button -->
+    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(184,134,42,0.3)">
+      <span style="font-size:18px">✦</span> נתח את ההסבר שלי
+    </button>
+    <!-- Result -->
+    <div id="reverse-result" style="display:none;margin-top:20px"></div>
+    <!-- Finish button -->
+    <button id="reverse-finish-btn" onclick="finishReverseAndClose()" style="display:none;margin-top:16px;width:100%;padding:16px;font-size:16px;font-weight:800;border-radius:16px;background:var(--ice);color:var(--bg,#F0EDE6);border:none;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+      ✓ סיים תדריך
+    </button>
+  </div>
+</div>
+
 <div id="agent-stats-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative">
     <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
