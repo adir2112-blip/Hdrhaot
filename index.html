@@ -1261,20 +1261,6 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   </div>
 
   <!-- TRACKING -->
-  <div class="sec" id="tab-tracking">
-    <div id="tracking-lock" class="lock-scene" style="display:flex">
-      <div class="lock-box">
-        <div class="lock-ico">🔐</div>
-        <div class="lock-title">Manager Access</div>
-        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
-        <div class="field">
-          <input type="password" id="tracking-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkTrackingPw()">
-        </div>
-        <div id="tracking-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
-        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkTrackingPw()">כניסה</button>
-      </div>
-    </div>
-    <div id="tracking-content" style="display:none">
 
     <!-- SIDE PANEL PAGES (fullscreen overlays) -->
     <div id="panel-verbal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
@@ -1384,6 +1370,22 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
 
     <!-- SIDEBAR MENU -->
+
+  <div class="sec" id="tab-tracking">
+    <div id="tracking-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">🔐</div>
+        <div class="lock-title">Manager Access</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="tracking-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkTrackingPw()">
+        </div>
+        <div id="tracking-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkTrackingPw()">כניסה</button>
+      </div>
+    </div>
+    <div id="tracking-content" style="display:none">
+
     <!-- TWO-COLUMN LAYOUT: sidebar + main -->
     <div style="display:flex;gap:20px;align-items:flex-start">
 
@@ -1532,7 +1534,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div><!-- /tracking-content -->
   <!-- SETTINGS -->
   <div class="sec" id="tab-settings">
-    <div id="settings-lock" class="lock-scene">
+    <div id="settings-lock" class="lock-scene" style="display:flex">
       <div class="lock-box">
         <div class="lock-ico">🔐</div>
         <div class="lock-title">Manager Access</div>
@@ -4587,7 +4589,9 @@ async function appInit(){
       document.getElementById('api-modal').classList.remove('hidden');
   }
   await loadAll();
-  renderSettings();renderAgentLogin();renderTracking();initBriefingDeptPicker();
+  renderAgentLogin();initBriefingDeptPicker();
+  // Only render protected panels if already unlocked
+  if(_adminUnlocked){ renderSettings(); renderTracking(); }
   // Start on agent login screen
   switchTab('agent');
 }
