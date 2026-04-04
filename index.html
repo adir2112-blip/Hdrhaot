@@ -1098,6 +1098,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- FEATURED BRIEFING BANNER -->
       <div id="agent-featured-banner" style="display:none;margin-bottom:16px"></div>
+      <!-- REFRESH REMINDERS -->
+      <div id="agent-refresh-banner" style="display:none;margin-bottom:16px"></div>
       <!-- PENDING COUNT HERO -->
       <div id="agent-pending-hero" style="display:none;margin-bottom:16px"></div>
 
@@ -1157,8 +1159,24 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </div>
           <div style="font-size:14px;line-height:1.9;color:var(--ice2);white-space:pre-wrap" id="flow-content"></div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <!-- AI SUMMARY CARD -->
+        <div id="ai-summary-card" style="display:none;margin-top:16px;border-radius:18px;overflow:hidden;border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 18px rgba(184,134,42,0.08)">
+          <div style="background:linear-gradient(135deg,#1A1814,#2E2820);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ סיכום AI</div>
+            <div id="ai-summary-loading" style="display:none;font-size:11px;color:rgba(201,168,76,0.6);font-family:'DM Mono',monospace">מסכם...</div>
+          </div>
+          <div style="background:#fff;padding:18px">
+            <div id="ai-summary-content"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
           <button class="btn btn-gold" onclick="goStep('quiz');ttsStop()">קראתי — עבור לשאלות ◂</button>
+          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2),0 0 0 0 rgba(184,134,42,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(184,134,42,0.35),0 0 0 4px rgba(184,134,42,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(184,134,42,0.2)';this.style.transform=''">
+            <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span>
+            <span>סיכום AI</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">GEMINI</span>
+          </button>
         </div>
       </div>
 
@@ -1445,6 +1463,7 @@ async function dbBriefings(){
     try{ b.completions=b.completions?(typeof b.completions==='string'?JSON.parse(b.completions):b.completions):{}; }catch(e){b.completions={};}
     b.deadline=b.deadline||null;
     b.featured=b.featured===true||b.featured==='true'||false;
+    b.refresh_requested=b.refresh_requested||null;
     return b;
   });
 }
@@ -1818,6 +1837,73 @@ async function extractFromFile(input){
     errEl.style.display='block';
     errEl.textContent='✗ שגיאה: '+err.message;
     console.error('File extract error:',err);
+  }
+}
+
+/* ── AI SUMMARY ─────────────────────────────── */
+async function generateAISummary(){
+  const key=localStorage.getItem('bs_api_key');
+  if(!key){alert('נדרש מפתח Gemini API — עדכן בהגדרות');return;}
+  const content=document.getElementById('flow-content')?.textContent||'';
+  const title=document.getElementById('flow-title')?.textContent||'';
+  if(!content.trim()){alert('אין תוכן לסכם');return;}
+
+  // Show loading
+  const btn=document.getElementById('ai-summary-btn');
+  const card=document.getElementById('ai-summary-card');
+  const loading=document.getElementById('ai-summary-loading');
+  const contentEl=document.getElementById('ai-summary-content');
+  btn.disabled=true; btn.textContent='✦ מסכם...';
+  card.style.display='block';
+  loading.style.display='block';
+  contentEl.innerHTML='';
+
+  try{
+    const prompt=`אתה עוזר למנהל מוקד. קרא את הנוהל הבא וסכם אותו בדיוק בפורמט הזה — 3 קטגוריות קצרות וברורות בעברית. כל קטגוריה עד 3 נקודות קצרות.
+
+נוהל: "${title}"
+${content.slice(0,4000)}
+
+החזר JSON בלבד ללא backtick:
+{"important":["...","..."],"forbidden":["...","..."],"todo":["...","..."]}
+
+important = מה הכי חשוב לדעת
+forbidden = מה אסור להגיד/לעשות  
+todo = מה צריך לעשות`;
+
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:800}})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const raw=data.candidates[0].content.parts[0].text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const parsed=JSON.parse(raw);
+
+    const section=(icon,color,bg,title,items)=>`
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:18px">${icon}</span>
+          <div style="font-size:12px;font-weight:700;color:${color};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">${title}</div>
+        </div>
+        <div style="background:${bg};border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+          ${(items||[]).map(i=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:14px;color:var(--ice);line-height:1.5">
+            <span style="color:${color};font-size:12px;margin-top:2px;flex-shrink:0">◆</span>
+            <span>${i}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+
+    contentEl.innerHTML=
+      section('💡','#B8862A','rgba(184,134,42,0.08)','מה הכי חשוב לדעת',parsed.important)+
+      section('🚫','#D94040','rgba(217,64,64,0.07)','מה אסור להגיד',parsed.forbidden)+
+      section('✅','#1A9E6E','rgba(26,158,110,0.07)','מה צריך לעשות',parsed.todo);
+
+  } catch(e){
+    contentEl.innerHTML=`<div style="color:var(--danger);font-size:13px">שגיאה: ${e.message}</div>`;
+  } finally{
+    loading.style.display='none';
+    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">GEMINI</span>';
   }
 }
 
@@ -2252,7 +2338,28 @@ function renderAgentBriefings(){
     console.log('Briefing:', b.title, '| targetDepts:', b.targetDepts, '| type:', typeof b.targetDepts, '| isArray:', Array.isArray(b.targetDepts));
   });
   const pending=S.briefings.filter(b=>{
-    const agId=String(S.agent.id); if(b.completions[agId]) return false;
+    const agId=String(S.agent.id);
+    const comp=b.completions[agId];
+
+    // Check if refresh was requested AFTER last completion
+    if(comp&&b.refresh_requested){
+      const compDate=new Date(comp.ts.split(' ').reverse().join('T').replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')||0);
+      const refreshDate=new Date(b.refresh_requested);
+      if(refreshDate>compDate) {
+        // Needs refresh — show as pending but mark it
+        b._needsRefresh=true;
+      } else {
+        b._needsRefresh=false;
+        return false; // completed & no refresh needed
+      }
+    } else if(comp){
+      b._needsRefresh=false;
+      return false; // completed, no refresh needed
+    } else {
+      b._needsRefresh=false;
+    }
+
+    // Check dept match
     if(!b.targetDepts||!Array.isArray(b.targetDepts)||b.targetDepts.length===0) return true;
     const agentDepts=(S.agent.depts||[]).map(d=>String(d).trim().toLowerCase());
     const briefDepts=b.targetDepts.map(d=>String(d).trim().toLowerCase());
@@ -2284,6 +2391,41 @@ function renderAgentBriefings(){
       featuredEl.style.display='none';
     }
   }
+  // Refresh reminder banner
+  const refreshEl=document.getElementById('agent-refresh-banner');
+  if(refreshEl){
+    const agId=String(S.agent.id);
+    const agentDepts=(S.agent.depts||[]).map(d=>d.trim().toLowerCase());
+    const REFRESH_DAYS=30;
+    const now=new Date();
+
+    const refreshDue=S.briefings.filter(b=>{
+      const comp=b.completions[agId];
+      if(!comp) return false; // not done yet — show in regular pending
+      // Check if relevant to agent
+      if(b.targetDepts&&b.targetDepts.length>0){
+        if(!b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.includes(d))) return false;
+      }
+      // Check if it's been REFRESH_DAYS since completion
+      const doneDate=new Date(comp.ts.split(' ')[0].split('/').reverse().join('-'));
+      const daysSince=Math.floor((now-doneDate)/(1000*60*60*24));
+      return daysSince>=REFRESH_DAYS;
+    });
+
+    if(refreshDue.length>0){
+      refreshEl.style.display='block';
+      const firstId=refreshDue[0].id;
+      refreshEl.innerHTML=`<div style="background:linear-gradient(135deg,#1A2A3A,#1E3550);border:1.5px solid rgba(91,160,230,0.35);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(30,70,140,0.2);cursor:pointer" onclick="openRefreshBriefing(${firstId})">
+        <div style="position:absolute;top:-10px;left:-10px;font-size:60px;opacity:0.08;pointer-events:none">🔄</div>
+        <div style="font-size:11px;color:rgba(120,180,255,0.7);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">🔄 זמן לרענון</div>
+        <div style="font-size:17px;font-weight:800;color:#F0F6FF;margin-bottom:4px">${refreshDue.length} תדריך${refreshDue.length>1?'ים':''} לרענון</div>
+        <div style="font-size:13px;color:rgba(240,246,255,0.55)">לא עברת על "${refreshDue[0].title}" כבר 30 יום</div>
+      </div>`;
+    } else {
+      refreshEl.style.display='none';
+    }
+  }
+
   // Show personal leaderboard
   // Show only agents in same group as current agent
   const _agGroup=agentGroup(S.agent);
@@ -2333,7 +2475,8 @@ function renderAgentBriefings(){
     return`<div class="brief-row" onclick="openBriefing(${b.id})" style="cursor:pointer;${urgent?'border-color:var(--warn-line);background:var(--warn-bg);':isFirst?'border-color:rgba(26,158,110,0.3);':''}">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap">
-          ${isFirst&&!urgent?`<span style="background:var(--ok);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">▶ הבא בתור</span>`:''}
+          ${b._needsRefresh?`<span style="background:#3A8FD4;color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">🔄 רענון נדרש</span>`:''}
+          ${isFirst&&!urgent&&!b._needsRefresh?`<span style="background:var(--ok);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">▶ הבא בתור</span>`:''}
           ${urgent?`<span style="background:var(--warn);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;font-family:'DM Mono',monospace">⚡ דחוף</span>`:''}
         </div>
         <div style="font-size:16px;font-weight:700;color:var(--ice)">${b.title}</div>
@@ -2350,14 +2493,21 @@ function renderAgentBriefings(){
   }).join('');
 }
 function openBriefing(id){
-  S.active=S.briefings.find(b=>b.id===id);S.answers=[];
+  S.active=S.briefings.find(b=>String(b.id)===String(id));S.answers=[];
   document.getElementById('agent-briefings').style.display='none';
   document.getElementById('agent-flow').style.display='block';
-  document.getElementById('flow-title').textContent=S.active.title;
+  const isRefresh=S._refreshMode&&String(S._refreshMode.briefingId)===String(id);
+  const titleEl=document.getElementById('flow-title');
+  titleEl.innerHTML=S.active.title+(isRefresh?` <span style="font-size:13px;background:rgba(91,160,230,0.15);color:#5BA0E6;border-radius:8px;padding:3px 8px;font-family:'DM Mono',monospace;font-weight:600;vertical-align:middle">🔄 רענון</span>`:'');
   document.getElementById('flow-content').textContent=S.active.content;
   document.getElementById('sig-briefing-title').textContent=`"${S.active.title}"`;
   document.getElementById('sign-done').style.display='none';
   document.getElementById('sign-btn').style.display='inline-flex';
+  // Reset AI summary
+  const sumCard=document.getElementById('ai-summary-card');
+  const sumBtn=document.getElementById('ai-summary-btn');
+  if(sumCard) sumCard.style.display='none';
+  if(sumBtn){sumBtn.disabled=false;sumBtn.innerHTML='<span>✦</span> סיכום AI';}
   goStep('read');
 }
 function goStep(s){
@@ -2410,7 +2560,16 @@ async function signBriefing(){
   const b=S.briefings.find(b=>b.id===S.active.id);
   const _agId=String(S.agent.id);
   const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
-  b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord};
+  const prevComp=b.completions[_agId];
+  // Collect history from previous rounds (stored as _hist_ key after refresh)
+  const histKey='_hist_'+_agId;
+  const prevHist=b.completions[histKey]?.history||[];
+  const history=[...prevHist];
+  if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
+  b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
+  // Remove the history-only key now that agent completed
+  delete b.completions[histKey];
+  b._needsRefresh=false;
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
@@ -2505,9 +2664,23 @@ async function backToBriefingsWithFeedback(){
   backToBriefings();
 }
 function backToBriefings(){
+  S._refreshMode=null;
   document.getElementById('agent-flow').style.display='none';
   document.getElementById('agent-briefings').style.display='block';
   renderAgentBriefings();
+}
+
+function openRefreshBriefing(id){
+  // Reset completion so agent can redo it (refresh mode)
+  const b=S.briefings.find(x=>String(x.id)===String(id));
+  if(!b||!S.agent) return;
+  const agId=String(S.agent.id);
+  const prevComp=b.completions[agId];
+  // Temporarily hide completion so openBriefing works
+  // We'll re-save after completion via signBriefing
+  delete b.completions[agId];
+  S._refreshMode={briefingId:id, prevComp};
+  openBriefing(id);
 }
 
 /* TRACKING */
@@ -2659,6 +2832,7 @@ function renderTracking(){
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button onclick="toggleBriefingDetails('bd-done-${bid}')" style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--ok);cursor:pointer;font-family:'Sora',sans-serif">✓ ${doneCount} השלימו</button>
             <button onclick="toggleBriefingDetails('bd-pend-${bid}')" style="background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--warn);cursor:pointer;font-family:'Sora',sans-serif">⏳ ${pendingList.length} ממתינים</button>
+            <button onclick="sendRefreshBriefing(${bid})" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:#3A8FD4;cursor:pointer;font-family:'Sora',sans-serif">🔄 רענון חוזר</button>
             <button class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px" onclick="deleteBriefingFromDashboard(${bid})">🗑</button>
           </div>
         </div>
@@ -3114,6 +3288,44 @@ function openWeakQuestionsPage(){
         <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(184,134,42,0.3)">◀ חזור לדשבורד</button>
       </div>
     </div>`;
+}
+
+/* ── REFRESH BRIEFING ───────────────────────── */
+async function sendRefreshBriefing(briefingId){
+  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
+  if(!b) return;
+  const doneCount=Object.keys(b.completions).length;
+  if(!confirm(`לאפס את תדריך "${b.title}" לרענון חוזר לכל הנציגים?
+${doneCount} נציגים שהשלימו יחזרו לממתינים.
+הציונים הקודמים יישמרו בהיסטוריה.`)) return;
+
+  // Archive all completions into history, then clear current completions
+  const newCompletions={};
+  Object.entries(b.completions).forEach(([agentId,comp])=>{
+    const history=comp.history||[];
+    history.push({score:comp.score,ts:comp.ts,answers:comp.answers});
+    // Keep agent entry but mark as archived (pending = no current completion)
+    // Store history separately in a "rounds" object
+    newCompletions[agentId+'_history']=history; // archive
+    // Don't copy the current completion → agent is now pending
+  });
+  // Only keep history entries, not current completions
+  const archiveOnly={};
+  Object.entries(b.completions).forEach(([agentId,comp])=>{
+    archiveOnly['_hist_'+agentId]={history:[...(comp.history||[]),{score:comp.score,ts:comp.ts}]};
+  });
+
+  const refreshTs=new Date().toISOString();
+  const {error}=await _sb.from('briefings').update({
+    completions:JSON.stringify(archiveOnly),
+    refresh_requested:refreshTs
+  }).eq('id',briefingId);
+  if(error){alert('שגיאה: '+error.message);return;}
+
+  b.completions=archiveOnly;
+  b.refresh_requested=refreshTs;
+  renderTracking();
+  alert(`✓ רענון חוזר נשלח! ${doneCount} נציגים חזרו לממתינים. הציונים הקודמים נשמרו בהיסטוריה.`);
 }
 
 function wqToggle(i){
