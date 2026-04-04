@@ -2877,13 +2877,15 @@ ${content.slice(0,3000)}
     if(S.active&&S.agent){
       const b=S.briefings.find(x=>x.id===S.active.id);
       const agId=String(S.agent.id);
-      if(b&&b.completions[agId]){
+      if(b){
+        if(!b.completions[agId]) b.completions[agId]={name:S.agent.name,score:0,ts:''};
         b.completions[agId].reverse_score=score;
         b.completions[agId].reverse_summary=parsed.summary||'';
         b.completions[agId].reverse_correct=parsed.correct||[];
         b.completions[agId].reverse_missing=parsed.missing||[];
         b.completions[agId].reverse_text=explanation;
-        _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+        await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+        console.log('✓ reverse data saved for agent',agId,'score',score);
       }
     }
 
