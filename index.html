@@ -1532,6 +1532,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div><!-- /two-column -->
 
     </div><!-- /tracking-content -->
+  </div><!-- /tab-tracking -->
   <!-- SETTINGS -->
   <div class="sec" id="tab-settings">
     <div id="settings-lock" class="lock-scene" style="display:flex">
@@ -1759,10 +1760,37 @@ function switchTab(name){
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='tracking'){ lockTracking(); }
-  if(name==='settings'){ if(!_adminUnlocked) lockSettings(); else renderSettings(); }
+  if(name==='tracking'){
+    if(!_adminUnlocked){
+      const lock=document.getElementById('tracking-lock');
+      const content=document.getElementById('tracking-content');
+      if(lock) lock.style.display='flex';
+      if(content) content.style.display='none';
+    } else {
+      renderTracking();
+    }
+  }
+  if(name==='settings'){
+    if(!_adminUnlocked){
+      // Just ensure lock is visible and content hidden - don't call lockSettings()
+      const lock=document.getElementById('settings-lock');
+      const content=document.getElementById('settings-content');
+      if(lock) lock.style.display='flex';
+      if(content) content.style.display='none';
+    } else {
+      renderSettings();
+      populateResetSelects();
+    }
+  }
   if(name==='agent'){ renderAgentLogin(); const sd=document.getElementById('search-detail-view'); if(sd) sd.style.display='none'; }
-  if(name==='manager'){ if(!_adminUnlocked) lockManager(); }
+  if(name==='manager'){
+    if(!_adminUnlocked){
+      const lock=document.getElementById('manager-lock');
+      const content=document.getElementById('manager-content');
+      if(lock) lock.style.display='flex';
+      if(content) content.style.display='none';
+    }
+  }
 }
 
 /* PASSWORD */
