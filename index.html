@@ -1263,112 +1263,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <!-- TRACKING -->
 
     <!-- SIDE PANEL PAGES (fullscreen overlays) -->
-    <div id="panel-verbal" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-        <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-verbal')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">מבחן מילולי</div>
-        <div class="sec-title" style="margin-bottom:20px">תשובות <em>מילוליות</em></div>
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-          <select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option>
-          </select>
-          <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל התדריכים</option>
-          </select>
-          <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל הזמנים</option>
-            <option value="7">שבוע אחרון</option>
-            <option value="30">חודש אחרון</option>
-            <option value="90">3 חודשים אחרונים</option>
-            <option value="180">חצי שנה אחרונה</option>
-            <option value="365">שנה אחרונה</option>
-          </select>
-        </div>
-        <div id="verbal-panel-content"></div>
-      </div>
-    </div>
+    
 
-    <div id="panel-scores" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-        <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-scores')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">ציונים</div>
-        <div class="sec-title" style="margin-bottom:20px">ציונים <em>רגילים</em></div>
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-          <select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option>
-          </select>
-          <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל התדריכים</option>
-          </select>
-          <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל הזמנים</option>
-            <option value="1">יום אחרון</option>
-            <option value="7">שבוע אחרון</option>
-            <option value="30">חודש אחרון</option>
-            <option value="90">3 חודשים</option>
-            <option value="180">חצי שנה</option>
-            <option value="365">שנה אחרונה</option>
-          </select>
-        </div>
-        <div id="scores-panel-content"></div>
-      </div>
-    </div>
-
-    <div id="panel-leaderboard" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-        <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-leaderboard')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">תחרות</div>
-        <div class="sec-title" style="margin-bottom:20px">לוח <em>תחרות</em></div>
-        <div style="margin-bottom:20px">
-          <select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option>
-          </select>
-        </div>
-        <div id="lb-panel-content"></div>
-      </div>
-    </div>
-
-    <div id="panel-pending" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:24px 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-        <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-pending')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">ממתינים</div>
-        <div class="sec-title" style="margin-bottom:20px">נציגים <em>ממתינים</em></div>
-        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-          <select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option>
-          </select>
-          <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
-            <option value="all">כל התדריכים</option>
-          </select>
-        </div>
-        <div id="pending-panel-content"></div>
-      </div>
-    </div>
-
+    
+    
+    
     <!-- SIDEBAR MENU -->
 
   <div class="sec" id="tab-tracking">
@@ -1393,95 +1292,47 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <div id="dashboard-sidebar" style="width:180px;flex-shrink:0;position:sticky;top:80px">
         <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px;overflow:hidden">
           <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">📊 ניתוח</div>
-          <button onclick="openPanel('panel-verbal')" id="sb-verbal" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('verbal')" id="sb-verbal" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">🎤</span><span>מבחן מילולי</span>
           </button>
-          <button onclick="openPanel('panel-scores')" id="sb-scores" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('scores')" id="sb-scores" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">📊</span><span>ציונים</span>
           </button>
-          <button onclick="openPanel('panel-leaderboard')" id="sb-lb" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('leaderboard')" id="sb-leaderboard" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">🏆</span><span>לוח תחרות</span>
           </button>
-          <button onclick="openPanel('panel-pending')" id="sb-pending" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('pending')" id="sb-pending" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">⏳</span><span>ממתינים</span>
           </button>
           <div style="height:1px;background:var(--line);margin:8px 4px"></div>
           <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;padding:0 4px">🔍 עומק</div>
-          <button onclick="openPanel('panel-weak')" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('weak')" id="sb-weak" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">⚠️</span><span>שאלות בעייתיות</span>
           </button>
-          <button onclick="openPanel('panel-feedback')" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('feedback')" id="sb-feedback" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">💬</span><span>משובי נציגים</span>
           </button>
-          <button onclick="openPanel('panel-calendar')" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">
+          <button onclick="showDashPanel('calendar')" id="sb-calendar" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">📅</span><span>לוח שנה</span>
+          </button>
+          <div style="height:1px;background:var(--line);margin:8px 4px"></div>
+          <button onclick="showDashPanel(null)" id="sb-main" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">🏠</span><span>דשבורד ראשי</span>
           </button>
         </div>
       </div>
 
-    <!-- PANEL: WEAK QUESTIONS -->
-    <div id="panel-weak" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:0 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-                <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-weak')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
+      <!-- PANEL HEADER (shown when a panel is active) -->
+        <div id="panel-header" style="display:none;margin-bottom:1.5rem">
+          <div class="sec-eyebrow" id="panel-header-eyebrow" style="margin-bottom:6px"></div>
+          <div class="sec-title" id="panel-header-title" style="margin-bottom:16px"></div>
+          <div id="panel-header-filters" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line2)"></div>
         </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">ניתוח טעויות</div>
-        <div class="sec-title" style="margin-bottom:20px">שאלות <em>בעייתיות</em></div>
-        <div style="margin-bottom:20px">
-          <select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl"><option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option></select>
-        </div>
-        <div id="weak-panel-content"></div>
-      </div>
-    </div>
+        <!-- Panel content area -->
+        <div id="inline-panel-content" style="display:none"></div>
 
-    <!-- PANEL: FEEDBACK -->
-    <div id="panel-feedback" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:0 20px 40px;direction:rtl">
-      <div style="max-width:660px;margin:0 auto">
-                <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-feedback')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">קול השטח</div>
-        <div class="sec-title" style="margin-bottom:20px">משובי <em>נציגים</em></div>
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-          <select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl"><option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option></select>
-          <select id="feedback-briefing-filter" onchange="renderFeedbackPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl"><option value="all">כל התדריכים</option></select>
-        </div>
-        <div id="feedback-panel-content"></div>
-      </div>
-    </div>
-
-    <!-- PANEL: CALENDAR -->
-    <div id="panel-calendar" style="display:none;position:fixed;inset:0;z-index:200;background:var(--bg,#F0EDE6);overflow-y:auto;padding:0 20px 40px;direction:rtl">
-      <div style="max-width:760px;margin:0 auto">
-                <div style="height:20px"></div>
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg,#F0EDE6);padding:14px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line2)">
-          <button onclick="closePanel('panel-calendar')" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer">◀ חזור לדשבורד</button>
-        </div>
-        <div class="sec-eyebrow" style="margin-bottom:6px">לו"ז תדריכים</div>
-        <div class="sec-title" style="margin-bottom:20px">לוח <em>שנה</em></div>
-        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
-          <select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl"><option value="all">כל המחלקות</option>
-            <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-            <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-            <option value="מעוף לעמית">מעוף לעמית</option></select>
-          <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:16px">◀</button>
-          <span id="cal-month-label" style="font-size:15px;font-weight:700;color:var(--ice);font-family:'Sora',sans-serif;min-width:120px;text-align:center"></span>
-          <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:16px">▶</button>
-        </div>
-        <div id="calendar-panel-content"></div>
-      </div>
-    </div>
-
-      <!-- MAIN CONTENT -->
-      <div style="flex:1;min-width:0">
+        <!-- DASHBOARD MAIN (shown by default) -->
+        <div id="dashboard-main">
 
     <div class="sec-header" style="margin-bottom:1.5rem">
       <div class="between" style="align-items:flex-start;flex-wrap:wrap;gap:12px">
@@ -1515,9 +1366,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
       </div>
     </div>
-    <!-- ALERT BANNER -->
     <div id="tracking-alert-banner" style="display:none;margin-bottom:1.5rem"></div>
-    <!-- WEAK QUESTIONS BADGE — top of dashboard -->
     <div id="weak-questions-badge" style="margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
     <div class="section-divider"><div class="section-divider-inner">📋 תדריכים</div></div>
@@ -1528,7 +1377,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="leaderboard-list" style="margin-bottom:1.5rem"></div>
     <div class="section-divider"><div class="section-divider-inner">👥 סטטוס נציגים</div></div>
     <div id="tracking-agents-list"></div>
-  </div><!-- /main content -->
+
+        </div><!-- /dashboard-main -->
+      </div><!-- /main content -->
     </div><!-- /two-column -->
 
     </div><!-- /tracking-content -->
@@ -1768,6 +1619,7 @@ function switchTab(name){
       if(content) content.style.display='none';
     } else {
       renderTracking();
+      showDashPanel(null); // reset to main dashboard view
     }
   }
   if(name==='settings'){
@@ -3184,6 +3036,11 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
 }
 
 function renderTracking(){
+  // Highlight "home" sidebar button on dashboard load
+  if(!_currentDashPanel){
+    const mainBtn=document.getElementById('sb-main');
+    if(mainBtn){ mainBtn.style.background='var(--gold-bg)'; mainBtn.style.color='var(--gold)'; mainBtn.style.fontWeight='700'; }
+  }
   renderFilterBar();
   renderAlertBanner();
   const wb=getWeek();
@@ -3763,6 +3620,105 @@ function toggleBriefingDetails(id){
 }
 
 /* ── DASHBOARD SIDE PANELS ───────────────────── */
+/* ── INLINE DASHBOARD PANELS ──────────────────── */
+const DASH_PANEL_META = {
+  verbal:      {eyebrow:'מבחן מילולי',   title:'תשובות <em>מילוליות</em>',  render:renderVerbalPanel},
+  scores:      {eyebrow:'ציונים',        title:'ציונים <em>רגילים</em>',     render:renderScoresPanel},
+  leaderboard: {eyebrow:'תחרות',         title:'לוח <em>תחרות</em>',          render:renderLeaderboardPanel},
+  pending:     {eyebrow:'ממתינים',       title:'נציגים <em>ממתינים</em>',     render:renderPendingPanel},
+  weak:        {eyebrow:'ניתוח טעויות', title:'שאלות <em>בעייתיות</em>',     render:renderWeakPanel},
+  feedback:    {eyebrow:'קול השטח',      title:'משובי <em>נציגים</em>',       render:renderFeedbackPanel},
+  calendar:    {eyebrow:'לו״ז תדריכים', title:'לוח <em>שנה</em>',            render:renderCalendarPanel},
+};
+
+const PANEL_FILTERS = {
+  verbal: `<select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
+           <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
+           <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="180">חצי שנה</option><option value="365">שנה</option></select>`,
+  scores: `<select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
+           <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
+           <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="1">יום</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="180">חצי שנה</option><option value="365">שנה</option></select>`,
+  leaderboard: `<select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>`,
+  pending: `<select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
+            <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
+  weak: `<select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>`,
+  feedback: `<select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
+              <select id="feedback-briefing-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
+  calendar: `<select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
+              <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">◀</button>
+              <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);font-family:'Sora',sans-serif;min-width:110px;text-align:center;display:inline-block"></span>
+              <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
+};
+
+let _currentDashPanel = null;
+
+function showDashPanel(panelKey){
+  const mainEl = document.getElementById('dashboard-main');
+  const panelHeader = document.getElementById('panel-header');
+  const panelContent = document.getElementById('inline-panel-content');
+  const panelFilters = document.getElementById('panel-header-filters');
+
+  // Reset all sidebar buttons
+  document.querySelectorAll('.sb-btn').forEach(b => {
+    b.style.background = 'none';
+    b.style.color = 'var(--ice2)';
+    b.style.fontWeight = '600';
+  });
+  const mainBtn = document.getElementById('sb-main');
+
+  if(!panelKey){
+    // Show dashboard main
+    _currentDashPanel = null;
+    mainEl.style.display = 'block';
+    panelHeader.style.display = 'none';
+    panelContent.style.display = 'none';
+    panelContent.innerHTML = '';
+    if(mainBtn){ mainBtn.style.background='var(--gold-bg)'; mainBtn.style.color='var(--gold)'; mainBtn.style.fontWeight='700'; }
+    return;
+  }
+
+  _currentDashPanel = panelKey;
+  const meta = DASH_PANEL_META[panelKey];
+  if(!meta) return;
+
+  // Hide main, show panel
+  mainEl.style.display = 'none';
+  panelHeader.style.display = 'block';
+  panelContent.style.display = 'block';
+  panelContent.innerHTML = '<div id="' + panelKey + '-panel-content"></div>';
+
+  // Set header
+  document.getElementById('panel-header-eyebrow').textContent = meta.eyebrow;
+  document.getElementById('panel-header-title').innerHTML = meta.title;
+  panelFilters.innerHTML = PANEL_FILTERS[panelKey] || '';
+
+  // Highlight active sidebar button
+  const activeBtn = document.getElementById('sb-' + panelKey);
+  if(activeBtn){ activeBtn.style.background='var(--gold-bg)'; activeBtn.style.color='var(--gold)'; activeBtn.style.fontWeight='700'; }
+
+  // Populate briefing dropdowns if needed
+  if(['verbal','scores','pending','feedback'].includes(panelKey)){
+    const bSelId = panelKey === 'verbal' ? 'verbal-briefing-filter'
+                 : panelKey === 'scores' ? 'scores-briefing-filter'
+                 : panelKey === 'pending' ? 'pending-briefing-filter'
+                 : 'feedback-briefing-filter';
+    const bSel = document.getElementById(bSelId);
+    if(bSel) bSel.innerHTML = '<option value="all">כל התדריכים</option>' +
+      S.briefings.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+  }
+  if(panelKey === 'calendar'){
+    if(!S._calYear) S._calYear = new Date().getFullYear();
+    if(S._calMonth === undefined) S._calMonth = new Date().getMonth();
+  }
+
+  // Render
+  meta.render();
+}
+
+// Legacy openPanel / closePanel — no-op now
+function openPanel(id){ const key=id.replace('panel-',''); showDashPanel(key); }
+function closePanel(id){ showDashPanel(null); }
+
 function openPanel(id){
   document.getElementById(id).style.display='block';
   window.scrollTo(0,0);
@@ -4134,13 +4090,18 @@ function renderCalendarPanel(){
     if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
     else agents=agents.filter(a=>(a.depts||[]).includes(dept));
   }
+  const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
 
-  // Get briefings published in this month
+  // Get briefings for this month — FILTERED by dept
   const monthBriefings=S.briefings.filter(b=>{
     if(!b.publishedAt) return false;
     const parts=b.publishedAt.split(' ')[0].split('/');
     if(parts.length<3) return false;
-    return parseInt(parts[1])===month+1&&parseInt(parts[2])===year;
+    if(parseInt(parts[1])!==month+1||parseInt(parts[2])!==year) return false;
+    // dept filter
+    if(dept==='all') return true;
+    if(!b.targetDepts||b.targetDepts.length===0) return true;
+    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
   });
 
   // Build calendar grid
@@ -4155,9 +4116,12 @@ function renderCalendarPanel(){
     if(!dayEvents[d]) dayEvents[d]=[];
     dayEvents[d].push(b);
   });
-  // Add deadlines
+  // Add deadlines (filtered by dept)
   S.briefings.forEach(b=>{
     if(!b.deadline) return;
+    if(dept!=='all'&&b.targetDepts&&b.targetDepts.length>0){
+      if(!b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d))) return;
+    }
     const dl=new Date(b.deadline);
     if(dl.getMonth()===month&&dl.getFullYear()===year){
       const d=dl.getDate();
@@ -4175,12 +4139,21 @@ function renderCalendarPanel(){
   for(let d=1;d<=daysInMonth;d++){
     const isToday=today.getDate()===d&&today.getMonth()===month&&today.getFullYear()===year;
     const events=dayEvents[d]||[];
-    const hasPublish=events.some(e=>!e._isDeadline);
-    const hasDeadline=events.some(e=>e._isDeadline);
-    html+=`<div style="min-height:64px;border-radius:10px;padding:6px;background:${isToday?'var(--gold-bg)':'rgba(0,0,0,0.02)'};border:${isToday?'1.5px solid var(--gold)':'1px solid var(--line)'};cursor:${events.length?'pointer':'default'};position:relative" ${events.length?`onclick="showCalDay(${d},${month},${year})"`:''}>
-      <div style="font-size:12px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--gold)':'var(--ice3)'};margin-bottom:4px">${d}</div>
-      ${hasPublish?`<div style="width:8px;height:8px;border-radius:50%;background:var(--ok);margin-bottom:2px" title="פורסם תדריך"></div>`:''}
-      ${hasDeadline?`<div style="width:8px;height:8px;border-radius:50%;background:var(--danger)" title="דדליין"></div>`:''}
+    const publishEvents=events.filter(e=>!e._isDeadline);
+    const deadlineEvents=events.filter(e=>e._isDeadline);
+    html+=`<div style="min-height:80px;border-radius:10px;padding:5px 6px;background:${isToday?'var(--gold-bg)':'rgba(0,0,0,0.02)'};border:${isToday?'1.5px solid var(--gold)':'1px solid var(--line)'};cursor:${events.length?'pointer':'default'};overflow:hidden;vertical-align:top" ${events.length?`onclick="showCalDay(${d},${month},${year})"`:''}>
+      <div style="font-size:11px;font-weight:${isToday?'800':'600'};color:${isToday?'var(--gold)':'var(--ice3)'};margin-bottom:3px">${d}</div>
+      ${publishEvents.map(e=>{
+        const actLabel=e.targetDepts&&e.targetDepts.length?e.targetDepts[0]:'כולם';
+        return`<div style="background:rgba(45,212,164,0.12);border-right:2px solid var(--ok);border-radius:4px;padding:2px 4px;margin-bottom:2px;overflow:hidden">
+          <div style="font-size:9px;color:var(--ok);font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${actLabel}</div>
+          <div style="font-size:9px;color:var(--ice);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title.slice(0,18)}${e.title.length>18?'…':''}</div>
+        </div>`;
+      }).join('')}
+      ${deadlineEvents.map(e=>`<div style="background:rgba(240,101,101,0.1);border-right:2px solid var(--danger);border-radius:4px;padding:2px 4px;margin-bottom:2px;overflow:hidden">
+        <div style="font-size:9px;color:var(--danger);font-weight:700;font-family:'DM Mono',monospace">⏰ דדליין</div>
+        <div style="font-size:9px;color:var(--ice);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title.slice(0,18)}${e.title.length>18?'…':''}</div>
+      </div>`).join('')}
     </div>`;
   }
   html+=`</div>`;
