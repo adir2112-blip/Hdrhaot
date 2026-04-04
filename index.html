@@ -1223,6 +1223,19 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <!-- PART B: Celebration + Reverse (shown after sign) -->
         <div id="sign-done" style="display:none">
           <div id="celebration-screen" style="text-align:center;padding:1rem 0">
+            <!-- TOP REVERSE BANNER — shown only if reverse_mode -->
+            <div id="reverse-top-banner" style="display:none;margin-bottom:20px;cursor:pointer" onclick="openReverseModal()">
+              <div style="background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(184,134,42,0.25),0 0 0 4px rgba(184,134,42,0.06);animation:glow-soft 2s ease-in-out infinite">
+                <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.07;pointer-events:none">🎤</div>
+                <div style="font-size:11px;font-weight:700;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
+                <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
+                <div style="font-size:13px;color:rgba(247,243,236,0.6);margin-bottom:14px">הסבר במילים שלך וקבל ציון נוסף</div>
+                <div style="background:linear-gradient(135deg,#B8862A,#E8C97A);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#1A1714">
+                  🎤 התחל חלק ב׳ עכשיו ◂
+                </div>
+              </div>
+            </div>
+
             <div id="celebration-emoji" style="font-size:64px;margin-bottom:12px;animation:float 2s ease-in-out infinite">🎉</div>
             <div id="celebration-title" style="font-family:'Playfair Display',serif;font-size:26px;color:var(--ice);margin-bottom:6px;font-weight:500"></div>
             <div id="celebration-sub" style="font-size:14px;color:var(--ice3);margin-bottom:20px;line-height:1.6"></div>
@@ -1300,7 +1313,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <div class="sec-eyebrow" style="margin-bottom:6px">ציונים</div>
         <div class="sec-title" style="margin-bottom:20px">ציונים <em>רגילים</em></div>
-        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
           <select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
             <option value="all">כל המחלקות</option>
             <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
@@ -1309,6 +1322,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </select>
           <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
             <option value="all">כל התדריכים</option>
+          </select>
+          <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:14px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl">
+            <option value="all">כל הזמנים</option>
+            <option value="1">יום אחרון</option>
+            <option value="7">שבוע אחרון</option>
+            <option value="30">חודש אחרון</option>
+            <option value="90">3 חודשים</option>
+            <option value="180">חצי שנה</option>
+            <option value="365">שנה אחרונה</option>
           </select>
         </div>
         <div id="scores-panel-content"></div>
@@ -2639,6 +2661,8 @@ function openBriefing(id){
   // Reset AI summary
   const revModal=document.getElementById('reverse-modal');
   if(revModal) revModal.style.display='none';
+  const topBanner=document.getElementById('reverse-top-banner');
+  if(topBanner) topBanner.style.display='none';
   const revText=document.getElementById('reverse-briefing-text');
   const revResult=document.getElementById('reverse-result');
   const revBtn=document.getElementById('reverse-submit-btn');
@@ -2786,12 +2810,15 @@ function showCelebration(){
 
   const btnNoReverse=document.getElementById('finish-btn-no-reverse');
   const btnGoReverse=document.getElementById('finish-btn-go-reverse');
+  const topBanner=document.getElementById('reverse-top-banner');
   if(S.active&&S.active.reverse_mode){
     if(btnNoReverse) btnNoReverse.style.display='none';
     if(btnGoReverse) btnGoReverse.style.display='block';
+    if(topBanner) topBanner.style.display='block';
   } else {
     if(btnNoReverse) btnNoReverse.style.display='block';
     if(btnGoReverse) btnGoReverse.style.display='none';
+    if(topBanner) topBanner.style.display='none';
   }
 }
 
@@ -3622,7 +3649,11 @@ function openPanel(id){
     if(df) df.value='all';
     populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
   }
-  if(id==='panel-scores') populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
+  if(id==='panel-scores'){
+    const df=document.getElementById('scores-date-filter');
+    if(df) df.value='all';
+    populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
+  }
   if(id==='panel-pending') populatePanelBriefings('pending-briefing-filter','pending-dept-filter',renderPendingPanel);
   if(id==='panel-leaderboard') renderLeaderboardPanel();
   if(id==='panel-verbal') renderVerbalPanel();
@@ -3757,23 +3788,57 @@ function renderVerbalPanel(){
 function renderScoresPanel(){
   const el=document.getElementById('scores-panel-content');
   if(!el) return;
+
   const agents=getPanelAgents('scores-dept-filter');
-  const briefs=getPanelBriefings('scores-briefing-filter',agents);
   const agentIds=new Set(agents.map(a=>String(a.id)));
+  const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
+  const bid=document.getElementById('scores-briefing-filter')?.value||'all';
+  const days=parseInt(document.getElementById('scores-date-filter')?.value||'all');
+
+  // Update briefing dropdown filtered by dept
+  const bSel=document.getElementById('scores-briefing-filter');
+  if(bSel){
+    const cur=bSel.value;
+    const dept=document.getElementById('scores-dept-filter')?.value||'all';
+    const relevantBriefs=S.briefings.filter(b=>{
+      if(dept==='all') return true;
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
+    });
+    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
+      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
+    else bSel.value='all';
+  }
 
   const rows=[];
-  briefs.forEach(b=>{
+  S.briefings.forEach(b=>{
+    if(bid!=='all'&&String(b.id)!==bid) return;
+    // filter by dept
+    if(agents.length<S.agents.length&&b.targetDepts&&b.targetDepts.length>0){
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!brDepts.some(d=>agentDepts.has(d))) return;
+    }
     Object.entries(b.completions).forEach(([agId,comp])=>{
+      if(!comp||typeof comp!=='object') return;
       if(agId.startsWith('_hist_')) return;
       if(!agentIds.has(String(agId))) return;
       if(comp.score===undefined||comp.score===null) return;
-      const agent=S.agents.find(a=>String(a.id)===agId);
-      rows.push({briefing:b.title,name:agent?agent.name:comp.name||agId,score:comp.score,ts:comp.ts});
+      // Date filter
+      if(!isNaN(days)&&comp.ts){
+        const parts=comp.ts.split(' ');
+        const dp=parts[0].split('/');
+        const tp=(parts[1]||'00:00').split(':');
+        const compDate=new Date(parseInt(dp[2]),parseInt(dp[1])-1,parseInt(dp[0]),parseInt(tp[0]),parseInt(tp[1]));
+        if(compDate<new Date(Date.now()-days*24*60*60*1000)) return;
+      }
+      const agent=S.agents.find(a=>String(a.id)===String(agId));
+      rows.push({briefing:b.title,name:agent?agent.name:comp.name||agId,score:comp.score,ts:comp.ts||''});
     });
   });
 
   if(!rows.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין ציונים עדיין.</div>';
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין ציונים לפי הסינון שנבחר.</div>';
     return;
   }
   rows.sort((a,b)=>b.score-a.score);
@@ -3782,7 +3847,8 @@ function renderScoresPanel(){
     <div style="font-size:18px;font-weight:800;color:var(--ice3);min-width:28px;text-align:center">#${i+1}</div>
     <div style="flex:1">
       <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
-      <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">📋 ${r.briefing} · ${r.ts}</div>
+      <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">📋 ${r.briefing}</div>
+      ${r.ts?`<div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">🕐 ${r.ts}</div>`:''}
     </div>
     <div style="font-size:24px;font-weight:800;color:${sc(r.score)}">${r.score}%</div>
   </div>`).join('');
