@@ -3810,7 +3810,17 @@ function showDashPanel(panelKey){
   mainEl.style.display = 'none';
   panelHeader.style.display = 'block';
   panelContent.style.display = 'block';
-  panelContent.innerHTML = '<div id="' + panelKey + '-panel-content"></div>';
+  const panelIdMap = {
+    verbal:'verbal-panel-content',
+    scores:'scores-panel-content',
+    leaderboard:'lb-panel-content',
+    pending:'pending-panel-content',
+    weak:'weak-panel-content',
+    feedback:'feedback-panel-content',
+    calendar:'calendar-panel-content',
+  };
+  const contentDivId = panelIdMap[panelKey] || (panelKey+'-panel-content');
+  panelContent.innerHTML = '<div id="'+contentDivId+'"></div>';
 
   // Set header
   document.getElementById('panel-header-eyebrow').textContent = meta.eyebrow;
@@ -3864,9 +3874,37 @@ function getPanelAgents(deptSelId){
 
 function getPanelBriefings(bSelId, agents){
   const bid=document.getElementById(bSelId)?.value||'all';
-  let briefs=S.briefings;
-  if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
-  return briefs;
+  if(bid!=='all') return S.briefings.filter(b=>String(b.id)===String(bid));
+  return S.briefings;
+}
+
+// Get briefings relevant to a set of agents (by their depts)
+function getRelevantBriefings(agents, deptValue){
+  // deptValue: 'all' | 'מובמנט' | 'פריפיט' | etc
+  if(!deptValue||deptValue==='all') return S.briefings;
+  // Get the specific depts for this group
+  const grp=GROUPS.find(g=>g.key===deptValue);
+  const targetDepts=grp?grp.depts:[deptValue];
+  const targetDeptsLower=targetDepts.map(d=>d.trim().toLowerCase());
+  return S.briefings.filter(b=>{
+    // If briefing has no targetDepts, it's for everyone — INCLUDE it
+    if(!b.targetDepts||b.targetDepts.length===0) return true;
+    // Otherwise check if any of briefing's targetDepts matches the selected group's depts
+    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>targetDeptsLower.includes(d));
+  });
+}
+
+// Populate briefing dropdown filtered by dept
+function populateBriefingDropdown(selId, agents, deptSelId){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  const deptVal=deptSelId?document.getElementById(deptSelId)?.value||'all':'all';
+  const cur=sel.value;
+  const relevant=getRelevantBriefings(agents, deptVal);
+  sel.innerHTML='<option value="all">כל התדריכים</option>'+
+    relevant.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  else sel.value='all';
 }
 
 /* ── VERBAL PANEL ── */
@@ -3879,31 +3917,14 @@ function renderVerbalPanel(){
   const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
   const bid=document.getElementById('verbal-briefing-filter')?.value||'all';
 
-  // Update briefing dropdown — only briefings relevant to selected dept
-  const bSel=document.getElementById('verbal-briefing-filter');
-  if(bSel){
-    const cur=bSel.value;
-    const relevantBriefs=S.briefings.filter(b=>{
-      const dept=document.getElementById('verbal-dept-filter')?.value||'all';
-      if(dept==='all') return true;
-      if(!b.targetDepts||b.targetDepts.length===0) return true;
-      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
-    });
-    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
-      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
-    // restore or reset
-    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
-    else bSel.value='all';
-  }
+  // Update briefing dropdown filtered by agent depts
+  populateBriefingDropdown('verbal-briefing-filter', agents, 'verbal-dept-filter');
 
   const rows=[];
-  S.briefings.forEach(b=>{
+  const _dv1=document.getElementById('verbal-dept-filter')?.value||'all';
+  const relevantBriefs=getRelevantBriefings(agents,_dv1);
+  relevantBriefs.forEach(b=>{
     if(bid!=='all'&&String(b.id)!==bid) return;
-    // Skip briefings not relevant to selected dept
-    if(b.targetDepts&&b.targetDepts.length>0){
-      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
-      if(!brDepts.some(d=>agentDepts.has(d))) return;
-    }
     Object.entries(b.completions).forEach(([agId,comp])=>{
       if(!comp||typeof comp!=='object') return;
       if(agId.startsWith('_hist_')) return;
@@ -3976,30 +3997,14 @@ function renderScoresPanel(){
   const bid=document.getElementById('scores-briefing-filter')?.value||'all';
   const days=parseInt(document.getElementById('scores-date-filter')?.value||'all');
 
-  // Update briefing dropdown filtered by dept
-  const bSel=document.getElementById('scores-briefing-filter');
-  if(bSel){
-    const cur=bSel.value;
-    const dept=document.getElementById('scores-dept-filter')?.value||'all';
-    const relevantBriefs=S.briefings.filter(b=>{
-      if(dept==='all') return true;
-      if(!b.targetDepts||b.targetDepts.length===0) return true;
-      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
-    });
-    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
-      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
-    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
-    else bSel.value='all';
-  }
+  // Update briefing dropdown filtered by agent depts
+  populateBriefingDropdown('scores-briefing-filter', agents, 'scores-dept-filter');
 
   const rows=[];
-  S.briefings.forEach(b=>{
+  const _dv1=document.getElementById('verbal-dept-filter')?.value||'all';
+  const relevantBriefs=getRelevantBriefings(agents,_dv1);
+  relevantBriefs.forEach(b=>{
     if(bid!=='all'&&String(b.id)!==bid) return;
-    // filter by dept
-    if(agents.length<S.agents.length&&b.targetDepts&&b.targetDepts.length>0){
-      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
-      if(!brDepts.some(d=>agentDepts.has(d))) return;
-    }
     Object.entries(b.completions).forEach(([agId,comp])=>{
       if(!comp||typeof comp!=='object') return;
       if(agId.startsWith('_hist_')) return;
@@ -4059,8 +4064,11 @@ function renderPendingPanel(){
   if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
 
   const agentIds=new Set(agents.map(a=>String(a.id)));
+  // Update briefing dropdown filtered by agent depts
+  populateBriefingDropdown('pending-briefing-filter', agents, 'pending-dept-filter');
+  const relevantBriefs=bid!=='all'?S.briefings.filter(b=>String(b.id)===bid):getRelevantBriefings(agents,document.getElementById('pending-dept-filter')?.value||'all');
   const rows=[];
-  briefs.forEach(b=>{
+  relevantBriefs.forEach(b=>{
     const pendingAgents=agents.filter(a=>{
       if(b.completions[String(a.id)]) return false;
       if(!b.targetDepts||!b.targetDepts.length) return true;
@@ -4188,16 +4196,17 @@ function renderCalendarPanel(){
   }
   const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
 
-  // Get briefings for this month — FILTERED by dept
+  // Get briefings for this month — FILTERED by dept using GROUPS
+  const grpForCal=GROUPS.find(g=>g.key===dept);
+  const groupDeptsLower=(grpForCal?grpForCal.depts:[dept]).map(d=>d.trim().toLowerCase());
   const monthBriefings=S.briefings.filter(b=>{
     if(!b.publishedAt) return false;
     const parts=b.publishedAt.split(' ')[0].split('/');
     if(parts.length<3) return false;
     if(parseInt(parts[1])!==month+1||parseInt(parts[2])!==year) return false;
-    // dept filter
     if(dept==='all') return true;
     if(!b.targetDepts||b.targetDepts.length===0) return true;
-    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
+    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>groupDeptsLower.includes(d));
   });
 
   // Build calendar grid
@@ -4216,7 +4225,7 @@ function renderCalendarPanel(){
   S.briefings.forEach(b=>{
     if(!b.deadline) return;
     if(dept!=='all'&&b.targetDepts&&b.targetDepts.length>0){
-      if(!b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d))) return;
+      if(!b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>groupDeptsLower.includes(d))) return;
     }
     const dl=new Date(b.deadline);
     if(dl.getMonth()===month&&dl.getFullYear()===year){
