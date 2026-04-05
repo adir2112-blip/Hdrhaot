@@ -959,7 +959,40 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
       <div class="field">
         <label class="field-label">תוכן הנוהל</label>
-        <textarea id="briefing-content" placeholder="הדבק את הנוהל כאן. AI יבנה ממנו שאלות אוטומטית..."></textarea>
+        <textarea id="briefing-content" placeholder="הדבק את הנוהל כאן בפשטות — AI ינסח וישפר עבורך..." style="min-height:140px"></textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2)">
+            <span style="font-size:16px">✦</span>
+            <span>שפר ונסח עם AI</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">GEMINI</span>
+          </button>
+          <div id="polish-loading" style="display:none;font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;align-items:center;gap:6px">
+            <div class="dot-row"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
+            <span>מנסח...</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="polish-preview" style="display:none;margin-bottom:18px">
+        <div style="background:linear-gradient(135deg,#1A1814,#2E2820);border-radius:18px;overflow:hidden">
+          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(201,168,76,0.15)">
+            <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ תוצאת AI — בדוק ואשר</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="approvePolish()" style="background:var(--ok);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">✓ אשר והחלף</button>
+              <button onclick="discardPolish()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">✕ בטל</button>
+            </div>
+          </div>
+          <div style="padding:18px 20px">
+            <!-- Rendered preview -->
+            <div id="polish-rendered" style="color:rgba(240,246,255,0.88);font-size:15px;font-family:'Sora',sans-serif;line-height:1.9;direction:rtl;min-height:100px"></div>
+            <!-- Editable raw text (hidden by default, shown on edit) -->
+            <textarea id="polish-result-text" style="display:none;width:100%;min-height:200px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.2);color:rgba(240,246,255,0.9);font-size:14px;font-family:'Sora',sans-serif;line-height:1.9;resize:vertical;outline:none;direction:rtl;border-radius:10px;padding:12px"></textarea>
+          </div>
+          <div style="padding:0 18px 14px;display:flex;gap:10px;align-items:center">
+            <button onclick="togglePolishEdit()" id="polish-edit-btn" style="background:none;border:1px solid rgba(201,168,76,0.3);color:rgba(201,168,76,0.7);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">✏ ערוך</button>
+            <span style="font-size:11px;color:rgba(201,168,76,0.4);font-family:'DM Mono',monospace">אשר כדי להחליף את הטקסט המקורי</span>
+          </div>
+        </div>
       </div>
 
       <div class="card" style="border-style:dashed;border-color:var(--gold-line);background:var(--gold-bg);padding:1.25rem;margin-bottom:0" id="file-upload-zone">
@@ -2030,6 +2063,82 @@ todo = מה צריך לעשות`;
   }
 }
 
+/* AI CONTENT POLISH */
+function markdownToHtml(md){
+  if(!md) return '';
+  var h='font-weight:800;color:var(--ice)';
+  var html=md
+    .replace(/^### (.+)$/gm,'<h4 style="font-size:15px;font-weight:800;color:var(--ice);margin:16px 0 6px">$1</h4>')
+    .replace(/^## (.+)$/gm,'<h3 style="font-size:17px;font-weight:800;color:var(--ice);margin:20px 0 8px;border-bottom:1px solid var(--line2);padding-bottom:4px">$1</h3>')
+    .replace(/^# (.+)$/gm,'<h2 style="font-size:20px;font-weight:800;color:var(--ice);margin:22px 0 10px">$1</h2>')
+    .replace(/[*][*](.+?)[*][*]/g,'<strong style="font-weight:800;color:var(--ice)">$1</strong>')
+    .replace(/[*](.+?)[*]/g,'<em>$1</em>')
+    .replace(/^[0-9]+[.] (.+)$/gm,'<div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--gold);min-width:20px">◆</span><span>$1</span></div>')
+    .replace(/^[-] (.+)$/gm,'<div style="display:flex;gap:10px;margin-bottom:6px"><span style="color:var(--gold);min-width:16px">◆</span><span>$1</span></div>')
+    .replace(/^[-]{3,}$/gm,'<hr style="border:none;border-top:1px solid var(--line2);margin:16px 0">')
+    .replace(/\n\n/g,'</p><p style="margin-bottom:12px;line-height:1.9">')
+    .replace(/\n/g,'<br>');
+  return '<p style="margin-bottom:12px;line-height:1.9">'+html+'</p>';
+}
+
+async function polishContent(){
+  const raw=document.getElementById('briefing-content')?.value?.trim();
+  if(!raw){alert('יש לרשום תוכן קודם');return;}
+  const key=localStorage.getItem('bs_api_key');
+  if(!key){openApiModal();return;}
+  const title=document.getElementById('briefing-title')?.value?.trim()||'';
+  const btn=document.getElementById('polish-btn');
+  const loading=document.getElementById('polish-loading');
+  const preview=document.getElementById('polish-preview');
+  btn.disabled=true; loading.style.display='flex'; preview.style.display='none';
+  try{
+    const prompt=`אתה עוזר למנהל מוקד שירות ומכירה בישראל. המנהל כתב נוהל עבודה בשפה פשוטה.\nהמשימה: לנסח מחדש את הנוהל בצורה מקצועית, ברורה ומסודרת לעובדי מוקד.\n\nכותרת: "${title}"\nטקסט גולמי:\n${raw}\n\nכתוב מחדש בעברית מקצועית. השתמש בסעיפים ממוספרים כשצריך. שמור על כל המידע המקורי — אל תמציא. החזר טקסט בלבד.`;
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const polished=data.candidates[0].content.parts[0].text.trim();
+    document.getElementById('polish-result-text').value=polished;
+    document.getElementById('polish-rendered').innerHTML=markdownToHtml(polished);
+    document.getElementById('polish-rendered').style.display='block';
+    document.getElementById('polish-result-text').style.display='none';
+    document.getElementById('polish-edit-btn').textContent='✏ ערוך';
+    preview.style.display='block';
+    preview.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){alert('שגיאה: '+e.message);}
+  finally{btn.disabled=false;loading.style.display='none';}
+}
+function togglePolishEdit(){
+  const rendered = document.getElementById('polish-rendered');
+  const raw = document.getElementById('polish-result-text');
+  const btn = document.getElementById('polish-edit-btn');
+  const isEditing = raw.style.display !== 'none';
+  if(isEditing){
+    // Back to preview
+    const updated = raw.value.trim();
+    document.getElementById('polish-rendered').innerHTML = markdownToHtml(updated);
+    rendered.style.display = 'block';
+    raw.style.display = 'none';
+    btn.textContent = '✏ ערוך';
+  } else {
+    // Show raw editor
+    rendered.style.display = 'none';
+    raw.style.display = 'block';
+    raw.focus();
+    btn.textContent = '👁 תצוגה מקדימה';
+  }
+}
+
+function approvePolish(){
+  const p=document.getElementById('polish-result-text')?.value?.trim();
+  if(p) document.getElementById('briefing-content').value=p;
+  document.getElementById('polish-preview').style.display='none';
+}
+function discardPolish(){
+  document.getElementById('polish-preview').style.display='none';
+}
 async function generateQuiz(){
   const title=document.getElementById('briefing-title').value.trim();
   const content=document.getElementById('briefing-content').value.trim();
@@ -2130,6 +2239,7 @@ async function publishBriefing(){
 function resetManager(){
   document.getElementById('briefing-title').value='';
   document.getElementById('briefing-content').value='';
+  document.getElementById('polish-preview').style.display='none';
   document.getElementById('briefing-deadline').value='';
   document.getElementById('briefing-featured').value='0';
   document.getElementById('briefing-reverse').value='0';
@@ -2629,7 +2739,14 @@ function openBriefing(id){
   const isRefresh=S._refreshMode&&String(S._refreshMode.briefingId)===String(id);
   const titleEl=document.getElementById('flow-title');
   titleEl.innerHTML=S.active.title+(isRefresh?` <span style="font-size:13px;background:rgba(91,160,230,0.15);color:#5BA0E6;border-radius:8px;padding:3px 8px;font-family:'DM Mono',monospace;font-weight:600;vertical-align:middle">🔄 רענון</span>`:'');
-  document.getElementById('flow-content').textContent=S.active.content;
+  const flowEl = document.getElementById('flow-content');
+  const rendered = markdownToHtml(S.active.content||'');
+  // If content has markdown markers, render as HTML; otherwise plain text
+  if(S.active.content&&(S.active.content.includes('**')||S.active.content.includes('##')||S.active.content.includes('\n1.'))){
+    flowEl.innerHTML = rendered;
+  } else {
+    flowEl.textContent = S.active.content;
+  }
   document.getElementById('sig-briefing-title').textContent=`"${S.active.title}"`;
   document.getElementById('sign-done').style.display='none';
   document.getElementById('sign-btn').style.display='inline-flex';
@@ -3719,36 +3836,7 @@ function showDashPanel(panelKey){
 function openPanel(id){ const key=id.replace('panel-',''); showDashPanel(key); }
 function closePanel(id){ showDashPanel(null); }
 
-function openPanel(id){
-  document.getElementById(id).style.display='block';
-  window.scrollTo(0,0);
-  // Populate briefing dropdowns
-  if(id==='panel-verbal'){
-    const df=document.getElementById('verbal-date-filter');
-    if(df) df.value='all';
-    populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
-  }
-  if(id==='panel-scores'){
-    const df=document.getElementById('scores-date-filter');
-    if(df) df.value='all';
-    populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
-  }
-  if(id==='panel-pending') populatePanelBriefings('pending-briefing-filter','pending-dept-filter',renderPendingPanel);
-  if(id==='panel-leaderboard') renderLeaderboardPanel();
-  if(id==='panel-verbal') renderVerbalPanel();
-  if(id==='panel-scores') renderScoresPanel();
-  if(id==='panel-pending') renderPendingPanel();
-  if(id==='panel-weak'){ renderWeakPanel(); }
-  if(id==='panel-feedback'){
-    populatePanelBriefings('feedback-briefing-filter','feedback-dept-filter',renderFeedbackPanel);
-    renderFeedbackPanel();
-  }
-  if(id==='panel-calendar'){ S._calYear=new Date().getFullYear(); S._calMonth=new Date().getMonth(); renderCalendarPanel(); }
-}
 
-function closePanel(id){
-  document.getElementById(id).style.display='none';
-}
 
 function populatePanelBriefings(selId, deptSelId, cb){
   const sel=document.getElementById(selId);
