@@ -3266,7 +3266,8 @@ function renderTracking(){
           <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
         </div>
-        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\'")}','${b.title.replace(/'/g,"\'")}')"
+        <button onclick="event.stopPropagation();retakeFromBtn(this)"
+          data-agent-id="${a.id}" data-briefing-id="${b.id}" data-agent-name="${esc(a.name)}" data-briefing-title="${esc(b.title)}"
           style="background:rgba(212,130,10,0.1);border:1.5px solid rgba(212,130,10,0.3);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sora',sans-serif;flex-shrink:0">
           🔄 מבחן חוזר
         </button>
@@ -3485,6 +3486,13 @@ function toggleHistory(id){
 }
 
 /* ── RETAKE BRIEFING ─────────────────────────── */
+function retakeFromBtn(btn){
+  const agentId=btn.dataset.agentId;
+  const briefingId=btn.dataset.briefingId;
+  const agentName=btn.dataset.agentName;
+  const briefingTitle=btn.dataset.briefingTitle;
+  retakeConfirm(agentId, briefingId, agentName, briefingTitle);
+}
 async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
   if(!confirm(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
 הציון הנוכחי יימחק.`)) return;
