@@ -1432,16 +1432,48 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
     <div id="settings-content" style="display:none">
-      <div class="between" style="margin-bottom:2rem">
-        <div>
-          <div class="sec-eyebrow">Manager Console</div>
-          <div class="sec-title">ניהול <em>נציגים</em></div>
+      <div style="display:flex;gap:20px;align-items:flex-start">
+
+        <!-- SETTINGS SIDEBAR -->
+        <div style="width:180px;flex-shrink:0;position:sticky;top:80px">
+          <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px">
+            <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">⚙️ ניהול</div>
+          <button onclick="showSettingsPanel('main')" id="ssb-main" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);font-weight:700;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">🏠</span><span>ראשי</span>
+          </button>
+          <button onclick="showSettingsPanel('agents')" id="ssb-agents" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">👥</span><span>נציגים</span>
+          </button>
+          <button onclick="showSettingsPanel('import')" id="ssb-import" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">📥</span><span>ייבוא מאקסל</span>
+          </button>
+          <button onclick="showSettingsPanel('delete')" id="ssb-delete" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">🗑</span><span>מחיקת נתונים</span>
+          </button>
+          <button onclick="showSettingsPanel('stats')" id="ssb-stats" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">📊</span><span>סטטיסטיקות</span>
+          </button>
+          <button onclick="showSettingsPanel('config')" id="ssb-config" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">⚙️</span><span>הגדרות</span>
+          </button>
+            <div style="height:1px;background:var(--line);margin:8px 4px"></div>
+            <button onclick="lockSettings()" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <span style="font-size:18px">🔒</span><span>נעל</span>
+            </button>
+          </div>
         </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn btn-outline btn-sm" onclick="openApiModal()">⚙ API Key</button>
-          <button class="btn btn-ghost btn-sm" onclick="lockSettings()">🔒 נעל</button>
-        </div>
-      </div>
+
+        <!-- SETTINGS MAIN CONTENT -->
+        <div style="flex:1;min-width:0">
+
+          <!-- Panel header -->
+          <div id="settings-panel-header" style="margin-bottom:1.5rem">
+            <div class="sec-eyebrow" id="settings-panel-eyebrow" style="margin-bottom:6px">Manager Console</div>
+            <div class="sec-title" id="settings-panel-title">ניהול <em>ראשי</em></div>
+          </div>
+
+          <!-- PANEL: MAIN (agents list + add) -->
+          <div id="sp-main">
       <div class="card">
         <div class="card-label">הוספת נציג</div>
         <div class="field">
@@ -1466,7 +1498,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;margin-bottom:12px;flex-wrap:wrap;gap:10px">
         <div class="eyebrow" style="margin:0">נציגים פעילים</div>
-        <select id="settings-group-filter" onchange="renderSettings()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;cursor:pointer;direction:rtl">
+        <select id="settings-group-filter" onchange="renderSettingsAgents()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;cursor:pointer;direction:rtl">
           <option value="all">כל המחלקות</option>
           <option value="מובמנט">מובמנט</option>
           <option value="פריפיט">פריפיט</option>
@@ -1477,9 +1509,73 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </select>
       </div>
       <div id="agents-list-settings"></div>
+          </div><!-- /sp-main -->
 
-      <div class="divider"></div>
-      <div class="eyebrow">איפוס תדריכים</div>
+          <!-- PANEL: AGENTS (full list + filter) -->
+          <div id="sp-agents" style="display:none">
+            <!-- Add agent form -->
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-label">+ הוספת נציג חדש</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+                <div style="flex:2;min-width:140px">
+                  <label class="field-label" style="margin-bottom:6px;display:block">שם מלא</label>
+                  <input type="text" id="new-agent-name2" placeholder="שם הנציג" style="width:100%">
+                </div>
+                <div style="flex:1;min-width:100px">
+                  <label class="field-label" style="margin-bottom:6px;display:block">PIN (4 ספרות)</label>
+                  <input type="text" id="new-agent-pin2" placeholder="1234" maxlength="4" inputmode="numeric" style="width:100%;letter-spacing:0.2em;font-family:'DM Mono',monospace;text-align:center">
+                </div>
+                <button class="btn btn-gold btn-sm" onclick="addAgentFromPanel()" style="flex-shrink:0;align-self:flex-end">+ הוסף</button>
+              </div>
+              <div style="margin-top:12px">
+                <label class="field-label" style="margin-bottom:6px;display:block">מחלקות</label>
+                <div class="dept-checkbox-grid" id="new-agent-depts2"></div>
+              </div>
+            </div>
+            <!-- Filter + list -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div class="eyebrow" style="margin:0">נציגים פעילים</div>
+              <select id="settings-group-filter2" onchange="renderSettingsAgents()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;cursor:pointer;direction:rtl">
+                <option value="all">כל המחלקות</option>
+                <option value="מובמנט">מובמנט</option>
+                <option value="פריפיט">פריפיט</option>
+                <option value="סחר">סחר</option>
+                <option value="מאוחדת">מאוחדת</option>
+                <option value="active">פעילים בלבד</option>
+                <option value="inactive">לא פעילים</option>
+              </select>
+            </div>
+            <div id="agents-list-settings2"></div>
+          </div><!-- /sp-agents -->
+
+          <!-- PANEL: IMPORT -->
+          <div id="sp-import" style="display:none">
+            <div class="card">
+              <div class="card-label">ייבוא נציגים מאקסל</div>
+              <div style="font-size:14px;color:var(--ice2);line-height:1.8;margin-bottom:16px">
+                העלה קובץ Excel עם העמודות הבאות:<br>
+                <span style="font-family:'DM Mono',monospace;background:var(--ink3);padding:2px 8px;border-radius:6px;font-size:12px">שם מלא | מחלקה | 4 ספרות ת"ז</span>
+              </div>
+              <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:14px;padding:2rem;text-align:center;margin-bottom:16px">
+                <div style="font-size:36px;margin-bottom:12px">📥</div>
+                <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">גרור קובץ Excel לכאן</div>
+                <div style="font-size:12px;color:var(--ice3);margin-bottom:16px">או לחץ לבחירה</div>
+                <label style="cursor:pointer">
+                  <input type="file" id="excel-upload2" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
+                  <span class="btn btn-gold btn-sm">📂 בחר קובץ</span>
+                </label>
+              </div>
+              <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;line-height:1.7">
+                ✓ נציגים קיימים לא יושכפלו<br>
+                ✓ PIN אופציונלי — 4 ספרות בלבד<br>
+                ✓ מחלקה חייבת להתאים לשמות המדויקים במערכת
+              </div>
+            </div>
+          </div><!-- /sp-import -->
+
+          <!-- PANEL: DELETE -->
+          <div id="sp-delete" style="display:none">
+      <div class="eyebrow">מחיקת נתונים</div>
       <div class="card" style="border-color:var(--danger-line)">
         <div class="card-label" style="color:var(--danger)">מחיקת תדריכים</div>
         <div style="font-size:12px;color:var(--ice3);margin-bottom:16px;line-height:1.7">מחיקה תסיר את התדריך מכל הנציגים. לא ניתן לשחזר.</div>
@@ -1520,9 +1616,60 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </div>
         </div>
       </div>
+          </div><!-- /sp-delete -->
+
+          <!-- PANEL: STATS -->
+          <div id="sp-stats" style="display:none">
+            <div id="settings-stats-content"></div>
+          </div><!-- /sp-stats -->
+
+          <!-- PANEL: CONFIG -->
+          <div id="sp-config" style="display:none">
+            <div class="card">
+              <div class="card-label">⚙️ הגדרות מערכת</div>
+              <div class="field">
+                <label class="field-label">מפתח Gemini API</label>
+                <div style="display:flex;gap:10px">
+                  <input type="text" id="config-api-key" placeholder="AIzaSy..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
+                  <button class="btn btn-gold btn-sm" onclick="saveConfigApiKey()">שמור</button>
+                </div>
+                <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">נדרש ליצירת שאלות AI וניסוח תוכן</div>
+              </div>
+              <div class="field" style="margin-top:16px">
+                <label class="field-label">שינוי סיסמת מנהל</label>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                  <input type="password" id="config-new-pw" placeholder="סיסמה חדשה" style="flex:1;min-width:140px">
+                  <input type="password" id="config-confirm-pw" placeholder="אימות" style="flex:1;min-width:140px">
+                  <button class="btn btn-gold btn-sm" onclick="saveConfigPw()">שמור</button>
+                </div>
+                <div id="config-pw-msg" style="display:none;font-size:12px;margin-top:6px;font-family:'DM Mono',monospace"></div>
+              </div>
+            </div>
+          </div><!-- /sp-config -->
+
+        </div><!-- /settings main content -->
+      </div><!-- /flex row -->
+    </div><!-- /settings-content -->
+  </div><!-- /tab-settings -->
+
+</div>
+
+<!-- ADMIN CONFIG PASSWORD MODAL -->
+<div id="admin-config-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:linear-gradient(145deg,#1A1814,#2A2420);border:1px solid rgba(201,168,76,0.3);border-radius:24px;padding:2.5rem 2rem;width:360px;max-width:90vw;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
+    <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:24px 24px 0 0"></div>
+    <div style="font-size:40px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,168,76,0.5))">🔑</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:#F0EDE6;margin-bottom:6px">גישת SUPER ADMIN</div>
+    <div style="font-size:13px;color:rgba(240,237,230,0.5);margin-bottom:22px;font-family:'DM Mono',monospace">הכנס סיסמת מנהל עליון</div>
+    <input type="password" id="config-admin-pw" placeholder="••••••••" 
+      style="width:100%;text-align:center;letter-spacing:0.2em;font-size:18px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.25);color:#F0EDE6;border-radius:14px;padding:13px;font-family:'DM Mono',monospace;margin-bottom:10px;outline:none"
+      onkeydown="if(event.key==='Enter')checkConfigAdminPw()">
+    <div id="config-admin-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-gold" style="flex:1" onclick="checkConfigAdminPw()">כניסה</button>
+      <button onclick="closeConfigAdminModal()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(240,237,230,0.5);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">ביטול</button>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -1536,6 +1683,7 @@ const AV_COLORS=[
 ];
 const LETTERS=['א','ב','ג','ד'];
 const ADMIN_PW='Q1w2e3r4!';
+const SUPER_ADMIN_PW='Adirgal123!';
 const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
 const GROUPS=[
   {key:'מובמנט', label:'מובמנט', depts:['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT']},
@@ -1693,6 +1841,7 @@ function unlockAll(){
   });
   renderSettings();
   renderTracking();
+  showSettingsPanel('main');
 }
 function lockAll(){
   _adminUnlocked = false;
@@ -1723,6 +1872,224 @@ function checkTrackingPw(){ checkAdminInput('tracking-pw-input','tracking-pw-err
 function checkPw(){ checkAdminInput('admin-pw-input','admin-pw-error'); }
 function lockManager(){ if(!_adminUnlocked){ document.getElementById('manager-lock').style.display='flex'; document.getElementById('manager-content').style.display='none'; } }
 function lockTracking(){ if(!_adminUnlocked){ document.getElementById('tracking-lock').style.display='flex'; document.getElementById('tracking-content').style.display='none'; } }
+/* ── SETTINGS SIDEBAR ────────────────────────── */
+let _currentSettingsPanel = 'main';
+
+function showConfigAdminModal(){
+  document.getElementById('config-admin-pw').value='';
+  document.getElementById('config-admin-err').style.display='none';
+  document.getElementById('admin-config-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('config-admin-pw').focus(),100);
+}
+
+function closeConfigAdminModal(){
+  document.getElementById('admin-config-modal').style.display='none';
+  // Return to previous panel (main)
+  showSettingsPanel('main');
+}
+
+function checkConfigAdminPw(){
+  const val = document.getElementById('config-admin-pw').value;
+  if(val === SUPER_ADMIN_PW){
+    document.getElementById('admin-config-modal').style.display='none';
+    // Now actually show the config panel content
+    const panels = ['main','agents','import','delete','stats','config'];
+    panels.forEach(p=>{
+      const el=document.getElementById('sp-'+p);
+      if(el) el.style.display=p==='config'?'block':'none';
+    });
+    document.querySelectorAll('.ssb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
+    const activeBtn=document.getElementById('ssb-config');
+    if(activeBtn){activeBtn.style.background='var(--gold-bg)';activeBtn.style.border='1px solid var(--gold-line)';activeBtn.style.color='var(--gold)';activeBtn.style.fontWeight='700';}
+    const eyEl=document.getElementById('settings-panel-eyebrow');
+    const titEl=document.getElementById('settings-panel-title');
+    if(eyEl) eyEl.textContent='הגדרות';
+    if(titEl) titEl.innerHTML='<em>הגדרות</em> מערכת';
+    _currentSettingsPanel='config';
+    loadConfigValues();
+  } else {
+    document.getElementById('config-admin-err').style.display='block';
+    document.getElementById('config-admin-pw').value='';
+    document.getElementById('config-admin-pw').focus();
+  }
+}
+
+function showSettingsPanel(key){
+  const panels = ['main','agents','import','delete','stats','config'];
+  panels.forEach(p => {
+    const el = document.getElementById('sp-'+p);
+    if(el) el.style.display = p===key ? 'block' : 'none';
+  });
+  // Update sidebar active state
+  document.querySelectorAll('.ssb-btn').forEach(b => {
+    b.style.background = 'none'; b.style.border = 'none';
+    b.style.color = 'var(--ice2)'; b.style.fontWeight = '600';
+  });
+  const activeBtn = document.getElementById('ssb-'+key);
+  if(activeBtn){ activeBtn.style.background='var(--gold-bg)'; activeBtn.style.border='1px solid var(--gold-line)'; activeBtn.style.color='var(--gold)'; activeBtn.style.fontWeight='700'; }
+  _currentSettingsPanel = key;
+
+  // Update header
+  const eyebrows = {main:'Manager Console',agents:'נציגים',import:'ייבוא',delete:'מחיקה',stats:'סטטיסטיקות',config:'הגדרות'};
+  const titles = {main:'ניהול <em>ראשי</em>',agents:'רשימת <em>נציגים</em>',import:'ייבוא <em>מאקסל</em>',delete:'מחיקת <em>נתונים</em>',stats:'סטטיסטיקות <em>מערכת</em>',config:'<em>הגדרות</em> מערכת'};
+  const eyEl = document.getElementById('settings-panel-eyebrow');
+  const titEl = document.getElementById('settings-panel-title');
+  if(eyEl) eyEl.textContent = eyebrows[key]||'';
+  if(titEl) titEl.innerHTML = titles[key]||'';
+
+  if(key==='agents'){ initAgentPanelDepts(); renderSettingsAgents(); }
+  if(key==='stats') renderSettingsStats();
+  if(key==='config'){ showConfigAdminModal(); return; }
+}
+
+async function addAgentFromPanel(){
+  const name = document.getElementById('new-agent-name2')?.value?.trim();
+  if(!name){ alert('יש להזין שם'); return; }
+  if(S.agents.find(a=>a.name===name)){ alert('נציג זה כבר קיים'); return; }
+  const pin = document.getElementById('new-agent-pin2')?.value?.trim();
+  if(pin && !/^\d{4}$/.test(pin)){ alert('PIN חייב להיות 4 ספרות'); return; }
+  const depts = DEPTS.filter((_,i)=>{const b=document.getElementById('na2-'+i);return b&&b.dataset.checked==='1';});
+  const row = {name, depts:JSON.stringify(depts)};
+  if(pin) row.pin = pin;
+  const {data,error} = await _sb.from('agents').insert(row).select().single();
+  if(error){ alert('שגיאה: '+error.message); return; }
+  data.depts = depts;
+  S.agents.push(data);
+  document.getElementById('new-agent-name2').value='';
+  document.getElementById('new-agent-pin2').value='';
+  document.querySelectorAll('[id^=na2-]').forEach(b=>{b.dataset.checked='0';b.classList.remove('checked');const sp=b.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';}});
+  renderSettingsAgents();
+  renderSettings();
+  renderAgentLogin();
+}
+
+function initAgentPanelDepts(){
+  const el = document.getElementById('new-agent-depts2');
+  if(!el||el.children.length) return;
+  el.innerHTML = DEPTS.map((d,i)=>`<button class="dept-cb" id="na2-${i}" onclick="toggleNA2(${i},this)" data-checked="0">
+    <span id="na2x-${i}" style="width:13px;height:13px;border-radius:3px;border:1px solid var(--line2);background:transparent;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px"></span> ${d}
+  </button>`).join('');
+}
+
+function toggleNA2(i,btn){
+  const on=btn.dataset.checked==='1';
+  btn.dataset.checked=on?'0':'1';
+  btn.classList.toggle('checked',!on);
+  const sp=btn.querySelector('span');
+  if(sp){sp.style.border=!on?'1px solid var(--gold)':'1px solid var(--line2)';sp.style.background=!on?'var(--gold)':'transparent';sp.textContent=!on?'✓':'';}
+}
+
+function renderSettingsAgents(){
+  const el = document.getElementById('agents-list-settings2');
+  if(!el) return;
+  const filterSel = document.getElementById('settings-group-filter2');
+  const filterVal = filterSel ? filterSel.value : 'all';
+  let filtered = S.agents;
+  if(filterVal==='active') filtered = S.agents.filter(a=>a.active!==false);
+  else if(filterVal==='inactive') filtered = S.agents.filter(a=>a.active===false);
+  else if(filterVal!=='all'){
+    const grp=GROUPS.find(g=>g.key===filterVal);
+    if(grp) filtered=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
+  }
+  if(!filtered.length){ el.innerHTML='<div style="color:var(--ice3);font-size:14px">אין נציגים בסינון זה.</div>'; return; }
+  el.innerHTML = filtered.map(a=>{
+    const c=col(a.id);
+    return`<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
+      <div class="av" style="width:36px;height:36px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${(a.depts||[]).map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">—</span>'}</div>
+        ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="toggleActive(${a.id})" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid ${a.active!==false?'rgba(26,158,110,0.3)':'rgba(217,64,64,0.3)'};background:${a.active!==false?'rgba(26,158,110,0.08)':'rgba(217,64,64,0.08)'};color:${a.active!==false?'var(--ok)':'var(--danger)'};font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">${a.active!==false?'● פעיל':'○ לא פעיל'}</button>
+        <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
+        <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSettingsStats(){
+  const el = document.getElementById('settings-stats-content');
+  if(!el) return;
+  if(!S.agents||!S.briefings){el.innerHTML='<div style="color:var(--ice3)">טוען נתונים...</div>';return;}
+  const activeAgents = S.agents.filter(a=>a.active!==false);
+  const totalBriefings = S.briefings.length;
+  const totalCompletions = S.briefings.reduce((s,b)=>s+Object.keys(b.completions).filter(k=>!k.startsWith('_hist_')).length,0);
+  const possible = activeAgents.length * totalBriefings;
+  const pct = possible ? Math.round(totalCompletions/possible*100) : 0;
+  const neverLoggedIn = activeAgents.filter(a=>!a.last_login).length;
+  const scores = S.briefings.flatMap(b=>Object.values(b.completions).filter(c=>!c._hist_&&c.score!==undefined).map(c=>c.score));
+  const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+
+  el.innerHTML=`
+    <div class="kpi-grid" style="margin-bottom:1.5rem">
+      <div class="kpi"><div class="kpi-val">${activeAgents.length}</div><div class="kpi-label">נציגים פעילים</div></div>
+      <div class="kpi"><div class="kpi-val">${totalBriefings}</div><div class="kpi-label">תדריכים</div></div>
+      <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז השלמה</div></div>
+      <div class="kpi"><div class="kpi-val">${avgScore!==null?avgScore+'%':'—'}</div><div class="kpi-label">ממוצע ציונים</div></div>
+    </div>
+    <div class="card">
+      <div class="card-label">פירוט לפי קבוצה</div>
+      ${GROUPS.map(g=>{
+        const gAgents=activeAgents.filter(a=>(a.depts||[]).some(d=>g.depts.includes(d)));
+        const gDone=S.briefings.reduce((s,b)=>s+gAgents.filter(a=>b.completions[String(a.id)]).length,0);
+        const gPossible=gAgents.length*totalBriefings;
+        const gPct=gPossible?Math.round(gDone/gPossible*100):0;
+        return`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+          <div style="flex:1;font-size:14px;font-weight:600;color:var(--ice)">${g.label}</div>
+          <div style="font-size:13px;color:var(--ice3)">${gAgents.length} נציגים</div>
+          <div style="font-size:16px;font-weight:700;color:${gPct>=80?'var(--ok)':gPct>=60?'var(--warn)':'var(--danger)'}">${gPct}%</div>
+          <div style="width:80px;height:6px;background:var(--ink4);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${gPct}%;background:${gPct>=80?'var(--ok)':gPct>=60?'var(--warn)':'var(--danger)'};border-radius:3px"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${neverLoggedIn?`<div class="card" style="border-color:var(--warn-line);margin-top:1rem">
+      <div class="card-label" style="color:var(--warn)">⚠️ לא התחברו מעולם</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${activeAgents.filter(a=>!a.last_login).map(a=>`<span style="background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:600">${a.name}</span>`).join('')}
+      </div>
+    </div>`:''}`;
+}
+
+async function loadConfigValues(){
+  const keyEl = document.getElementById('config-api-key');
+  if(keyEl){
+    const stored = localStorage.getItem('bs_api_key');
+    keyEl.value = stored ? '••••••••••••••••' : '';
+    keyEl.placeholder = stored ? 'מפתח קיים — הכנס חדש לשינוי' : 'AIzaSy...';
+  }
+  // Show current admin pw hint
+  const pwMsg = document.getElementById('config-pw-msg');
+  if(pwMsg){ pwMsg.style.display='none'; }
+}
+
+async function saveConfigApiKey(){
+  const k = document.getElementById('config-api-key')?.value?.trim();
+  if(!k||k==='••••••••••••••••') return;
+  if(!k.startsWith('AIza')){ alert('מפתח לא תקין'); return; }
+  await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
+  localStorage.setItem('bs_api_key',k);
+  document.getElementById('config-api-key').value='••••••••••••••••';
+  alert('✓ מפתח API נשמר');
+}
+
+function saveConfigPw(){
+  const np = document.getElementById('config-new-pw')?.value;
+  const cp = document.getElementById('config-confirm-pw')?.value;
+  const msg = document.getElementById('config-pw-msg');
+  if(!np||np.length<6){ if(msg){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='סיסמה חייבת להיות לפחות 6 תווים';} return; }
+  if(np!==cp){ if(msg){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='הסיסמאות אינן תואמות';} return; }
+  // Note: changing ADMIN_PW at runtime (session only)
+  window._sessionPw = np;
+  if(msg){msg.style.display='block';msg.style.color='var(--ok)';msg.textContent='✓ סיסמה שונתה לסשן הנוכחי';}
+  document.getElementById('config-new-pw').value='';
+  document.getElementById('config-confirm-pw').value='';
+}
+
 function lockSettings(){
   // Only lock settings panel, don't touch other panels
   _adminUnlocked = false;
