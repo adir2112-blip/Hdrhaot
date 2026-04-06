@@ -905,6 +905,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('knowledge')" id="nav-knowledge">
+        <span class="nav-icon">🧠</span><span class="nav-label">ניהול ידע</span>
+      </button>
       <button class="nav-btn active" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
         <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
@@ -922,6 +925,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </button>
     <button class="bnav-btn" id="bnav-settings" onclick="switchTab('settings')">
       <span class="bni">⚙️</span><span class="bnl">ניהול</span>
+    </button>
+    <button class="bnav-btn" id="bnav-knowledge" onclick="switchTab('knowledge')">
+      <span class="bni">🧠</span><span class="bnl">ידע</span>
     </button>
     <button class="bnav-btn bnav-agent-special" id="bnav-agent" onclick="switchTab('agent')">
       <span class="bni">👤</span><span class="bnl">כניסת עובד</span>
@@ -1135,6 +1141,20 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
       </div>
 
+      <!-- KNOWLEDGE CHAT BUTTON -->
+      <div id="agent-knowledge-btn-wrap" style="margin-bottom:14px">
+        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.35);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(184,134,42,0.2)'" onmouseout="this.style.boxShadow='none'">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(201,168,76,0.6))">🧠</span>
+            <div style="text-align:right">
+              <div style="font-size:14px;font-weight:800;color:#F0EDE6">שאל את ה-AI</div>
+              <div style="font-size:12px;color:rgba(240,237,230,0.5)">בסיס הידע של המחלקה שלך</div>
+            </div>
+          </div>
+          <span style="font-size:20px;color:var(--gold)">◂</span>
+        </button>
+      </div>
+
       <!-- SEARCH -->
       <div style="position:relative;margin-bottom:16px">
         <input type="text" id="briefing-search-input"
@@ -1290,6 +1310,150 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- KNOWLEDGE BASE -->
+  <div class="sec" id="tab-knowledge">
+    <div id="knowledge-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">🧠</div>
+        <div class="lock-title">ניהול ידע</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="knowledge-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkKnowledgePw()">
+        </div>
+        <div id="knowledge-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkKnowledgePw()">כניסה</button>
+      </div>
+    </div>
+    <div id="knowledge-content" style="display:none">
+      <div style="display:flex;gap:0;align-items:flex-start;min-height:60vh">
+
+        <!-- FOLDER TREE (left panel) -->
+        <div id="kb-folder-tree" style="display:none;width:240px;flex-shrink:0;background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px;margin-left:0;margin-left:16px;min-height:400px;position:sticky;top:80px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:10px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em">📁 ספרייה</div>
+            <button onclick="createFolder(null)" style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">+ תיקיה</button>
+          </div>
+          <div id="folder-tree-root" style="display:flex;flex-direction:column;gap:2px"></div>
+        </div>
+
+        <div style="display:flex;gap:20px;align-items:flex-start;flex:1;min-width:0">
+        <div style="width:180px;flex-shrink:0;position:sticky;top:80px">
+          <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px">
+            <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">🧠 ידע</div>
+            <button onclick="showKnowledgePanel('library')" id="ksb-library" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">📁</span><span>ספרייה</span>
+            </button>
+            <button onclick="showKnowledgePanel('articles')" id="ksb-articles" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);font-weight:700;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">📚</span><span>מאמרים</span>
+            </button>
+            <button onclick="showKnowledgePanel('add')" id="ksb-add" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">➕</span><span>הוסף תוכן</span>
+            </button>
+            <button onclick="showKnowledgePanel('chat')" id="ksb-chat" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">💬</span><span>בדוק AI</span>
+            </button>
+            <button onclick="showKnowledgePanel('briefings')" id="ksb-briefings" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <span style="font-size:18px">📋</span><span>תדריכים</span>
+            </button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div id="kp-library" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">ספרייה</div>
+            <div class="sec-title" style="margin-bottom:16px">עץ <em>תיקיות</em></div>
+            <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:16px;padding:2rem;text-align:center">
+              <div style="font-size:40px;margin-bottom:12px">📁</div>
+              <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">עץ התיקיות פתוח בצד</div>
+              <div style="font-size:13px;color:var(--ice3);margin-bottom:16px">לחץ על תיקיה לצפייה בתכנים שלה</div>
+              <button onclick="createFolder(null)" class="btn btn-gold btn-sm">📁 צור תיקיה ראשית</button>
+            </div>
+            <div id="kp-library-content" style="margin-top:16px"></div>
+          </div>
+
+          <div id="kp-articles">
+            <div class="sec-eyebrow" style="margin-bottom:6px">Knowledge Base</div>
+            <div class="sec-title" style="margin-bottom:16px">מאמרי <em>ידע</em></div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+              <select id="k-dept-filter" onchange="renderKnowledgeArticles()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+                <option value="all">כל המחלקות</option><option value="כללי">כללי</option>
+                <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+                <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+              </select>
+              <input type="text" id="k-search" placeholder="🔍 חפש..." oninput="renderKnowledgeArticles()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
+            </div>
+            <div id="knowledge-articles-list"></div>
+          </div>
+          <div id="kp-add" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">הוספת תוכן</div>
+            <div class="sec-title" style="margin-bottom:16px">הוסף <em>ידע חדש</em></div>
+            <div class="card">
+              <div class="field"><label class="field-label">כותרת</label><input type="text" id="k-title" placeholder="למשל: נוהל טיפול בהתנגדויות"></div>
+              <div class="field"><label class="field-label">תוכן</label><textarea id="k-content" placeholder="הכנס כאן את תוכן הידע..." style="min-height:160px"></textarea></div>
+              <div class="field">
+                <label class="field-label">העלה קובץ PDF / Word (אופציונלי)</label>
+                <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:14px;padding:1.5rem;text-align:center">
+                  <label style="cursor:pointer"><input type="file" id="k-file-upload" accept=".pdf,.docx,.doc" style="display:none" onchange="extractKnowledgeFile(this)"><span class="btn btn-outline btn-sm">📂 בחר קובץ</span></label>
+                  <div id="k-file-status" style="display:none;margin-top:8px;font-size:12px;color:var(--gold);font-family:'DM Mono',monospace"></div>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">מחלקה</label>
+                <select id="k-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
+                  <option value="כללי">כללי (לכולם)</option><option value="מובמנט">מובמנט</option>
+                  <option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">תיקיה (אופציונלי)</label>
+                <select id="k-folder-select" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
+                  <option value="">ללא תיקיה</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button class="btn btn-gold" onclick="saveKnowledgeArticle()">💾 שמור</button>
+                <div id="k-save-msg" style="display:none;font-size:13px;font-family:'DM Mono',monospace;align-items:center"></div>
+              </div>
+            </div>
+          </div>
+          <div id="kp-chat" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">בדיקת AI</div>
+            <div class="sec-title" style="margin-bottom:16px">שאל את ה-<em>AI</em></div>
+            <div style="margin-bottom:12px">
+              <select id="k-chat-dept" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+                <option value="כללי">כללי</option><option value="מובמנט">מובמנט</option>
+                <option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+              </select>
+            </div>
+            <div id="k-admin-chat-box" style="background:var(--ink3);border:1px solid var(--line2);border-radius:16px;padding:16px;min-height:200px;max-height:400px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="k-admin-chat-input" placeholder="שאל שאלה לבדיקת בסיס הידע..." style="flex:1" onkeydown="if(event.key==='Enter')sendKnowledgeChat('admin')">
+              <button class="btn btn-gold" onclick="sendKnowledgeChat('admin')">שלח ▶</button>
+            </div>
+          </div>
+
+          <!-- PANEL: BRIEFINGS AS KNOWLEDGE -->
+          <div id="kp-briefings" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">תדריכים בבסיס הידע</div>
+            <div class="sec-title" style="margin-bottom:16px">תדריכים <em>ושאלות</em></div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+              <select id="kb-briefings-dept" onchange="renderKBBriefings()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+                <option value="all">כל המחלקות</option>
+                <option value="מובמנט">מובמנט</option>
+                <option value="פריפיט">פריפיט</option>
+                <option value="סחר">סחר</option>
+                <option value="מאוחדת">מאוחדת</option>
+              </select>
+              <input type="text" id="kb-briefings-search" placeholder="🔍 חפש תדריך..." oninput="renderKBBriefings()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
+            </div>
+            <div id="kb-briefings-list"></div>
+          </div>
+
+        </div>
+        </div><!-- /inner flex -->
+      </div><!-- /outer flex -->
     </div>
   </div>
 
@@ -1792,6 +1956,19 @@ function switchTab(name){
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
+  if(name==='knowledge'){
+    if(!_adminUnlocked){
+      const lock=document.getElementById('knowledge-lock');
+      const content=document.getElementById('knowledge-content');
+      if(lock) lock.style.display='flex';
+      if(content) content.style.display='none';
+    } else {
+      document.getElementById('knowledge-lock').style.display='none';
+      document.getElementById('knowledge-content').style.display='block';
+      Promise.all([loadKnowledge(),loadFolders()]).then(()=>{renderKnowledgeArticles();});
+      showKnowledgePanel('articles');
+    }
+  }
   if(name==='tracking'){
     if(!_adminUnlocked){
       const lock=document.getElementById('tracking-lock');
@@ -1842,6 +2019,7 @@ function unlockAll(){
   renderSettings();
   renderTracking();
   showSettingsPanel('main');
+  loadKnowledge();
 }
 function lockAll(){
   _adminUnlocked = false;
@@ -2088,6 +2266,502 @@ function saveConfigPw(){
   if(msg){msg.style.display='block';msg.style.color='var(--ok)';msg.textContent='✓ סיסמה שונתה לסשן הנוכחי';}
   document.getElementById('config-new-pw').value='';
   document.getElementById('config-confirm-pw').value='';
+}
+
+/* ══════════════════════════════════════════════
+   KNOWLEDGE BASE
+══════════════════════════════════════════════ */
+let S_knowledge = []; // loaded articles
+
+async function loadKnowledge(){
+  const {data,error} = await _sb.from('knowledge_base').select('*').order('created_at',{ascending:false});
+  if(!error) S_knowledge = data||[];
+}
+
+function checkKnowledgePw(){
+  const val = document.getElementById('knowledge-pw-input').value;
+  if(val === ADMIN_PW){
+    document.getElementById('knowledge-lock').style.display='none';
+    document.getElementById('knowledge-content').style.display='block';
+    Promise.all([loadKnowledge(),loadFolders()]).then(()=>{renderKnowledgeArticles();});
+    showKnowledgePanel('articles');
+  } else {
+    document.getElementById('knowledge-pw-error').style.display='block';
+    document.getElementById('knowledge-pw-input').value='';
+  }
+}
+
+function showKnowledgePanel(key){
+  ['library','articles','add','chat','briefings'].forEach(p=>{
+    const el=document.getElementById('kp-'+p);
+    if(el) el.style.display=p===key?'block':'none';
+  });
+  document.querySelectorAll('.ksb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
+  const ab=document.getElementById('ksb-'+key);
+  if(ab){ab.style.background='var(--gold-bg)';ab.style.border='1px solid var(--gold-line)';ab.style.color='var(--gold)';ab.style.fontWeight='700';}
+  if(key==='articles') renderKnowledgeArticles();
+  if(key==='chat') document.getElementById('k-admin-chat-box').innerHTML='';
+  if(key==='briefings') renderKBBriefings();
+  if(key==='library'){ loadFolders().then(()=>renderFolderTree()); }
+  if(key==='add'){
+    const fSel=document.getElementById('k-folder-select');
+    if(fSel) fSel.innerHTML='<option value="">ללא תיקיה</option>'+S_folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  }
+  // Show/hide folder tree panel
+  const treePanel=document.getElementById('kb-folder-tree');
+  if(treePanel) treePanel.style.display=(key==='library')?'block':'none';
+}
+
+function renderKnowledgeArticles(){
+  const el=document.getElementById('knowledge-articles-list');
+  if(!el) return;
+  const dept=document.getElementById('k-dept-filter')?.value||'all';
+  const q=(document.getElementById('k-search')?.value||'').trim().toLowerCase();
+  let items=S_knowledge;
+  if(dept!=='all') items=items.filter(a=>a.dept===dept);
+  if(q) items=items.filter(a=>(a.title||'').toLowerCase().includes(q)||(a.content||'').toLowerCase().includes(q));
+  if(!items.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין פריטי ידע. לחץ "הוסף תוכן" כדי להתחיל.</div>';
+    return;
+  }
+  el.innerHTML=items.map(a=>`<div class="track-row" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="chip chip-gold" style="font-size:11px">${a.dept||'כללי'}</span>
+          <div style="font-size:15px;font-weight:700;color:var(--ice)">${a.title}</div>
+        </div>
+        <div style="font-size:13px;color:var(--ice3);line-height:1.6;max-height:60px;overflow:hidden;text-overflow:ellipsis">${(a.content||'').slice(0,150)}${(a.content||'').length>150?'…':''}</div>
+        <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:6px">${a.created_at?new Date(a.created_at).toLocaleDateString('he-IL'):''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px">✏ ערוך</button>
+        <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:5px 10px;font-size:11px">🗑</button>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+async function extractKnowledgeFile(input){
+  const file=input.files[0]; if(!file) return;
+  const status=document.getElementById('k-file-status');
+  status.style.display='block'; status.textContent='⏳ קורא קובץ...';
+  try{
+    let txt='';
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(ext==='pdf'){
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const ab=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+      for(let i=1;i<=pdf.numPages;i++){
+        const p=await pdf.getPage(i);
+        const c=await p.getTextContent();
+        txt+=c.items.map(s=>s.str).join(' ')+' ';
+      }
+    } else {
+      const ab=await file.arrayBuffer();
+      const r=await mammoth.extractRawText({arrayBuffer:ab});
+      txt=r.value;
+    }
+    const existing=document.getElementById('k-content').value;
+    document.getElementById('k-content').value=(existing+' '+txt).trim();
+    if(!document.getElementById('k-title').value){
+      document.getElementById('k-title').value=file.name.replace(/[.][^.]+$/,'').replace(/[-_]/g,' ');
+    }
+    status.textContent='✓ חולץ בהצלחה'; status.style.color='var(--ok)';
+  } catch(e){ status.textContent='✗ שגיאה: '+e.message; status.style.color='var(--danger)'; }
+  input.value='';
+}
+
+async function saveKnowledgeArticle(){
+  const title=document.getElementById('k-title')?.value?.trim();
+  const content=document.getElementById('k-content')?.value?.trim();
+  const dept=document.getElementById('k-dept')?.value||'כללי';
+  if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
+  const msg=document.getElementById('k-save-msg');
+  msg.style.display='flex'; msg.textContent='שומר...'; msg.style.color='var(--ice3)';
+  const folderId=document.getElementById('k-folder-select')?.value||null;
+  const insertData={title,content,dept};
+  if(folderId) insertData.folder_id=folderId;
+  const {data,error}=await _sb.from('knowledge_base').insert(insertData).select().single();
+  if(error){msg.textContent='שגיאה: '+error.message;msg.style.color='var(--danger)';return;}
+  S_knowledge.unshift(data);
+  document.getElementById('k-title').value='';
+  document.getElementById('k-content').value='';
+  document.getElementById('k-file-status').style.display='none';
+  msg.textContent='נשמר!'; msg.style.color='var(--ok)';
+  setTimeout(()=>{msg.style.display='none';showKnowledgePanel('articles');},1200);
+}
+
+let _editingKbId = null;
+function editKnowledgeArticle(id){
+  const item = S_knowledge.find(a=>String(a.id)===String(id));
+  if(!item) return;
+  _editingKbId = id;
+  document.getElementById('k-edit-title').value = item.title||'';
+  document.getElementById('k-edit-content').value = item.content||'';
+  document.getElementById('k-edit-dept').value = item.dept||'כללי';
+  document.getElementById('knowledge-edit-modal').style.display = 'flex';
+}
+function closeKnowledgeEdit(){
+  document.getElementById('knowledge-edit-modal').style.display = 'none';
+  _editingKbId = null;
+}
+async function saveKnowledgeEdit(){
+  if(!_editingKbId) return;
+  const title = document.getElementById('k-edit-title').value.trim();
+  const content = document.getElementById('k-edit-content').value.trim();
+  const dept = document.getElementById('k-edit-dept').value;
+  if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
+  const {error} = await _sb.from('knowledge_base').update({title,content,dept}).eq('id',_editingKbId);
+  if(error){alert('שגיאה: '+error.message);return;}
+  const idx = S_knowledge.findIndex(a=>String(a.id)===String(_editingKbId));
+  if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept};
+  closeKnowledgeEdit();
+  renderKnowledgeArticles();
+}
+async function deleteKnowledgeArticle(id){
+  if(!confirm('למחוק פריט ידע זה?')) return;
+  await _sb.from('knowledge_base').delete().eq('id',id);
+  S_knowledge=S_knowledge.filter(a=>String(a.id)!==String(id));
+  renderKnowledgeArticles();
+}
+
+function renderKBBriefings(){
+  const el=document.getElementById('kb-briefings-list');
+  if(!el) return;
+  const dept=document.getElementById('kb-briefings-dept')?.value||'all';
+  const q=(document.getElementById('kb-briefings-search')?.value||'').toLowerCase();
+
+  let briefs=S.briefings;
+  if(dept!=='all'){
+    const grp=GROUPS.find(g=>g.key===dept);
+    const depts=grp?grp.depts:[dept];
+    briefs=briefs.filter(b=>{
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.some(d=>depts.includes(d));
+    });
+  }
+  if(q) briefs=briefs.filter(b=>(b.title||'').toLowerCase().includes(q)||(b.content||'').toLowerCase().includes(q));
+
+  if(!briefs.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין תדריכים לסינון זה.</div>';
+    return;
+  }
+
+  el.innerHTML=briefs.map(b=>{
+    const qs=b.questions||[];
+    const deptChips=(b.targetDepts||[]).map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span class="chip chip-muted">לכולם</span>';
+    return`<div class="track-row" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">📋 ${b.title}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${deptChips}</div>
+          <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">${b.publishedAt}</div>
+        </div>
+        <span class="chip chip-ok" style="font-size:11px;flex-shrink:0">${qs.length} שאלות</span>
+      </div>
+      ${b.content?`<div style="font-size:13px;color:var(--ice3);line-height:1.6;background:var(--ink3);border-radius:10px;padding:10px 12px;margin-bottom:10px;max-height:80px;overflow:hidden;text-overflow:ellipsis">${(b.content||'').slice(0,200)}${(b.content||'').length>200?'…':''}</div>`:''}
+      ${qs.length?`<div>
+        <div style="font-size:10px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">שאלות ותשובות</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${qs.map((q,i)=>`<div style="background:#fff;border:1px solid rgba(184,134,42,0.1);border-radius:10px;padding:10px 12px">
+            <div style="font-size:13px;font-weight:600;color:var(--ice);margin-bottom:4px">❓ ${q.q}</div>
+            <div style="font-size:12px;color:var(--ok);font-weight:600">✓ ${(q.options||[])[q.correct]||'—'}</div>
+          </div>`).join('')}
+        </div>
+      </div>`:''}`
+    +'</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   FOLDER TREE — Knowledge Library
+══════════════════════════════════════════════ */
+let S_folders = [];   // {id, name, parent_id, created_at}
+let _selectedFolderId = null;
+
+async function loadFolders(){
+  const {data} = await _sb.from('kb_folders').select('*').order('name');
+  S_folders = data||[];
+}
+
+async function createFolder(parentId){
+  const name = prompt('שם התיקיה:');
+  if(!name||!name.trim()) return;
+  const {data,error} = await _sb.from('kb_folders').insert({name:name.trim(), parent_id:parentId||null}).select().single();
+  if(error){alert('שגיאה: '+error.message);return;}
+  S_folders.push(data);
+  renderFolderTree();
+  if(parentId) selectFolder(data.id);
+}
+
+async function deleteFolder(id){
+  if(!confirm('למחוק תיקיה זו וכל תכניה?')) return;
+  // Delete all articles in this folder and sub-folders recursively
+  const allIds = getFolderAndChildren(id);
+  for(const fid of allIds){
+    await _sb.from('knowledge_base').delete().eq('folder_id', fid);
+    S_knowledge = S_knowledge.filter(a=>a.folder_id!==fid);
+    await _sb.from('kb_folders').delete().eq('id', fid);
+  }
+  S_folders = S_folders.filter(f=>!allIds.includes(f.id));
+  if(_selectedFolderId && allIds.includes(_selectedFolderId)) _selectedFolderId=null;
+  renderFolderTree();
+  selectFolder(null);
+}
+
+function getFolderAndChildren(id){
+  const result=[id];
+  const children=S_folders.filter(f=>f.parent_id===id);
+  children.forEach(c=>result.push(...getFolderAndChildren(c.id)));
+  return result;
+}
+
+function renderFolderTree(){
+  const root = document.getElementById('folder-tree-root');
+  if(!root) return;
+  const topLevel = S_folders.filter(f=>!f.parent_id);
+  root.innerHTML = '';
+  if(!topLevel.length){
+    root.innerHTML='<div style="font-size:12px;color:var(--ice3);text-align:center;padding:1rem 0">אין תיקיות עדיין</div>';
+    return;
+  }
+  topLevel.forEach(f=>root.appendChild(buildFolderNode(f, 0)));
+}
+
+function buildFolderNode(folder, depth){
+  const children = S_folders.filter(f=>f.parent_id===folder.id);
+  const articles = S_knowledge.filter(a=>a.folder_id===folder.id);
+  const isSelected = _selectedFolderId===folder.id;
+  const isOpen = document.getElementById('fnode-'+folder.id)?.dataset?.open==='1';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText='margin-bottom:2px;';
+
+  // Folder row
+  const row = document.createElement('div');
+  row.id='fnode-'+folder.id;
+  row.dataset.open = isOpen?'1':'0';
+  row.style.cssText=`display:flex;align-items:center;gap:6px;padding:7px ${8+depth*14}px;border-radius:10px;cursor:pointer;background:${isSelected?'var(--gold-bg)':'transparent'};border:1px solid ${isSelected?'var(--gold-line)':'transparent'};transition:all 0.15s;`;
+
+  const hasChildren = children.length>0||articles.length>0;
+  row.innerHTML=`
+    <span style="font-size:11px;color:var(--ice3);min-width:12px">${hasChildren?(isOpen?'▾':'▸'):''}</span>
+    <span style="font-size:16px">${isOpen?'📂':'📁'}</span>
+    <span style="font-size:13px;font-weight:600;color:${isSelected?'var(--gold)':'var(--ice2)'};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${folder.name}">${folder.name}</span>
+    ${articles.length?`<span style="font-size:10px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:1px 7px;font-family:'DM Mono',monospace">${articles.length}</span>`:''}
+    <button onclick="event.stopPropagation();createFolder('${folder.id}')" style="background:none;border:none;color:var(--ice3);cursor:pointer;font-size:13px;padding:0 2px" title="תיקיה חדשה">+</button>
+    <button onclick="event.stopPropagation();deleteFolder('${folder.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:0 2px" title="מחק">✕</button>`;
+
+  row.onclick=()=>toggleFolderNode(folder.id);
+  wrap.appendChild(row);
+
+  // Children container (initially hidden unless open)
+  if(hasChildren){
+    const childWrap=document.createElement('div');
+    childWrap.id='fchildren-'+folder.id;
+    childWrap.style.display=isOpen?'block':'none';
+    // Articles in this folder
+    articles.forEach(a=>{
+      const aRow=document.createElement('div');
+      aRow.style.cssText=`display:flex;align-items:center;gap:6px;padding:5px ${8+(depth+1)*14}px;border-radius:8px;cursor:pointer;transition:background 0.1s;`;
+      aRow.innerHTML=`<span style="font-size:12px">📄</span><span style="font-size:12px;color:var(--ice2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.title}</span>`;
+      aRow.onmouseover=()=>aRow.style.background='var(--ink4)';
+      aRow.onmouseout=()=>aRow.style.background='transparent';
+      aRow.onclick=()=>viewFolderArticle(a.id);
+      childWrap.appendChild(aRow);
+    });
+    // Sub-folders
+    children.forEach(c=>childWrap.appendChild(buildFolderNode(c, depth+1)));
+    wrap.appendChild(childWrap);
+  }
+
+  return wrap;
+}
+
+function toggleFolderNode(id){
+  const node=document.getElementById('fnode-'+id);
+  const children=document.getElementById('fchildren-'+id);
+  if(!node) return;
+  const wasOpen=node.dataset.open==='1';
+  node.dataset.open=wasOpen?'0':'1';
+  if(children) children.style.display=wasOpen?'none':'block';
+  selectFolder(id);
+  renderFolderTree();
+}
+
+function selectFolder(id){
+  _selectedFolderId=id;
+  const contentEl=document.getElementById('kp-library-content');
+  if(!contentEl) return;
+  if(!id){contentEl.innerHTML='';return;}
+  const folder=S_folders.find(f=>f.id===id);
+  if(!folder) return;
+  const articles=S_knowledge.filter(a=>a.folder_id===id);
+  const children=S_folders.filter(f=>f.parent_id===id);
+
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="font-size:16px;font-weight:700;color:var(--ice)">📂 ${folder.name}</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="createFolder('${id}')" class="btn btn-outline btn-sm">📁 תת-תיקיה</button>
+      <button onclick="addArticleToFolder('${id}')" class="btn btn-gold btn-sm">+ מאמר</button>
+    </div>
+  </div>`;
+
+  if(!articles.length&&!children.length){
+    html+='<div style="text-align:center;padding:2rem;color:var(--ice3);background:var(--ink3);border-radius:14px">התיקיה ריקה — הוסף מאמר או תת-תיקיה</div>';
+  }
+  // Sub-folders
+  if(children.length){
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${children.map(c=>{
+      const cnt=S_knowledge.filter(a=>a.folder_id===c.id).length;
+      return`<div onclick="selectFolder('${c.id}')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(184,134,42,0.15);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(184,134,42,0.15)'">
+        <span style="font-size:20px">📁</span>
+        <div><div style="font-size:13px;font-weight:700;color:var(--ice)">${c.name}</div><div style="font-size:11px;color:var(--ice3)">${cnt} מאמרים</div></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  // Articles
+  if(articles.length){
+    html+=articles.map(a=>`<div class="track-row" style="margin-bottom:8px;display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:4px">📄 ${a.title}</div>
+        <div style="font-size:12px;color:var(--ice3);line-height:1.5">${(a.content||'').slice(0,120)}${(a.content||'').length>120?'…':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px">✏</button>
+        <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:4px 8px;font-size:11px">🗑</button>
+      </div>
+    </div>`).join('');
+  }
+
+  contentEl.innerHTML=html;
+}
+
+function addArticleToFolder(folderId){
+  // Switch to add panel and pre-set folder
+  showKnowledgePanel('add');
+  document.getElementById('k-folder-select').value=folderId;
+}
+
+function viewFolderArticle(id){
+  const a=S_knowledge.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  editKnowledgeArticle(id);
+}
+
+function buildKnowledgeContext(dept){
+  // Manual knowledge articles
+  const articles=S_knowledge.filter(a=>a.dept==='כללי'||a.dept===dept);
+  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,800)).join('\n\n---\n\n');
+
+  // Briefings relevant to this dept
+  const grp=GROUPS.find(g=>g.key===dept);
+  const depts=grp?grp.depts:[dept];
+  const relBriefs=S.briefings.filter(b=>{
+    if(!b.targetDepts||b.targetDepts.length===0) return true;
+    return b.targetDepts.some(d=>depts.includes(d));
+  });
+  const briefCtx=relBriefs.map(b=>{
+    const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
+    return '📋 תדריך: '+b.title+'\n'+(b.content||'').slice(0,600)+(qs?'\n\nשאלות ותשובות:\n'+qs:'');
+  }).join('\n\n---\n\n');
+
+  const combined=[articleCtx,briefCtx].filter(Boolean).join('\n\n===\n\n');
+  return combined;
+}
+
+let _adminKbHistory=[];
+async function sendKnowledgeChat(mode){
+  const inputId=mode==='admin'?'k-admin-chat-input':'agent-kb-input';
+  const boxId=mode==='admin'?'k-admin-chat-box':'agent-kb-messages';
+  const dept=mode==='admin'?(document.getElementById('k-chat-dept')?.value||'כללי'):_agentKbDept;
+  const input=document.getElementById(inputId);
+  const q=input?.value?.trim();
+  if(!q) return;
+  const key=localStorage.getItem('bs_api_key');
+  if(!key){alert('נדרש מפתח Gemini API');return;}
+  input.value='';
+  appendKbMessage(boxId,'user',q);
+  const thinkingId='think-'+Date.now();
+  appendKbMessage(boxId,'ai','חושב...',thinkingId);
+  const ctx=buildKnowledgeContext(dept);
+  const sysPrompt=ctx
+    ?'אתה עוזר AI חכם של מוקד שירות ומכירה בישראל. ענה על שאלות הנציגים בעברית בלבד, בצורה ברורה וקצרה. השתמש רק במידע הבא:\n\n'+ctx+'\n\nאם התשובה אינה במידע — אמור שאין לך מידע על כך ועדיף לפנות למנהל.'
+    :'אתה עוזר AI של מוקד שירות. ענה בצורה כללית בעברית.';
+  if(mode==='admin') _adminKbHistory.push({role:'user',content:q});
+  else _agentKbHistory.push({role:'user',content:q});
+  const history=mode==='admin'?_adminKbHistory:_agentKbHistory;
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        system_instruction:{parts:[{text:sysPrompt}]},
+        contents:history.map(m=>({role:m.role==='ai'?'model':'user',parts:[{text:m.content}]})),
+        generationConfig:{temperature:0.2,maxOutputTokens:2000}
+      })
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const ans=data.candidates[0].content.parts[0].text.trim();
+    updateKbMessage(boxId,thinkingId,ans);
+    if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
+    else _agentKbHistory.push({role:'ai',content:ans});
+  } catch(e){
+    updateKbMessage(boxId,thinkingId,'שגיאה: '+e.message);
+  }
+}
+
+function appendKbMessage(boxId,role,text,id){
+  const box=document.getElementById(boxId);
+  if(!box) return;
+  const isUser=role==='user';
+  const div=document.createElement('div');
+  if(id) div.id=id;
+  div.style.cssText='display:flex;'+(isUser?'justify-content:flex-end':'justify-content:flex-start')+';';
+  div.innerHTML='<div style="max-width:82%;padding:10px 14px;border-radius:'+(isUser?'18px 4px 18px 18px':'4px 18px 18px 18px')+';background:'+(isUser?'linear-gradient(135deg,#B8862A,#E8C97A)':'#fff')+';border:1px solid '+(isUser?'transparent':'rgba(0,0,0,0.08)')+';font-size:14px;color:'+(isUser?'#1A1714':'var(--ice)')+';line-height:1.7;white-space:pre-wrap;text-align:right;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'+text+'</div>';
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+function updateKbMessage(boxId,id,text){
+  const el=document.getElementById(id);
+  if(el){const bubble=el.querySelector('div');if(bubble)bubble.textContent=text;}
+  const box=document.getElementById(boxId);
+  if(box) box.scrollTop=box.scrollHeight;
+}
+
+let _agentKbDept='כללי';
+let _agentKbHistory=[];
+
+function openAgentKnowledgeChat(){
+  if(!S.agent) return;
+  const grp=agentGroup(S.agent);
+  _agentKbDept=grp||'כללי';
+  _agentKbHistory=[];
+  document.getElementById('agent-kb-messages').innerHTML='';
+  document.getElementById('agent-kb-input').value='';
+  document.getElementById('agent-kb-title').textContent='עוזר AI';
+  const deptLabel=document.getElementById('agent-kb-dept-label');
+  if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
+  document.getElementById('agent-knowledge-modal').style.display='block';
+  // Position: on desktop show as popup, on mobile full-width bottom
+  const modal = document.getElementById('agent-knowledge-modal');
+  if(window.innerWidth < 500){
+    modal.style.left='8px'; modal.style.right='8px'; modal.style.width='auto'; modal.style.bottom='80px';
+  } else {
+    modal.style.left='20px'; modal.style.right='auto'; modal.style.width='380px'; modal.style.bottom='20px';
+  }
+  if(!S_knowledge.length){
+    loadKnowledge().then(()=>appendKbMessage('agent-kb-messages','ai','שלום! אני כאן לעזור. שאל אותי כל שאלה על הנהלים והמוצרים של המחלקה שלך.'));
+  } else {
+    appendKbMessage('agent-kb-messages','ai','שלום! אני כאן לעזור. שאל אותי כל שאלה על הנהלים והמוצרים של המחלקה שלך.');
+  }
+}
+
+function closeAgentKnowledgeChat(){
+  document.getElementById('agent-knowledge-modal').style.display='none';
 }
 
 function lockSettings(){
@@ -2396,7 +3070,7 @@ todo = מה צריך לעשות`;
 
     const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:800}})
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
@@ -2430,82 +3104,6 @@ todo = מה צריך לעשות`;
   }
 }
 
-/* AI CONTENT POLISH */
-function markdownToHtml(md){
-  if(!md) return '';
-  var h='font-weight:800;color:var(--ice)';
-  var html=md
-    .replace(/^### (.+)$/gm,'<h4 style="font-size:15px;font-weight:800;color:var(--ice);margin:16px 0 6px">$1</h4>')
-    .replace(/^## (.+)$/gm,'<h3 style="font-size:17px;font-weight:800;color:var(--ice);margin:20px 0 8px;border-bottom:1px solid var(--line2);padding-bottom:4px">$1</h3>')
-    .replace(/^# (.+)$/gm,'<h2 style="font-size:20px;font-weight:800;color:var(--ice);margin:22px 0 10px">$1</h2>')
-    .replace(/[*][*](.+?)[*][*]/g,'<strong style="font-weight:800;color:var(--ice)">$1</strong>')
-    .replace(/[*](.+?)[*]/g,'<em>$1</em>')
-    .replace(/^[0-9]+[.] (.+)$/gm,'<div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--gold);min-width:20px">◆</span><span>$1</span></div>')
-    .replace(/^[-] (.+)$/gm,'<div style="display:flex;gap:10px;margin-bottom:6px"><span style="color:var(--gold);min-width:16px">◆</span><span>$1</span></div>')
-    .replace(/^[-]{3,}$/gm,'<hr style="border:none;border-top:1px solid var(--line2);margin:16px 0">')
-    .replace(/\n\n/g,'</p><p style="margin-bottom:12px;line-height:1.9">')
-    .replace(/\n/g,'<br>');
-  return '<p style="margin-bottom:12px;line-height:1.9">'+html+'</p>';
-}
-
-async function polishContent(){
-  const raw=document.getElementById('briefing-content')?.value?.trim();
-  if(!raw){alert('יש לרשום תוכן קודם');return;}
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){openApiModal();return;}
-  const title=document.getElementById('briefing-title')?.value?.trim()||'';
-  const btn=document.getElementById('polish-btn');
-  const loading=document.getElementById('polish-loading');
-  const preview=document.getElementById('polish-preview');
-  btn.disabled=true; loading.style.display='flex'; preview.style.display='none';
-  try{
-    const prompt=`אתה עוזר למנהל מוקד שירות ומכירה בישראל. המנהל כתב נוהל עבודה בשפה פשוטה.\nהמשימה: לנסח מחדש את הנוהל בצורה מקצועית, ברורה ומסודרת לעובדי מוקד.\n\nכותרת: "${title}"\nטקסט גולמי:\n${raw}\n\nכתוב מחדש בעברית מקצועית. השתמש בסעיפים ממוספרים כשצריך. שמור על כל המידע המקורי — אל תמציא. החזר טקסט בלבד.`;
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})
-    });
-    const data=await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const polished=data.candidates[0].content.parts[0].text.trim();
-    document.getElementById('polish-result-text').value=polished;
-    document.getElementById('polish-rendered').innerHTML=markdownToHtml(polished);
-    document.getElementById('polish-rendered').style.display='block';
-    document.getElementById('polish-result-text').style.display='none';
-    document.getElementById('polish-edit-btn').textContent='✏ ערוך';
-    preview.style.display='block';
-    preview.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(e){alert('שגיאה: '+e.message);}
-  finally{btn.disabled=false;loading.style.display='none';}
-}
-function togglePolishEdit(){
-  const rendered = document.getElementById('polish-rendered');
-  const raw = document.getElementById('polish-result-text');
-  const btn = document.getElementById('polish-edit-btn');
-  const isEditing = raw.style.display !== 'none';
-  if(isEditing){
-    // Back to preview
-    const updated = raw.value.trim();
-    document.getElementById('polish-rendered').innerHTML = markdownToHtml(updated);
-    rendered.style.display = 'block';
-    raw.style.display = 'none';
-    btn.textContent = '✏ ערוך';
-  } else {
-    // Show raw editor
-    rendered.style.display = 'none';
-    raw.style.display = 'block';
-    raw.focus();
-    btn.textContent = '👁 תצוגה מקדימה';
-  }
-}
-
-function approvePolish(){
-  const p=document.getElementById('polish-result-text')?.value?.trim();
-  if(p) document.getElementById('briefing-content').value=p;
-  document.getElementById('polish-preview').style.display='none';
-}
-function discardPolish(){
-  document.getElementById('polish-preview').style.display='none';
-}
 async function generateQuiz(){
   const title=document.getElementById('briefing-title').value.trim();
   const content=document.getElementById('briefing-content').value.trim();
@@ -2606,7 +3204,6 @@ async function publishBriefing(){
 function resetManager(){
   document.getElementById('briefing-title').value='';
   document.getElementById('briefing-content').value='';
-  document.getElementById('polish-preview').style.display='none';
   document.getElementById('briefing-deadline').value='';
   document.getElementById('briefing-featured').value='0';
   document.getElementById('briefing-reverse').value='0';
@@ -3106,14 +3703,7 @@ function openBriefing(id){
   const isRefresh=S._refreshMode&&String(S._refreshMode.briefingId)===String(id);
   const titleEl=document.getElementById('flow-title');
   titleEl.innerHTML=S.active.title+(isRefresh?` <span style="font-size:13px;background:rgba(91,160,230,0.15);color:#5BA0E6;border-radius:8px;padding:3px 8px;font-family:'DM Mono',monospace;font-weight:600;vertical-align:middle">🔄 רענון</span>`:'');
-  const flowEl = document.getElementById('flow-content');
-  const rendered = markdownToHtml(S.active.content||'');
-  // If content has markdown markers, render as HTML; otherwise plain text
-  if(S.active.content&&(S.active.content.includes('**')||S.active.content.includes('##')||S.active.content.includes('\n1.'))){
-    flowEl.innerHTML = rendered;
-  } else {
-    flowEl.textContent = S.active.content;
-  }
+  document.getElementById('flow-content').textContent=S.active.content;
   document.getElementById('sig-briefing-title').textContent=`"${S.active.title}"`;
   document.getElementById('sign-done').style.display='none';
   document.getElementById('sign-btn').style.display='inline-flex';
@@ -3520,11 +4110,6 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
 }
 
 function renderTracking(){
-  // Highlight "home" sidebar button on dashboard load
-  if(!_currentDashPanel){
-    const mainBtn=document.getElementById('sb-main');
-    if(mainBtn){ mainBtn.style.background='var(--gold-bg)'; mainBtn.style.color='var(--gold)'; mainBtn.style.fontWeight='700'; }
-  }
   renderFilterBar();
   renderAlertBanner();
   const wb=getWeek();
@@ -3633,8 +4218,7 @@ function renderTracking(){
           <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
         </div>
-        <button onclick="event.stopPropagation();retakeFromBtn(this)"
-          data-agent-id="${a.id}" data-briefing-id="${b.id}" data-agent-name="${esc(a.name)}" data-briefing-title="${esc(b.title)}"
+        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\'")}','${b.title.replace(/'/g,"\'")}')"
           style="background:rgba(212,130,10,0.1);border:1.5px solid rgba(212,130,10,0.3);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sora',sans-serif;flex-shrink:0">
           🔄 מבחן חוזר
         </button>
@@ -3853,13 +4437,6 @@ function toggleHistory(id){
 }
 
 /* ── RETAKE BRIEFING ─────────────────────────── */
-function retakeFromBtn(btn){
-  const agentId=btn.dataset.agentId;
-  const briefingId=btn.dataset.briefingId;
-  const agentName=btn.dataset.agentName;
-  const briefingTitle=btn.dataset.briefingTitle;
-  retakeConfirm(agentId, briefingId, agentName, briefingTitle);
-}
 async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
   if(!confirm(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
 הציון הנוכחי יימחק.`)) return;
@@ -4112,116 +4689,36 @@ function toggleBriefingDetails(id){
 }
 
 /* ── DASHBOARD SIDE PANELS ───────────────────── */
-/* ── INLINE DASHBOARD PANELS ──────────────────── */
-const DASH_PANEL_META = {
-  verbal:      {eyebrow:'מבחן מילולי',   title:'תשובות <em>מילוליות</em>',  render:renderVerbalPanel},
-  scores:      {eyebrow:'ציונים',        title:'ציונים <em>רגילים</em>',     render:renderScoresPanel},
-  leaderboard: {eyebrow:'תחרות',         title:'לוח <em>תחרות</em>',          render:renderLeaderboardPanel},
-  pending:     {eyebrow:'ממתינים',       title:'נציגים <em>ממתינים</em>',     render:renderPendingPanel},
-  weak:        {eyebrow:'ניתוח טעויות', title:'שאלות <em>בעייתיות</em>',     render:renderWeakPanel},
-  feedback:    {eyebrow:'קול השטח',      title:'משובי <em>נציגים</em>',       render:renderFeedbackPanel},
-  calendar:    {eyebrow:'לו״ז תדריכים', title:'לוח <em>שנה</em>',            render:renderCalendarPanel},
-};
-
-const PANEL_FILTERS = {
-  verbal: `<select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
-           <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
-           <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="180">חצי שנה</option><option value="365">שנה</option></select>`,
-  scores: `<select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
-           <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
-           <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="1">יום</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="180">חצי שנה</option><option value="365">שנה</option></select>`,
-  leaderboard: `<select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>`,
-  pending: `<select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
-            <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
-  weak: `<select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>`,
-  feedback: `<select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
-              <select id="feedback-briefing-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
-  calendar: `<select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer"><option value="all">כל המחלקות</option><option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option><option value="מעוף לעמית">מעוף לעמית</option></select>
-              <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">◀</button>
-              <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);font-family:'Sora',sans-serif;min-width:110px;text-align:center;display:inline-block"></span>
-              <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
-};
-
-let _currentDashPanel = null;
-
-function showDashPanel(panelKey){
-  const mainEl = document.getElementById('dashboard-main');
-  const panelHeader = document.getElementById('panel-header');
-  const panelContent = document.getElementById('inline-panel-content');
-  const panelFilters = document.getElementById('panel-header-filters');
-
-  // Reset all sidebar buttons
-  document.querySelectorAll('.sb-btn').forEach(b => {
-    b.style.background = 'none';
-    b.style.color = 'var(--ice2)';
-    b.style.fontWeight = '600';
-  });
-  const mainBtn = document.getElementById('sb-main');
-
-  if(!panelKey){
-    // Show dashboard main
-    _currentDashPanel = null;
-    mainEl.style.display = 'block';
-    panelHeader.style.display = 'none';
-    panelContent.style.display = 'none';
-    panelContent.innerHTML = '';
-    if(mainBtn){ mainBtn.style.background='var(--gold-bg)'; mainBtn.style.color='var(--gold)'; mainBtn.style.fontWeight='700'; }
-    return;
+function openPanel(id){
+  document.getElementById(id).style.display='block';
+  window.scrollTo(0,0);
+  // Populate briefing dropdowns
+  if(id==='panel-verbal'){
+    const df=document.getElementById('verbal-date-filter');
+    if(df) df.value='all';
+    populatePanelBriefings('verbal-briefing-filter','verbal-dept-filter',renderVerbalPanel);
   }
-
-  _currentDashPanel = panelKey;
-  const meta = DASH_PANEL_META[panelKey];
-  if(!meta) return;
-
-  // Hide main, show panel
-  mainEl.style.display = 'none';
-  panelHeader.style.display = 'block';
-  panelContent.style.display = 'block';
-  const panelIdMap = {
-    verbal:'verbal-panel-content',
-    scores:'scores-panel-content',
-    leaderboard:'lb-panel-content',
-    pending:'pending-panel-content',
-    weak:'weak-panel-content',
-    feedback:'feedback-panel-content',
-    calendar:'calendar-panel-content',
-  };
-  const contentDivId = panelIdMap[panelKey] || (panelKey+'-panel-content');
-  panelContent.innerHTML = '<div id="'+contentDivId+'"></div>';
-
-  // Set header
-  document.getElementById('panel-header-eyebrow').textContent = meta.eyebrow;
-  document.getElementById('panel-header-title').innerHTML = meta.title;
-  panelFilters.innerHTML = PANEL_FILTERS[panelKey] || '';
-
-  // Highlight active sidebar button
-  const activeBtn = document.getElementById('sb-' + panelKey);
-  if(activeBtn){ activeBtn.style.background='var(--gold-bg)'; activeBtn.style.color='var(--gold)'; activeBtn.style.fontWeight='700'; }
-
-  // Populate briefing dropdowns if needed
-  if(['verbal','scores','pending','feedback'].includes(panelKey)){
-    const bSelId = panelKey === 'verbal' ? 'verbal-briefing-filter'
-                 : panelKey === 'scores' ? 'scores-briefing-filter'
-                 : panelKey === 'pending' ? 'pending-briefing-filter'
-                 : 'feedback-briefing-filter';
-    const bSel = document.getElementById(bSelId);
-    if(bSel) bSel.innerHTML = '<option value="all">כל התדריכים</option>' +
-      S.briefings.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+  if(id==='panel-scores'){
+    const df=document.getElementById('scores-date-filter');
+    if(df) df.value='all';
+    populatePanelBriefings('scores-briefing-filter','scores-dept-filter',renderScoresPanel);
   }
-  if(panelKey === 'calendar'){
-    if(!S._calYear) S._calYear = new Date().getFullYear();
-    if(S._calMonth === undefined) S._calMonth = new Date().getMonth();
+  if(id==='panel-pending') populatePanelBriefings('pending-briefing-filter','pending-dept-filter',renderPendingPanel);
+  if(id==='panel-leaderboard') renderLeaderboardPanel();
+  if(id==='panel-verbal') renderVerbalPanel();
+  if(id==='panel-scores') renderScoresPanel();
+  if(id==='panel-pending') renderPendingPanel();
+  if(id==='panel-weak'){ renderWeakPanel(); }
+  if(id==='panel-feedback'){
+    populatePanelBriefings('feedback-briefing-filter','feedback-dept-filter',renderFeedbackPanel);
+    renderFeedbackPanel();
   }
-
-  // Render
-  meta.render();
+  if(id==='panel-calendar'){ S._calYear=new Date().getFullYear(); S._calMonth=new Date().getMonth(); renderCalendarPanel(); }
 }
 
-// Legacy openPanel / closePanel — no-op now
-function openPanel(id){ const key=id.replace('panel-',''); showDashPanel(key); }
-function closePanel(id){ showDashPanel(null); }
-
-
+function closePanel(id){
+  document.getElementById(id).style.display='none';
+}
 
 function populatePanelBriefings(selId, deptSelId, cb){
   const sel=document.getElementById(selId);
@@ -4241,37 +4738,9 @@ function getPanelAgents(deptSelId){
 
 function getPanelBriefings(bSelId, agents){
   const bid=document.getElementById(bSelId)?.value||'all';
-  if(bid!=='all') return S.briefings.filter(b=>String(b.id)===String(bid));
-  return S.briefings;
-}
-
-// Get briefings relevant to a set of agents (by their depts)
-function getRelevantBriefings(agents, deptValue){
-  // deptValue: 'all' | 'מובמנט' | 'פריפיט' | etc
-  if(!deptValue||deptValue==='all') return S.briefings;
-  // Get the specific depts for this group
-  const grp=GROUPS.find(g=>g.key===deptValue);
-  const targetDepts=grp?grp.depts:[deptValue];
-  const targetDeptsLower=targetDepts.map(d=>d.trim().toLowerCase());
-  return S.briefings.filter(b=>{
-    // If briefing has no targetDepts, it's for everyone — INCLUDE it
-    if(!b.targetDepts||b.targetDepts.length===0) return true;
-    // Otherwise check if any of briefing's targetDepts matches the selected group's depts
-    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>targetDeptsLower.includes(d));
-  });
-}
-
-// Populate briefing dropdown filtered by dept
-function populateBriefingDropdown(selId, agents, deptSelId){
-  const sel=document.getElementById(selId);
-  if(!sel) return;
-  const deptVal=deptSelId?document.getElementById(deptSelId)?.value||'all':'all';
-  const cur=sel.value;
-  const relevant=getRelevantBriefings(agents, deptVal);
-  sel.innerHTML='<option value="all">כל התדריכים</option>'+
-    relevant.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
-  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
-  else sel.value='all';
+  let briefs=S.briefings;
+  if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
+  return briefs;
 }
 
 /* ── VERBAL PANEL ── */
@@ -4284,14 +4753,31 @@ function renderVerbalPanel(){
   const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
   const bid=document.getElementById('verbal-briefing-filter')?.value||'all';
 
-  // Update briefing dropdown filtered by agent depts
-  populateBriefingDropdown('verbal-briefing-filter', agents, 'verbal-dept-filter');
+  // Update briefing dropdown — only briefings relevant to selected dept
+  const bSel=document.getElementById('verbal-briefing-filter');
+  if(bSel){
+    const cur=bSel.value;
+    const relevantBriefs=S.briefings.filter(b=>{
+      const dept=document.getElementById('verbal-dept-filter')?.value||'all';
+      if(dept==='all') return true;
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
+    });
+    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
+      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+    // restore or reset
+    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
+    else bSel.value='all';
+  }
 
   const rows=[];
-  const _dv1=document.getElementById('verbal-dept-filter')?.value||'all';
-  const relevantBriefs=getRelevantBriefings(agents,_dv1);
-  relevantBriefs.forEach(b=>{
+  S.briefings.forEach(b=>{
     if(bid!=='all'&&String(b.id)!==bid) return;
+    // Skip briefings not relevant to selected dept
+    if(b.targetDepts&&b.targetDepts.length>0){
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!brDepts.some(d=>agentDepts.has(d))) return;
+    }
     Object.entries(b.completions).forEach(([agId,comp])=>{
       if(!comp||typeof comp!=='object') return;
       if(agId.startsWith('_hist_')) return;
@@ -4364,14 +4850,30 @@ function renderScoresPanel(){
   const bid=document.getElementById('scores-briefing-filter')?.value||'all';
   const days=parseInt(document.getElementById('scores-date-filter')?.value||'all');
 
-  // Update briefing dropdown filtered by agent depts
-  populateBriefingDropdown('scores-briefing-filter', agents, 'scores-dept-filter');
+  // Update briefing dropdown filtered by dept
+  const bSel=document.getElementById('scores-briefing-filter');
+  if(bSel){
+    const cur=bSel.value;
+    const dept=document.getElementById('scores-dept-filter')?.value||'all';
+    const relevantBriefs=S.briefings.filter(b=>{
+      if(dept==='all') return true;
+      if(!b.targetDepts||b.targetDepts.length===0) return true;
+      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
+    });
+    bSel.innerHTML='<option value="all">כל התדריכים</option>'+
+      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+    if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
+    else bSel.value='all';
+  }
 
   const rows=[];
-  const _dv1=document.getElementById('verbal-dept-filter')?.value||'all';
-  const relevantBriefs=getRelevantBriefings(agents,_dv1);
-  relevantBriefs.forEach(b=>{
+  S.briefings.forEach(b=>{
     if(bid!=='all'&&String(b.id)!==bid) return;
+    // filter by dept
+    if(agents.length<S.agents.length&&b.targetDepts&&b.targetDepts.length>0){
+      const brDepts=b.targetDepts.map(d=>d.trim().toLowerCase());
+      if(!brDepts.some(d=>agentDepts.has(d))) return;
+    }
     Object.entries(b.completions).forEach(([agId,comp])=>{
       if(!comp||typeof comp!=='object') return;
       if(agId.startsWith('_hist_')) return;
@@ -4431,11 +4933,8 @@ function renderPendingPanel(){
   if(bid!=='all') briefs=briefs.filter(b=>String(b.id)===String(bid));
 
   const agentIds=new Set(agents.map(a=>String(a.id)));
-  // Update briefing dropdown filtered by agent depts
-  populateBriefingDropdown('pending-briefing-filter', agents, 'pending-dept-filter');
-  const relevantBriefs=bid!=='all'?S.briefings.filter(b=>String(b.id)===bid):getRelevantBriefings(agents,document.getElementById('pending-dept-filter')?.value||'all');
   const rows=[];
-  relevantBriefs.forEach(b=>{
+  briefs.forEach(b=>{
     const pendingAgents=agents.filter(a=>{
       if(b.completions[String(a.id)]) return false;
       if(!b.targetDepts||!b.targetDepts.length) return true;
@@ -4561,19 +5060,13 @@ function renderCalendarPanel(){
     if(grp) agents=agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
     else agents=agents.filter(a=>(a.depts||[]).includes(dept));
   }
-  const agentDepts=new Set(agents.flatMap(a=>a.depts||[]).map(d=>d.trim().toLowerCase()));
 
-  // Get briefings for this month — FILTERED by dept using GROUPS
-  const grpForCal=GROUPS.find(g=>g.key===dept);
-  const groupDeptsLower=(grpForCal?grpForCal.depts:[dept]).map(d=>d.trim().toLowerCase());
+  // Get briefings published in this month
   const monthBriefings=S.briefings.filter(b=>{
     if(!b.publishedAt) return false;
     const parts=b.publishedAt.split(' ')[0].split('/');
     if(parts.length<3) return false;
-    if(parseInt(parts[1])!==month+1||parseInt(parts[2])!==year) return false;
-    if(dept==='all') return true;
-    if(!b.targetDepts||b.targetDepts.length===0) return true;
-    return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>groupDeptsLower.includes(d));
+    return parseInt(parts[1])===month+1&&parseInt(parts[2])===year;
   });
 
   // Build calendar grid
@@ -4588,12 +5081,9 @@ function renderCalendarPanel(){
     if(!dayEvents[d]) dayEvents[d]=[];
     dayEvents[d].push(b);
   });
-  // Add deadlines (filtered by dept)
+  // Add deadlines
   S.briefings.forEach(b=>{
     if(!b.deadline) return;
-    if(dept!=='all'&&b.targetDepts&&b.targetDepts.length>0){
-      if(!b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>groupDeptsLower.includes(d))) return;
-    }
     const dl=new Date(b.deadline);
     if(dl.getMonth()===month&&dl.getFullYear()===year){
       const d=dl.getDate();
@@ -4611,21 +5101,12 @@ function renderCalendarPanel(){
   for(let d=1;d<=daysInMonth;d++){
     const isToday=today.getDate()===d&&today.getMonth()===month&&today.getFullYear()===year;
     const events=dayEvents[d]||[];
-    const publishEvents=events.filter(e=>!e._isDeadline);
-    const deadlineEvents=events.filter(e=>e._isDeadline);
-    html+=`<div style="min-height:80px;border-radius:10px;padding:5px 6px;background:${isToday?'var(--gold-bg)':'rgba(0,0,0,0.02)'};border:${isToday?'1.5px solid var(--gold)':'1px solid var(--line)'};cursor:${events.length?'pointer':'default'};overflow:hidden;vertical-align:top" ${events.length?`onclick="showCalDay(${d},${month},${year})"`:''}>
-      <div style="font-size:11px;font-weight:${isToday?'800':'600'};color:${isToday?'var(--gold)':'var(--ice3)'};margin-bottom:3px">${d}</div>
-      ${publishEvents.map(e=>{
-        const actLabel=e.targetDepts&&e.targetDepts.length?e.targetDepts[0]:'כולם';
-        return`<div style="background:rgba(45,212,164,0.12);border-right:2px solid var(--ok);border-radius:4px;padding:2px 4px;margin-bottom:2px;overflow:hidden">
-          <div style="font-size:9px;color:var(--ok);font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${actLabel}</div>
-          <div style="font-size:9px;color:var(--ice);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title.slice(0,18)}${e.title.length>18?'…':''}</div>
-        </div>`;
-      }).join('')}
-      ${deadlineEvents.map(e=>`<div style="background:rgba(240,101,101,0.1);border-right:2px solid var(--danger);border-radius:4px;padding:2px 4px;margin-bottom:2px;overflow:hidden">
-        <div style="font-size:9px;color:var(--danger);font-weight:700;font-family:'DM Mono',monospace">⏰ דדליין</div>
-        <div style="font-size:9px;color:var(--ice);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e.title}">${e.title.slice(0,18)}${e.title.length>18?'…':''}</div>
-      </div>`).join('')}
+    const hasPublish=events.some(e=>!e._isDeadline);
+    const hasDeadline=events.some(e=>e._isDeadline);
+    html+=`<div style="min-height:64px;border-radius:10px;padding:6px;background:${isToday?'var(--gold-bg)':'rgba(0,0,0,0.02)'};border:${isToday?'1.5px solid var(--gold)':'1px solid var(--line)'};cursor:${events.length?'pointer':'default'};position:relative" ${events.length?`onclick="showCalDay(${d},${month},${year})"`:''}>
+      <div style="font-size:12px;font-weight:${isToday?'800':'500'};color:${isToday?'var(--gold)':'var(--ice3)'};margin-bottom:4px">${d}</div>
+      ${hasPublish?`<div style="width:8px;height:8px;border-radius:50%;background:var(--ok);margin-bottom:2px" title="פורסם תדריך"></div>`:''}
+      ${hasDeadline?`<div style="width:8px;height:8px;border-radius:50%;background:var(--danger)" title="דדליין"></div>`:''}
     </div>`;
   }
   html+=`</div>`;
@@ -5084,6 +5565,34 @@ function toggleBriefingDept(i,btn){
   if(sp){sp.style.border=!on?'1px solid var(--gold)':'1px solid var(--line2)';sp.style.background=!on?'var(--gold)':'transparent';sp.textContent=!on?'✓':'';}
 }
 </script>
+
+<!-- AGENT KNOWLEDGE CHAT MODAL -->
+<div id="agent-knowledge-modal" style="display:none;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:slide-up 0.25s ease">
+  <div style="background:#fff;border:1.5px solid rgba(184,134,42,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(184,134,42,0.1);overflow:hidden;display:flex;flex-direction:column;max-height:520px">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#F0EDE6" id="agent-kb-title">עוזר AI</div>
+          <div style="font-size:10px;color:rgba(240,237,230,0.45);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
+        </div>
+      </div>
+      <button onclick="closeAgentKnowledgeChat()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>
+    <!-- Messages -->
+    <div id="agent-kb-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:320px;background:#FAFAF8"></div>
+    <!-- Input -->
+    <div style="padding:10px 14px;border-top:1px solid rgba(184,134,42,0.12);background:#fff;flex-shrink:0">
+      <div style="display:flex;gap:8px;align-items:flex-end;background:var(--ink3);border:1.5px solid rgba(184,134,42,0.15);border-radius:14px;padding:8px 12px">
+        <textarea id="agent-kb-input" placeholder="שאל שאלה..." style="flex:1;background:transparent;border:none;color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;line-height:1.5;resize:none;height:36px;max-height:80px;outline:none;direction:rtl" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendKnowledgeChat('agent');}" oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+        <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
+      </div>
+      <div style="text-align:center;margin-top:6px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">מבוסס על ידע המחלקה שלך בלבד</div>
+    </div>
+  </div>
+</div>
+
 
 <!-- PIN MODAL -->
 <div id="pin-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
