@@ -1789,6 +1789,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
           <!-- PANEL: CONFIG -->
           <div id="sp-config" style="display:none">
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-label">📊 שימוש ב-AI היום</div>
+              <div id="config-ai-usage" style="margin-top:8px"></div>
+              <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">מתאפס בחצות בכל יום · מכסה יומית ~1500 בקשות</div>
+            </div>
             <div class="card">
               <div class="card-label">⚙️ הגדרות מערכת</div>
               <div class="field">
@@ -2240,9 +2245,26 @@ async function loadConfigValues(){
     keyEl.value = stored ? '••••••••••••••••' : '';
     keyEl.placeholder = stored ? 'מפתח קיים — הכנס חדש לשינוי' : 'AIzaSy...';
   }
-  // Show current admin pw hint
   const pwMsg = document.getElementById('config-pw-msg');
-  if(pwMsg){ pwMsg.style.display='none'; }
+  if(pwMsg) pwMsg.style.display='none';
+  // Show AI usage counter
+  const usageEl = document.getElementById('config-ai-usage');
+  if(usageEl){
+    const today = new Date().toISOString().slice(0,10);
+    const {data:usageData}=await _sb.from('app_settings').select('value').eq('key','ai_usage_'+today).single().catch(()=>({data:null}));
+    const used = parseInt(usageData?.value||'0');
+    const pct = Math.min(100, Math.round(used/15));
+    const color = pct>80?'var(--danger)':pct>50?'var(--warn)':'var(--ok)';
+    usageEl.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:24px;font-weight:800;color:${color};font-family:'DM Mono',monospace">${used}</div>
+        <div style="font-size:13px;color:var(--ice3)">מתוך ~1500</div>
+      </div>
+      <div style="height:8px;background:var(--ink4);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width 0.5s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--ice3);margin-top:6px">${today}</div>`;
+  }
 }
 
 async function saveConfigApiKey(){
@@ -2273,9 +2295,12 @@ function saveConfigPw(){
 ══════════════════════════════════════════════ */
 let S_knowledge = []; // loaded articles
 
-async function loadKnowledge(){
+let _kbLastLoaded = 0;
+async function loadKnowledge(force=false){
+  const now = Date.now();
+  if(!force && S_knowledge.length && (now - _kbLastLoaded) < 300000) return; // cache 5 min
   const {data,error} = await _sb.from('knowledge_base').select('*').order('created_at',{ascending:false});
-  if(!error) S_knowledge = data||[];
+  if(!error){ S_knowledge = data||[]; _kbLastLoaded = now; }
 }
 
 function checkKnowledgePw(){
@@ -2396,12 +2421,16 @@ async function saveKnowledgeArticle(){
 let _editingKbId = null;
 function editKnowledgeArticle(id){
   const item = S_knowledge.find(a=>String(a.id)===String(id));
-  if(!item) return;
+  if(!item){ console.warn('editKnowledgeArticle: not found id=',id,'S_knowledge=',S_knowledge.length); alert('פריט לא נמצא — נסה לרענן'); return; }
   _editingKbId = id;
-  document.getElementById('k-edit-title').value = item.title||'';
-  document.getElementById('k-edit-content').value = item.content||'';
-  document.getElementById('k-edit-dept').value = item.dept||'כללי';
-  document.getElementById('knowledge-edit-modal').style.display = 'flex';
+  const titleEl=document.getElementById('k-edit-title');
+  const contentEl=document.getElementById('k-edit-content');
+  const deptEl=document.getElementById('k-edit-dept');
+  if(titleEl) titleEl.value=item.title||'';
+  if(contentEl) contentEl.value=item.content||'';
+  if(deptEl) deptEl.value=item.dept||'כללי';
+  const modal=document.getElementById('knowledge-edit-modal');
+  if(modal){ modal.style.display='flex'; }
 }
 function closeKnowledgeEdit(){
   document.getElementById('knowledge-edit-modal').style.display = 'none';
@@ -2534,7 +2563,7 @@ function buildFolderNode(folder, depth){
   const children = S_folders.filter(f=>f.parent_id===folder.id);
   const articles = S_knowledge.filter(a=>a.folder_id===folder.id);
   const isSelected = _selectedFolderId===folder.id;
-  const isOpen = document.getElementById('fnode-'+folder.id)?.dataset?.open==='1';
+  const isOpen = _openFolders.has(String(folder.id)) || document.getElementById('fnode-'+folder.id)?.dataset?.open==='1';
 
   const wrap = document.createElement('div');
   wrap.style.cssText='margin-bottom:2px;';
@@ -2588,7 +2617,17 @@ function toggleFolderNode(id){
   node.dataset.open=wasOpen?'0':'1';
   if(children) children.style.display=wasOpen?'none':'block';
   selectFolder(id);
+  // Re-render tree keeping all parent paths open
+  _openFolders=getOpenFolderIds();
+  _openFolders.add(id);
   renderFolderTree();
+}
+
+let _openFolders=new Set();
+function getOpenFolderIds(){
+  const open=new Set();
+  document.querySelectorAll('[id^="fnode-"]').forEach(n=>{if(n.dataset.open==='1') open.add(n.id.replace('fnode-',''));});
+  return open;
 }
 
 function selectFolder(id){
@@ -2647,14 +2686,27 @@ function addArticleToFolder(folderId){
 
 function viewFolderArticle(id){
   const a=S_knowledge.find(x=>String(x.id)===String(id));
-  if(!a) return;
+  if(!a){
+    // Maybe not loaded yet
+    loadKnowledge().then(()=>editKnowledgeArticle(id));
+    return;
+  }
   editKnowledgeArticle(id);
 }
 
 function buildKnowledgeContext(dept){
   // Manual knowledge articles
-  const articles=S_knowledge.filter(a=>a.dept==='כללי'||a.dept===dept);
-  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,800)).join('\n\n---\n\n');
+  // Match articles: 'כללי' for all, exact group key match, OR agent's actual dept strings
+  const grpObj=GROUPS.find(g=>g.key===dept);
+  const agentDeptStrings=grpObj?grpObj.depts:[];
+  const articles=S_knowledge.filter(a=>{
+    if(a.dept==='כללי'||!a.dept) return true;
+    if(a.dept===dept) return true;  // matches group key
+    if(agentDeptStrings.includes(a.dept)) return true;  // matches specific dept string
+    return false;
+  });
+  // Articles are the primary knowledge source - include more content
+  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,2000)).join('\n\n---\n\n');
 
   // Briefings relevant to this dept
   const grp=GROUPS.find(g=>g.key===dept);
@@ -2665,7 +2717,7 @@ function buildKnowledgeContext(dept){
   });
   const briefCtx=relBriefs.map(b=>{
     const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
-    return '📋 תדריך: '+b.title+'\n'+(b.content||'').slice(0,600)+(qs?'\n\nשאלות ותשובות:\n'+qs:'');
+    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs:'');
   }).join('\n\n---\n\n');
 
   const combined=[articleCtx,briefCtx].filter(Boolean).join('\n\n===\n\n');
@@ -2686,20 +2738,35 @@ async function sendKnowledgeChat(mode){
   appendKbMessage(boxId,'user',q);
   const thinkingId='think-'+Date.now();
   appendKbMessage(boxId,'ai','חושב...',thinkingId);
+  // Load knowledge (cached, max once per 5 min)
+  await loadKnowledge();
   const ctx=buildKnowledgeContext(dept);
-  const sysPrompt=ctx
-    ?'אתה עוזר AI חכם של מוקד שירות ומכירה בישראל. ענה על שאלות הנציגים בעברית בלבד, בצורה ברורה וקצרה. השתמש רק במידע הבא:\n\n'+ctx+'\n\nאם התשובה אינה במידע — אמור שאין לך מידע על כך ועדיף לפנות למנהל.'
-    :'אתה עוזר AI של מוקד שירות. ענה בצורה כללית בעברית.';
+  console.log('[AI] dept=',dept,'articles=',S_knowledge.length,'ctx=',ctx.length);
+  // Build system message with knowledge - injected as first message every time
+  const sysMsg = ctx
+    ? 'אתה עוזר AI של מוקד '+dept+'.'+
+      ' ענה בעברית, בצורה ברורה וישירה.'+
+      ' אם התשובה מופיעה בבסיס הידע — ענה ישירות. אל תגיד "פנה למנהל" אם המידע קיים.'+
+      '\n\n=== בסיס הידע של '+dept+' ===\n'+ctx+'\n=== סוף בסיס הידע ==='
+    : 'אתה עוזר AI של מוקד שירות. ענה בעברית.';
+
   if(mode==='admin') _adminKbHistory.push({role:'user',content:q});
   else _agentKbHistory.push({role:'user',content:q});
   const history=mode==='admin'?_adminKbHistory:_agentKbHistory;
+  // Always inject knowledge as first turn, then last 8 messages
+  const recentHistory=history.slice(-8);
+  // Build contents: knowledge context as first user/model pair, then chat
+  const contents=[
+    {role:'user',parts:[{text:sysMsg}]},
+    {role:'model',parts:[{text:'הבנתי. אענה רק לפי בסיס הידע שסיפקת.'}]},
+    ...recentHistory.map(m=>({role:m.role==='ai'?'model':'user',parts:[{text:m.content}]}))
+  ];
   try{
     const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        system_instruction:{parts:[{text:sysPrompt}]},
-        contents:history.map(m=>({role:m.role==='ai'?'model':'user',parts:[{text:m.content}]})),
-        generationConfig:{temperature:0.2,maxOutputTokens:2000}
+        contents,
+        generationConfig:{temperature:0.2,maxOutputTokens:1000}
       })
     });
     const data=await res.json();
@@ -2708,6 +2775,14 @@ async function sendKnowledgeChat(mode){
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
+    // Track daily usage globally in Supabase (all agents counted together)
+    try{
+      const today=new Date().toISOString().slice(0,10);
+      const usageKey='ai_usage_'+today;
+      const {data:cur}=await _sb.from('app_settings').select('value').eq('key',usageKey).single();
+      const newCount=(parseInt(cur?.value||'0')+1).toString();
+      await _sb.from('app_settings').upsert({key:usageKey,value:newCount},{onConflict:'key'});
+    }catch(e){ console.log('usage track err',e); }
   } catch(e){
     updateKbMessage(boxId,thinkingId,'שגיאה: '+e.message);
   }
@@ -2745,6 +2820,7 @@ function openAgentKnowledgeChat(){
   document.getElementById('agent-kb-title').textContent='עוזר AI';
   const deptLabel=document.getElementById('agent-kb-dept-label');
   if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
+
   document.getElementById('agent-knowledge-modal').style.display='block';
   // Position: on desktop show as popup, on mobile full-width bottom
   const modal = document.getElementById('agent-knowledge-modal');
@@ -2753,11 +2829,10 @@ function openAgentKnowledgeChat(){
   } else {
     modal.style.left='20px'; modal.style.right='auto'; modal.style.width='380px'; modal.style.bottom='20px';
   }
-  if(!S_knowledge.length){
-    loadKnowledge().then(()=>appendKbMessage('agent-kb-messages','ai','שלום! אני כאן לעזור. שאל אותי כל שאלה על הנהלים והמוצרים של המחלקה שלך.'));
-  } else {
-    appendKbMessage('agent-kb-messages','ai','שלום! אני כאן לעזור. שאל אותי כל שאלה על הנהלים והמוצרים של המחלקה שלך.');
-  }
+  // Always load fresh knowledge to ensure agent sees latest content
+  loadKnowledge().then(()=>{
+    appendKbMessage('agent-kb-messages','ai','שלום '+S.agent.name.split(' ')[0]+'! 👋\nאני כאן לעזור בכל שאלה על נהלים ומוצרים של '+_agentKbDept+'.\nשאל אותי כל שאלה!');
+  });
 }
 
 function closeAgentKnowledgeChat(){
@@ -4689,6 +4764,96 @@ function toggleBriefingDetails(id){
 }
 
 /* ── DASHBOARD SIDE PANELS ───────────────────── */
+/* ══ INLINE DASHBOARD PANELS ══════════════════════ */
+const DASH_PANEL_META = {
+  verbal:      {eyebrow:'מבחן מילולי',   title:'תשובות <em>מילוליות</em>',  render:renderVerbalPanel},
+  scores:      {eyebrow:'ציונים',        title:'ציונים <em>רגילים</em>',     render:renderScoresPanel},
+  leaderboard: {eyebrow:'תחרות',         title:'לוח <em>תחרות</em>',          render:renderLeaderboardPanel},
+  pending:     {eyebrow:'ממתינים',       title:'נציגים <em>ממתינים</em>',     render:renderPendingPanel},
+  weak:        {eyebrow:'ניתוח טעויות', title:'שאלות <em>בעייתיות</em>',     render:renderWeakPanel},
+  feedback:    {eyebrow:'קול השטח',      title:'משובי <em>נציגים</em>',       render:renderFeedbackPanel},
+  calendar:    {eyebrow:'לו"ז תדריכים', title:'לוח <em>שנה</em>',            render:renderCalendarPanel},
+};
+
+const PANEL_FILTERS = {
+  verbal: `<select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+           <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
+           <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="365">שנה</option></select>`,
+  scores: `<select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+           <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
+           <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="1">יום</option><option value="7">שבוע</option><option value="30">חודש</option><option value="365">שנה</option></select>`,
+  leaderboard: `<select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>`,
+  pending: `<select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+            <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
+  weak: `<select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>`,
+  feedback: `<select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+             <select id="feedback-briefing-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
+  calendar: `<select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+             <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">◀</button>
+             <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);min-width:110px;text-align:center;display:inline-block"></span>
+             <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
+};
+
+let _currentDashPanel = null;
+
+function showDashPanel(panelKey){
+  const mainEl=document.getElementById('dashboard-main');
+  const panelHeader=document.getElementById('panel-header');
+  const panelContent=document.getElementById('inline-panel-content');
+  const panelFilters=document.getElementById('panel-header-filters');
+
+  document.querySelectorAll('.sb-btn').forEach(b=>{
+    b.style.background='none'; b.style.border='none';
+    b.style.color='var(--ice2)'; b.style.fontWeight='600';
+  });
+  const mainBtn=document.getElementById('sb-main');
+
+  if(!panelKey){
+    _currentDashPanel=null;
+    if(mainEl) mainEl.style.display='block';
+    if(panelHeader) panelHeader.style.display='none';
+    if(panelContent){ panelContent.style.display='none'; panelContent.innerHTML=''; }
+    if(mainBtn){ mainBtn.style.background='var(--gold-bg)'; mainBtn.style.color='var(--gold)'; mainBtn.style.fontWeight='700'; }
+    return;
+  }
+
+  _currentDashPanel=panelKey;
+  const meta=DASH_PANEL_META[panelKey];
+  if(!meta) return;
+
+  if(mainEl) mainEl.style.display='none';
+  if(panelHeader) panelHeader.style.display='block';
+  if(panelContent){ panelContent.style.display='block'; }
+
+  const panelIdMap={
+    verbal:'verbal-panel-content', scores:'scores-panel-content',
+    leaderboard:'lb-panel-content', pending:'pending-panel-content',
+    weak:'weak-panel-content', feedback:'feedback-panel-content', calendar:'calendar-panel-content',
+  };
+  const contentDivId=panelIdMap[panelKey]||(panelKey+'-panel-content');
+  if(panelContent) panelContent.innerHTML='<div id="'+contentDivId+'"></div>';
+
+  const eyEl=document.getElementById('panel-header-eyebrow');
+  const titEl=document.getElementById('panel-header-title');
+  if(eyEl) eyEl.textContent=meta.eyebrow;
+  if(titEl) titEl.innerHTML=meta.title;
+  if(panelFilters) panelFilters.innerHTML=PANEL_FILTERS[panelKey]||'';
+
+  const activeBtn=document.getElementById('sb-'+panelKey);
+  if(activeBtn){ activeBtn.style.background='var(--gold-bg)'; activeBtn.style.border='1px solid var(--gold-line)'; activeBtn.style.color='var(--gold)'; activeBtn.style.fontWeight='700'; }
+
+  if(['verbal','scores','pending','feedback'].includes(panelKey)){
+    const bSelId=panelKey==='verbal'?'verbal-briefing-filter':panelKey==='scores'?'scores-briefing-filter':panelKey==='pending'?'pending-briefing-filter':'feedback-briefing-filter';
+    const bSel=document.getElementById(bSelId);
+    if(bSel) bSel.innerHTML='<option value="all">כל התדריכים</option>'+S.briefings.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+  }
+  if(panelKey==='calendar'){
+    if(!S._calYear) S._calYear=new Date().getFullYear();
+    if(S._calMonth===undefined) S._calMonth=new Date().getMonth();
+  }
+  meta.render();
+}
+
 function openPanel(id){
   document.getElementById(id).style.display='block';
   window.scrollTo(0,0);
@@ -5576,6 +5741,7 @@ function toggleBriefingDept(i,btn){
         <div>
           <div style="font-size:13px;font-weight:800;color:#F0EDE6" id="agent-kb-title">עוזר AI</div>
           <div style="font-size:10px;color:rgba(240,237,230,0.45);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
+
         </div>
       </div>
       <button onclick="closeAgentKnowledgeChat()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
@@ -5593,6 +5759,30 @@ function toggleBriefingDept(i,btn){
   </div>
 </div>
 
+
+<!-- KNOWLEDGE EDIT MODAL -->
+<div id="knowledge-edit-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:700;color:var(--ice)">✏ עריכת פריט ידע</div>
+      <button onclick="closeKnowledgeEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ice3)">✕</button>
+    </div>
+    <div class="field"><label class="field-label">כותרת</label><input type="text" id="k-edit-title" style="width:100%"></div>
+    <div class="field"><label class="field-label">תוכן</label><textarea id="k-edit-content" style="min-height:200px;width:100%"></textarea></div>
+    <div class="field">
+      <label class="field-label">מחלקה</label>
+      <select id="k-edit-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
+        <option value="כללי">כללי (לכולם)</option>
+        <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
+        <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-gold" onclick="saveKnowledgeEdit()" style="flex:1">💾 שמור שינויים</button>
+      <button class="btn btn-outline" onclick="closeKnowledgeEdit()">ביטול</button>
+    </div>
+  </div>
+</div>
 
 <!-- PIN MODAL -->
 <div id="pin-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
