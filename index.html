@@ -1120,7 +1120,39 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
 
-    <div id="agent-briefings" style="display:none">
+    <div id="agent-briefings" style="display:none;gap:20px;align-items:flex-start;width:100%">
+
+
+
+  <!-- AGENT SIDEBAR -->
+    <div style="width:190px;min-width:190px;max-width:190px;flex-shrink:0;flex-grow:0;align-self:flex-start">
+      <div style="background:#fff;border:1.5px solid rgba(184,134,42,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(184,134,42,0.08)">
+        <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(184,134,42,0.1);margin-bottom:10px;text-align:center"></div>
+        <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
+          <span style="font-size:17px">🏠</span><span>ראשי</span>
+        </button>
+        <button onclick="showAgentPanel('briefings')" id="asb-briefings" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">📋</span><span>תדריכים</span></div>
+          <span id="asb-briefings-badge" style="display:none;background:var(--danger);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
+        </button>
+        <button onclick="showAgentPanel('leaderboard')" id="asb-leaderboard" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
+          <span style="font-size:17px">🏆</span><span>לוח תחרות</span>
+        </button>
+        <button onclick="showAgentPanel('achievements')" id="asb-achievements" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
+          <span style="font-size:17px">🏅</span><span>הישגים</span>
+        </button>
+        <div style="height:1px;background:rgba(184,134,42,0.15);margin:10px 4px"></div>
+        <button onclick="showAgentPanel('knowledge')" id="asb-knowledge" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:0;text-align:right;transition:all 0.15s">
+          <span style="font-size:17px">📚</span><span>ניהול ידע</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div style="flex:1;min-width:0;overflow:hidden">
+
+      <!-- PANEL: MAIN (existing content) -->
+      <div id="abp-main">
       <!-- WELCOME BANNER -->
       <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 24px rgba(184,134,42,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
         <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(184,134,42,0.07) 0%,transparent 70%);pointer-events:none"></div>
@@ -1209,6 +1241,51 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <div id="agent-leaderboard" style="margin-top:1.5rem"></div>
       <div id="agent-achievements" style="margin-top:1rem"></div>
     </div>
+
+  
+
+
+      <!-- /abp-main -->
+
+      <!-- PANEL: BRIEFINGS -->
+      <div id="abp-briefings" style="display:none;width:100%"><div id="abp-briefings-content"></div></div>
+
+      <!-- PANEL: LEADERBOARD -->
+      <div id="abp-leaderboard" style="display:none;width:100%">
+        <div class="sec-eyebrow" style="margin-bottom:6px">תחרות</div>
+        <div class="sec-title" style="margin-bottom:16px">לוח <em>תחרות</em></div>
+        <div id="abp-leaderboard-content"></div>
+      </div>
+
+      <!-- PANEL: ACHIEVEMENTS -->
+      <div id="abp-achievements" style="display:none;width:100%">
+        <div class="sec-eyebrow" style="margin-bottom:6px">הישגים</div>
+        <div class="sec-title" style="margin-bottom:16px">ה<em>ישגים</em> שלי</div>
+        <div id="abp-achievements-content"></div>
+      </div>
+
+      <!-- PANEL: KNOWLEDGE -->
+      <div id="abp-knowledge" style="display:none;width:100%">
+        <div class="sec-eyebrow" style="margin-bottom:6px">ניהול ידע</div>
+        <div class="sec-title" style="margin-bottom:16px">בסיס <em>הידע שלי</em></div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <!-- folder tree -->
+          <div id="abp-kb-tree" style="width:190px;flex-shrink:0;background:var(--ink3);border:1px solid var(--line2);border-radius:14px;padding:12px;min-height:100px">
+            <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">📁 תיקיות</div>
+          </div>
+          <!-- article view -->
+          <div id="abp-kb-article" style="flex:1;min-width:0">
+            <div style="text-align:center;padding:2rem;color:var(--ice3)">
+              <div style="font-size:32px;margin-bottom:8px">📂</div>
+              <div style="font-size:14px">לחץ על תיקיה לצפייה</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </div><!-- /main-content -->
+    </div><!-- /main-content-end -->
 
     <div id="agent-flow" style="display:none">
       <div id="step-read">
@@ -1310,8 +1387,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </div><!-- /main content -->
+</div><!-- /agent-briefings-wrapper -->
 
   <!-- KNOWLEDGE BASE -->
   <div class="sec" id="tab-knowledge">
@@ -1820,8 +1897,6 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div><!-- /flex row -->
     </div><!-- /settings-content -->
   </div><!-- /tab-settings -->
-
-</div>
 
 <!-- ADMIN CONFIG PASSWORD MODAL -->
 <div id="admin-config-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);align-items:center;justify-content:center">
@@ -3337,7 +3412,9 @@ async function selectAgent(id){
   }
   if(!S.agent){alert('שגיאה: נציג לא נמצא (id='+sid+')');return;}
   document.getElementById('agent-login').style.display='none';
-  document.getElementById('agent-briefings').style.display='block';
+  document.getElementById('agent-briefings').style.display='flex';
+  document.getElementById('agent-briefings').style.flexDirection='row';
+  document.getElementById('agent-briefings').style.flexWrap='nowrap';
   document.getElementById('agent-flow').style.display='none';
   document.getElementById('logged-agent-name').textContent=S.agent.name;
   // Save last login timestamp
@@ -3345,6 +3422,8 @@ async function selectAgent(id){
   S.agent.last_login=loginTs;
   await _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id);
   S.briefings=await dbBriefings();
+  updateAgentSidebar();
+  showAgentPanel('main');
   renderAgentBriefings();
 }
 async function refreshAgentBriefings(){
@@ -3508,7 +3587,9 @@ function showSearchDetail(id){
 function closeSearchDetail(){
   const detailEl=document.getElementById('search-detail-view');
   if(detailEl) detailEl.style.display='none';
-  document.getElementById('agent-briefings').style.display='block';
+  document.getElementById('agent-briefings').style.display='flex';
+  document.getElementById('agent-briefings').style.flexDirection='row';
+  document.getElementById('agent-briefings').style.flexWrap='nowrap';
 }
 
 function renderAchievements(){
@@ -4076,7 +4157,9 @@ async function backToBriefingsWithFeedback(){
 function backToBriefings(){
   S._refreshMode=null;
   document.getElementById('agent-flow').style.display='none';
-  document.getElementById('agent-briefings').style.display='block';
+  document.getElementById('agent-briefings').style.display='flex';
+  document.getElementById('agent-briefings').style.flexDirection='row';
+  document.getElementById('agent-briefings').style.flexWrap='nowrap';
   renderAgentBriefings();
 }
 
@@ -5728,6 +5811,244 @@ function toggleBriefingDept(i,btn){
   btn.classList.toggle('checked',!on);
   const sp=btn.querySelector('span');
   if(sp){sp.style.border=!on?'1px solid var(--gold)':'1px solid var(--line2)';sp.style.background=!on?'var(--gold)':'transparent';sp.textContent=!on?'✓':'';}
+}
+
+
+/* ══ AGENT SIDEBAR ══════════════════════════════ */
+function showAgentPanel(key){
+  document.getElementById('abp-main').style.display        = key==='main'        ? 'block':'none';
+  document.getElementById('abp-briefings').style.display   = key==='briefings'   ? 'block':'none';
+  var lb=document.getElementById('abp-leaderboard');
+  if(lb) lb.style.display = key==='leaderboard' ? 'block':'none';
+  var ach=document.getElementById('abp-achievements');
+  if(ach) ach.style.display = key==='achievements' ? 'block':'none';
+  var kb=document.getElementById('abp-knowledge');
+  if(kb) kb.style.display = key==='knowledge' ? 'block':'none';
+  const mainBtn=document.getElementById('asb-main');
+  const brfBtn=document.getElementById('asb-briefings');
+  var lbBtn=document.getElementById('asb-leaderboard');
+  var achBtn=document.getElementById('asb-achievements');
+  var kbBtn=document.getElementById('asb-knowledge');
+  [
+    {btn:mainBtn,   k:'main'},
+    {btn:brfBtn,    k:'briefings'},
+    {btn:lbBtn,     k:'leaderboard'},
+    {btn:achBtn,    k:'achievements'},
+    {btn:kbBtn,     k:'knowledge'},
+  ].forEach(function(item){
+    if(!item.btn) return;
+    var active=key===item.k;
+    item.btn.style.background = active ? 'linear-gradient(135deg,#B8862A,#E8C97A)' : 'none';
+    item.btn.style.color      = active ? '#1A1714' : 'var(--ice2)';
+    item.btn.style.fontWeight = active ? '800' : '600';
+    item.btn.style.border     = active ? 'none' : '1.5px solid var(--line2)';
+  });
+  if(key==='briefings')    renderAgentBriefingsPanel();
+  if(key==='leaderboard')  renderAgentLeaderboardPanel();
+  if(key==='achievements') renderAgentAchievementsPanel();
+  if(key==='knowledge')    renderAgentKnowledgePanel();
+}
+
+async function renderAgentKnowledgePanel(){
+  var treeEl=document.getElementById('abp-kb-tree');
+  var articleEl=document.getElementById('abp-kb-article');
+  if(!treeEl||!S.agent) return;
+  treeEl.innerHTML='<div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">📁 תיקיות</div><div style="font-size:12px;color:var(--ice3)">טוען...</div>';
+
+  await loadKnowledge();
+  await loadFolders();
+
+  // Determine agent dept group
+  var grp=agentGroup(S.agent);  // e.g. 'מובמנט'
+
+  // Filter articles: show 'כללי' + agent's group dept
+  function isRelevant(article){
+    if(!article.dept||article.dept==='כללי') return true;
+    return article.dept===grp;
+  }
+
+  // Build tree - show all folders (filter articles inside)
+  var topFolders=S_folders.filter(function(f){return !f.parent_id;});
+
+  treeEl.innerHTML='<div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">📁 תיקיות</div>';
+
+  function folderHasRelevantContent(fid){
+    // Check if folder or any descendant has a relevant article
+    var arts=S_knowledge.filter(function(a){return a.folder_id===fid&&isRelevant(a);});
+    if(arts.length) return true;
+    var subs=S_folders.filter(function(f){return f.parent_id===fid;});
+    return subs.some(function(sf){return folderHasRelevantContent(sf.id);});
+  }
+
+  function buildFolderRow(folder, depth){
+    if(!folderHasRelevantContent(folder.id)) return null;
+    var arts=S_knowledge.filter(function(a){return a.folder_id===folder.id&&isRelevant(a);});
+    var subFolders=S_folders.filter(function(f){return f.parent_id===folder.id;});
+
+    var wrap=document.createElement('div');
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:6px;padding:7px '+(6+depth*12)+'px;border-radius:10px;cursor:pointer;transition:background 0.1s';
+    row.innerHTML='<span style="font-size:14px">📁</span><span style="font-size:13px;font-weight:600;color:var(--ice2);flex:1">'+folder.name+'</span>'+(arts.length?'<span style="font-size:10px;color:var(--gold);font-family:DM Mono,monospace">'+arts.length+'</span>':'');
+    row.onmouseover=function(){row.style.background='var(--ink4)';};
+    row.onmouseout=function(){row.style.background='transparent';};
+
+    var childWrap=document.createElement('div');
+    childWrap.style.display='none';
+    // Articles
+    arts.forEach(function(a){
+      var aRow=document.createElement('div');
+      aRow.style.cssText='display:flex;align-items:center;gap:6px;padding:5px '+(6+(depth+1)*12)+'px;border-radius:8px;cursor:pointer;transition:background 0.1s';
+      aRow.innerHTML='<span style="font-size:11px">📄</span><span style="font-size:12px;color:var(--ice2)">'+a.title+'</span>';
+      aRow.onmouseover=function(){aRow.style.background='var(--ink4)';};
+      aRow.onmouseout=function(){aRow.style.background='transparent';};
+      aRow.onclick=function(){showAgentArticle(a);};
+      childWrap.appendChild(aRow);
+    });
+    // Sub-folders
+    subFolders.forEach(function(sf){
+      var sfNode=buildFolderRow(sf,depth+1);
+      if(sfNode) childWrap.appendChild(sfNode);
+    });
+
+    row.onclick=function(){
+      var open=childWrap.style.display==='block';
+      childWrap.style.display=open?'none':'block';
+      row.querySelector('span').textContent=open?'📁':'📂';
+    };
+    wrap.appendChild(row);
+    wrap.appendChild(childWrap);
+    return wrap;
+  }
+
+  var hasContent=false;
+  topFolders.forEach(function(f){
+    var node=buildFolderRow(f,0);
+    if(node){treeEl.appendChild(node);hasContent=true;}
+  });
+
+  // Articles without folder
+  var noFolder=S_knowledge.filter(function(a){return !a.folder_id&&isRelevant(a);});
+  if(noFolder.length){
+    var sep=document.createElement('div');
+    sep.style.cssText='margin-top:8px;padding-top:8px;border-top:1px solid var(--line)';
+    sep.innerHTML='<div style="font-size:9px;color:var(--ice3);font-family:DM Mono,monospace;text-transform:uppercase;margin-bottom:6px">📄 מאמרים</div>';
+    noFolder.forEach(function(a){
+      var r=document.createElement('div');
+      r.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 4px;border-radius:8px;cursor:pointer;transition:background 0.1s';
+      r.innerHTML='<span style="font-size:11px">📄</span><span style="font-size:12px;color:var(--ice2)">'+a.title+'</span>';
+      r.onmouseover=function(){r.style.background='var(--ink4)';};
+      r.onmouseout=function(){r.style.background='transparent';};
+      r.onclick=function(){showAgentArticle(a);};
+      sep.appendChild(r);
+    });
+    treeEl.appendChild(sep);
+    hasContent=true;
+  }
+
+  if(!hasContent){
+    treeEl.innerHTML+='<div style="font-size:12px;color:var(--ice3);margin-top:4px">אין תכנים זמינים</div>';
+  }
+}
+
+function showAgentArticle(article){
+  var el=document.getElementById('abp-kb-article');
+  if(!el) return;
+  el.innerHTML='<div style="background:#fff;border:1px solid var(--line2);border-radius:16px;padding:20px 22px">'+
+    '<div style="font-size:18px;font-weight:800;color:var(--ice);margin-bottom:8px">'+article.title+'</div>'+
+    '<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 10px;font-family:DM Mono,monospace">'+( article.dept||'כללי')+'</span>'+
+    '<div style="font-size:14px;line-height:1.85;color:var(--ice2);margin-top:16px;white-space:pre-wrap">'+( article.content||'')+'</div>'+
+  '</div>';
+}
+
+function renderAgentAchievementsPanel(){
+  var el=document.getElementById('abp-achievements-content');
+  if(!el||!S.agent) return;
+  var agId=String(S.agent.id);
+  var done=S.briefings.filter(function(b){ return b.completions[agId]; });
+  var scores=done.map(function(b){ return b.completions[agId].score; });
+  var avg=scores.length?Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length):null;
+
+  var allBadges=[
+    {icon:'🌟',label:'תדריך ראשון',desc:'השלמת את התדריך הראשון שלך',earned:done.length>=1},
+    {icon:'📚',label:'מתמיד',desc:'השלמת 5 תדריכים',earned:done.length>=5},
+    {icon:'🎓',label:'בוגר',desc:'השלמת 10 תדריכים',earned:done.length>=10},
+    {icon:'⭐',label:'מושלם',desc:'קיבלת 100% בתדריך',earned:scores.some(function(s){return s===100;})},
+    {icon:'🎯',label:'מצטיין',desc:'ממוצע מעל 90%',earned:avg!==null&&avg>=90},
+    {icon:'🔥',label:'בוער',desc:'השלמת 3+ תדריכים',earned:done.length>=3},
+    {icon:'💎',label:'יהלום',desc:'ממוצע מעל 80%',earned:avg!==null&&avg>=80},
+    {icon:'🏅',label:'אלוף',desc:'השלמת 20 תדריכים',earned:done.length>=20},
+  ];
+
+  var earnedBadges=allBadges.filter(function(b){return b.earned;});
+  var lockedBadges=allBadges.filter(function(b){return !b.earned;});
+
+  el.innerHTML='<div class="card" style="padding:0;overflow:hidden">'+
+    '<div style="padding:14px 18px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">'+
+      '<div class="card-label" style="margin:0">🏅 הישגים</div>'+
+      '<div style="font-size:12px;color:var(--ice3);font-family:DM Mono,monospace">'+earnedBadges.length+'/'+allBadges.length+' הושגו</div>'+
+    '</div>'+
+    '<div style="padding:14px 18px">'+
+      (earnedBadges.length?
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:'+(lockedBadges.length?'14px':'0')+'">'+
+          earnedBadges.map(function(b){return '<div style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:8px"><span style="font-size:22px">'+b.icon+'</span><div><div style="font-size:13px;font-weight:700;color:var(--gold)">'+b.label+'</div><div style="font-size:10px;color:var(--ice3)">'+b.desc+'</div></div></div>';}).join('')+
+        '</div>':'')+''+
+      (lockedBadges.length?
+        '<div style="font-size:11px;color:var(--ice3);font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">ממתינים לפתיחה</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+          lockedBadges.map(function(b){return '<div style="background:rgba(0,0,0,0.03);border:1px dashed var(--line2);border-radius:12px;padding:8px 12px;display:flex;align-items:center;gap:6px;opacity:0.5"><span style="font-size:18px;filter:grayscale(1)">'+b.icon+'</span><div style="font-size:11px;color:var(--ice3)">'+b.desc+'</div></div>';}).join('')+
+        '</div>':'')+''+
+    '</div></div>';
+}
+
+function renderAgentLeaderboardPanel(){
+  var el=document.getElementById('abp-leaderboard-content');
+  if(!el||!S.agent) return;
+  // Filter to agent's group only
+  var grp=GROUPS.find(function(g){ return g.depts.some(function(d){ return (S.agent.depts||[]).includes(d); }); });
+  var groupAgents=grp ? S.agents.filter(function(a){ return (a.depts||[]).some(function(d){ return grp.depts.includes(d); }); }) : null;
+  renderLeaderboard('abp-leaderboard-content', S.agent.id, groupAgents);
+}
+
+function updateAgentSidebar(){
+  if(!S.agent) return;
+  const hdr=document.getElementById('agent-sb-header');
+  if(hdr){
+    const c=col(S.agent.id);
+    hdr.innerHTML='<div class="av" style="width:40px;height:40px;background:'+c.bg+';color:'+c.c+';font-size:14px;margin:0 auto 6px">'+ini(S.agent.name)+'</div><div style="font-size:13px;font-weight:700;color:var(--ice)">'+S.agent.name+'</div>';
+  }
+  const pending=S.briefings.filter(b=>{
+    if(b.completions[String(S.agent.id)]) return false;
+    if(!b.targetDepts||!b.targetDepts.length) return true;
+    return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
+  }).length;
+  const badge=document.getElementById('asb-briefings-badge');
+  if(badge){ badge.style.display=pending?'inline':'none'; badge.textContent=String(pending); }
+}
+
+function renderAgentBriefingsPanel(){
+  const el=document.getElementById('abp-briefings-content');
+  if(!el||!S.agent) return;
+  const agId=String(S.agent.id);
+  const pending=S.briefings.filter(b=>{
+    if(b.completions[agId]) return false;
+    if(!b.targetDepts||!b.targetDepts.length) return true;
+    return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
+  });
+  if(!pending.length){
+    el.innerHTML='<div style="text-align:center;padding:3rem 1rem;background:linear-gradient(135deg,#f0fff8,#e8fdf2);border-radius:20px;border:1.5px solid rgba(26,158,110,0.2)"><div style="font-size:48px;margin-bottom:14px">🎉</div><div style="font-size:20px;font-weight:800;color:var(--ok);margin-bottom:6px">כל הכבוד!</div><div style="font-size:15px;color:var(--ice3)">אין תדריכים ממתינים כרגע</div></div>';
+    return;
+  }
+  el.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--ice3);margin-bottom:14px">'+pending.length+' תדריכים ממתינים</div>'+
+    pending.map(function(b){
+      var dl=b.deadline?new Date(b.deadline):null;
+      var daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
+      var urgent=daysLeft!==null&&daysLeft<=2;
+      return '<div style="background:'+(urgent?'linear-gradient(135deg,#fff8f0,#fff3e6)':'linear-gradient(135deg,#0F4C2A,#1A7A45)')+';border-radius:20px;padding:22px;margin-bottom:12px">'+
+        '<div style="color:'+(urgent?'var(--ice)':'#fff')+';font-size:17px;font-weight:800;margin-bottom:8px;text-align:right">'+b.title+'</div>'+
+        (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'rgba(255,255,255,0.8)')+';margin-bottom:12px;text-align:right">⏰ '+daysLeft+' ימים לסיום</div>':'')+
+        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#1A1714':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
+        '</div>';
+    }).join('');
 }
 </script>
 
