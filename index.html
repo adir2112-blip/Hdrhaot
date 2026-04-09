@@ -873,7 +873,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
     <div class="field">
       <label class="field-label">מפתח API</label>
-      <input type="text" id="api-modal-key" placeholder="AIzaSy..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px" onkeydown="if(event.key==='Enter')saveApiKey()">
+      <input type="text" id="api-modal-key" placeholder="gsk_..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px" onkeydown="if(event.key==='Enter')saveApiKey()">
     </div>
     <div id="api-modal-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace"></div>
     <div style="display:flex;gap:10px;margin-top:18px">
@@ -1874,9 +1874,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div class="card">
               <div class="card-label">⚙️ הגדרות מערכת</div>
               <div class="field">
-                <label class="field-label">מפתח Gemini API</label>
+                <label class="field-label">מפתח Groq API</label>
                 <div style="display:flex;gap:10px">
-                  <input type="text" id="config-api-key" placeholder="AIzaSy..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
+                  <input type="text" id="config-api-key" placeholder="gsk_..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
                   <button class="btn btn-gold btn-sm" onclick="saveConfigApiKey()">שמור</button>
                 </div>
                 <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">נדרש ליצירת שאלות AI וניסוח תוכן</div>
@@ -2318,7 +2318,7 @@ async function loadConfigValues(){
   if(keyEl){
     const stored = localStorage.getItem('bs_api_key');
     keyEl.value = stored ? '••••••••••••••••' : '';
-    keyEl.placeholder = stored ? 'מפתח קיים — הכנס חדש לשינוי' : 'AIzaSy...';
+    keyEl.placeholder = stored ? 'מפתח קיים — הכנס חדש לשינוי' : 'gsk_...';
   }
   const pwMsg = document.getElementById('config-pw-msg');
   if(pwMsg) pwMsg.style.display='none';
@@ -2770,14 +2770,16 @@ function viewFolderArticle(id){
 }
 
 function buildKnowledgeContext(dept){
-  // Manual knowledge articles
-  // Match articles: 'כללי' for all, exact group key match, OR agent's actual dept strings
-  const grpObj=GROUPS.find(g=>g.key===dept);
-  const agentDeptStrings=grpObj?grpObj.depts:[];
+  // dept = group key (e.g. 'מובמנט') OR agent's specific dept
+  // For AI: show only articles relevant to THIS specific agent
+  const agentActualDepts = S.agent ? (S.agent.depts||[]).map(d=>d.trim().toLowerCase()) : [];
+  const agentGrp = S.agent ? agentGroup(S.agent) : null;
   const articles=S_knowledge.filter(a=>{
     if(a.dept==='כללי'||!a.dept) return true;
-    if(a.dept===dept) return true;  // matches group key
-    if(agentDeptStrings.includes(a.dept)) return true;  // matches specific dept string
+    const ad=a.dept.trim().toLowerCase();
+    if(ad===(dept||'').toLowerCase()) return true; // exact dept/group match
+    if(agentActualDepts.includes(ad)) return true; // specific dept match
+    if(agentGrp && ad===agentGrp.toLowerCase()) return true; // agent's group key
     return false;
   });
   // Articles are the primary knowledge source - include more content
@@ -2800,6 +2802,8 @@ function buildKnowledgeContext(dept){
 }
 
 let _adminKbHistory=[];
+let _lastAiRequest=0; // rate limit tracker
+let _aiRequestInProgress=false; // global lock
 async function sendKnowledgeChat(mode){
   const inputId=mode==='admin'?'k-admin-chat-input':'agent-kb-input';
   const boxId=mode==='admin'?'k-admin-chat-box':'agent-kb-messages';
@@ -2808,7 +2812,7 @@ async function sendKnowledgeChat(mode){
   const q=input?.value?.trim();
   if(!q) return;
   const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Gemini API');return;}
+  if(!key){alert('נדרש מפתח Groq API');return;}
   input.value='';
   appendKbMessage(boxId,'user',q);
   const thinkingId='think-'+Date.now();
@@ -2836,17 +2840,41 @@ async function sendKnowledgeChat(mode){
     {role:'model',parts:[{text:'הבנתי. אענה רק לפי בסיס הידע שסיפקת.'}]},
     ...recentHistory.map(m=>({role:m.role==='ai'?'model':'user',parts:[{text:m.content}]}))
   ];
+  // ── Rate limit protection: max 1 request per 3 seconds ──────────────────
+  const now_rl=Date.now();
+  const elapsed=now_rl-(_lastAiRequest||0);
+  const minGap=4000; // 4 seconds = ~15 req/min max (safe for free tier)
+  if(elapsed<minGap){
+    const wait=minGap-elapsed;
+    updateKbMessage(boxId,thinkingId,'⏳ ממתין רגע...');
+    await new Promise(r=>setTimeout(r,wait));
+  }
+  _lastAiRequest=Date.now();
+
   try{
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key='+key,{
-      method:'POST',headers:{'Content-Type':'application/json'},
+    // Build messages for Groq (OpenAI-compatible format)
+    const groqMessages=contents.map(function(c){
+      return {role:c.role==='model'?'assistant':c.role, content:c.parts[0].text};
+    });
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
-        contents,
-        generationConfig:{temperature:0.2,maxOutputTokens:1000}
+        model:'llama-3.3-70b-versatile',
+        messages:groqMessages,
+        temperature:0.2,
+        max_tokens:1000
       })
     });
     const data=await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const ans=data.candidates[0].content.parts[0].text.trim();
+    if(data.error){
+      const msg=data.error.message||'';
+      if(msg.includes('rate_limit')||msg.includes('Rate limit')){
+        throw new Error('עומס זמני — המתן מספר שניות ונסה שוב.');
+      }
+      throw new Error(msg);
+    }
+    const ans=data.choices[0].message.content.trim();
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
@@ -2860,6 +2888,8 @@ async function sendKnowledgeChat(mode){
     }catch(e){ console.log('usage track err',e); }
   } catch(e){
     updateKbMessage(boxId,thinkingId,'שגיאה: '+e.message);
+  } finally{
+    _aiRequestInProgress=false;
   }
 }
 
@@ -2887,27 +2917,57 @@ let _agentKbHistory=[];
 
 function openAgentKnowledgeChat(){
   if(!S.agent) return;
-  const grp=agentGroup(S.agent);
-  _agentKbDept=grp||'כללי';
   _agentKbHistory=[];
   document.getElementById('agent-kb-messages').innerHTML='';
   document.getElementById('agent-kb-input').value='';
   document.getElementById('agent-kb-title').textContent='עוזר AI';
-  const deptLabel=document.getElementById('agent-kb-dept-label');
-  if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
 
   document.getElementById('agent-knowledge-modal').style.display='block';
-  // Position: on desktop show as popup, on mobile full-width bottom
-  const modal = document.getElementById('agent-knowledge-modal');
+  const modal=document.getElementById('agent-knowledge-modal');
   if(window.innerWidth < 500){
     modal.style.left='8px'; modal.style.right='8px'; modal.style.width='auto'; modal.style.bottom='80px';
   } else {
     modal.style.left='20px'; modal.style.right='auto'; modal.style.width='380px'; modal.style.bottom='20px';
   }
-  // Always load fresh knowledge to ensure agent sees latest content
+
   loadKnowledge().then(()=>{
-    appendKbMessage('agent-kb-messages','ai','שלום '+S.agent.name.split(' ')[0]+'! 👋\nאני כאן לעזור בכל שאלה על נהלים ומוצרים של '+_agentKbDept+'.\nשאל אותי כל שאלה!');
+    const agentDepts=(S.agent.depts||[]);
+    // If agent has multiple depts → ask which context
+    if(agentDepts.length > 1){
+      _agentKbDept=agentDepts[0]; // default to first
+      const deptLabel=document.getElementById('agent-kb-dept-label');
+      if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
+      // Show welcome with dept selector
+      const btns=agentDepts.map(d=>
+        `<button onclick="setAgentKbDept('${d}')" style="background:rgba(184,134,42,0.1);border:1px solid rgba(184,134,42,0.3);color:var(--ice);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;margin:2px">${d}</button>`
+      ).join('');
+      appendKbMessage('agent-kb-messages','ai',
+        'שלום '+S.agent.name.split(' ')[0]+'! 👋\n'+
+        'אני רואה שאתה משויך למספר מחלקות.\n'+
+        'באיזה הקשר תרצה לשאול?\n\n'+
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'+btns+'</div>'
+      );
+    } else {
+      _agentKbDept=agentDepts[0]||agentGroup(S.agent)||'כללי';
+      const deptLabel=document.getElementById('agent-kb-dept-label');
+      if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
+      appendKbMessage('agent-kb-messages','ai',
+        'שלום '+S.agent.name.split(' ')[0]+'! 👋\nאני כאן לעזור בכל שאלה על נהלים ומוצרים של '+_agentKbDept+'.\nשאל אותי כל שאלה!'
+      );
+    }
   });
+}
+
+function setAgentKbDept(dept){
+  _agentKbDept=dept;
+  _agentKbHistory=[];
+  const deptLabel=document.getElementById('agent-kb-dept-label');
+  if(deptLabel) deptLabel.textContent='ידע '+dept;
+  // Clear and restart with new context
+  document.getElementById('agent-kb-messages').innerHTML='';
+  appendKbMessage('agent-kb-messages','ai',
+    'מצוין! עכשיו אני עונה בהקשר של **'+dept+'**.\nשאל אותי כל שאלה!'
+  );
 }
 
 function closeAgentKnowledgeChat(){
@@ -3190,7 +3250,7 @@ async function extractFromFile(input){
 /* ── AI SUMMARY ─────────────────────────────── */
 async function generateAISummary(){
   const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Gemini API — עדכן בהגדרות');return;}
+  if(!key){alert('נדרש מפתח Groq API — עדכן בהגדרות');return;}
   const content=document.getElementById('flow-content')?.textContent||'';
   const title=document.getElementById('flow-title')?.textContent||'';
   if(!content.trim()){alert('אין תוכן לסכם');return;}
@@ -3218,7 +3278,7 @@ important = מה הכי חשוב לדעת
 forbidden = מה אסור להגיד/לעשות  
 todo = מה צריך לעשות`;
 
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})
     });
@@ -3272,7 +3332,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
 כותרת: ${title}
 תוכן: ${content}
 צור בדיוק ${numQ} שאלות.`;
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:3000}})
     });
@@ -4060,7 +4120,7 @@ async function submitReverseBriefing(){
   const explanation=document.getElementById('reverse-briefing-text')?.value?.trim();
   if(!explanation){alert('כתוב הסבר קודם');return;}
   const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Gemini API');return;}
+  if(!key){alert('נדרש מפתח Groq API');return;}
   const content=S.active?.content||'';
   const title=S.active?.title||'';
 
@@ -4088,7 +4148,7 @@ ${content.slice(0,3000)}
   "summary": "משפט אחד קצר על ההבנה הכללית"
 }`;
 
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,{
+    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:600}})
     });
@@ -5781,14 +5841,19 @@ async function appInit(){
   try{
     const {data}=await _sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
     if(data&&data.value){
+      // Always overwrite localStorage with latest key from Supabase
       localStorage.setItem('bs_api_key',data.value);
     } else if(!localStorage.getItem('bs_api_key')){
-      // First time only - show modal
       document.getElementById('api-modal').classList.remove('hidden');
     }
   } catch(e){
     if(!localStorage.getItem('bs_api_key'))
       document.getElementById('api-modal').classList.remove('hidden');
+  }
+  // Clear any stale Gemini key that starts with 'AIza'
+  const storedKey=localStorage.getItem('bs_api_key')||'';
+  if(storedKey.startsWith('AIza')){
+    localStorage.removeItem('bs_api_key');
   }
   await loadAll();
   renderAgentLogin();initBriefingDeptPicker();
@@ -5858,13 +5923,21 @@ async function renderAgentKnowledgePanel(){
   await loadKnowledge();
   await loadFolders();
 
-  // Determine agent dept group
-  var grp=agentGroup(S.agent);  // e.g. 'מובמנט'
+  // Agent's ACTUAL specific depts (e.g. ['כללית אקטיב','מעוף לעמית'])
+  var agentActualDepts = (S.agent.depts||[]).map(function(d){return d.trim().toLowerCase();});
+  var grp = agentGroup(S.agent); // group key e.g. 'מובמנט'
+  var grpObj = GROUPS.find(function(g){return g.key===grp;});
+  var grpDepts = grpObj ? grpObj.depts.map(function(d){return d.trim().toLowerCase();}) : [];
 
-  // Filter articles: show 'כללי' + agent's group dept
   function isRelevant(article){
     if(!article.dept||article.dept==='כללי') return true;
-    return article.dept===grp;
+    var ad = article.dept.trim().toLowerCase();
+    if(ad === (grp||'').toLowerCase()) return true; // group key (e.g. 'מובמנט')
+    if(agentActualDepts.includes(ad)) return true;  // specific dept
+    // Also match if article dept is ANY dept within agent's group
+    var groupDepts = grpDepts || [];
+    if(groupDepts.includes(ad)) return true;
+    return false;
   }
 
   // Build tree - show all folders (filter articles inside)
