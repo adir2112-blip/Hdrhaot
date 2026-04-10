@@ -2816,7 +2816,7 @@ function buildKnowledgeContext(dept){
     return false;
   });
   // Articles are the primary knowledge source - include more content
-  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,2000)).join('\n\n---\n\n');
+  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,600)).join('\n\n---\n\n');
 
   // Briefings relevant to this dept
   // Include: briefings for this specific dept, for agent's group, or for all
@@ -2832,7 +2832,7 @@ function buildKnowledgeContext(dept){
   });
   const briefCtx=relBriefs.map(b=>{
     const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
-    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs:'');
+    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,800):'');
   }).join('\n\n---\n\n');
 
   const combined=[articleCtx,briefCtx].filter(Boolean).join('\n\n===\n\n');
@@ -2889,16 +2889,16 @@ async function sendKnowledgeChat(mode){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
-        model:'llama-3.3-70b-versatile',
+        model:'llama-3.1-8b-instant',
         messages:groqMessages,
         temperature:0.2,
-        max_tokens:1000
+        max_tokens:500
       })
     });
     const data=await res.json();
     if(data.error){
       const msg=data.error.message||'';
-      if(msg.includes('rate_limit')||msg.includes('Rate limit')){
+      if(msg.includes('rate_limit')||msg.includes('Rate limit')||msg.includes('tokens per')){
         throw new Error('עומס זמני (מגבלת Groq) — המתן 10 שניות ונסה שוב.');
       }
       throw new Error(msg);
@@ -3342,7 +3342,7 @@ todo = מה צריך לעשות`;
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
@@ -3397,7 +3397,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
@@ -4214,7 +4214,7 @@ ${content.slice(0,3000)}
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
+      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
@@ -6235,7 +6235,7 @@ async function polishContent(){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
-        model:'llama-3.3-70b-versatile',
+        model:'llama-3.1-8b-instant',
         messages:[
           {role:'user',content:
             'אתה עוזר לכתיבת תדריכים מקצועיים לנציגי שירות ומכירה בישראל.\n'+
