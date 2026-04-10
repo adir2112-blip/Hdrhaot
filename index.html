@@ -6603,44 +6603,27 @@ async function promptPushSubscription() {
   if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
 }
 
-// Send push to all agents with specific depts (called after publishBriefing)
+// Send push to all agents via Supabase Edge Function
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
-    // Get all subscriptions from Supabase
-    const {data} = await _sb.from('app_settings')
-      .select('key,value')
-      .like('key', 'push_sub_%');
+    const supabaseUrl = 'https://hbjtpjdthvjikfxsufdo.supabase.co';
+    const anonKey = _sb.rest?.headers?.['apikey'] || 
+      document.querySelector('script')?.textContent?.match(/eyJ[^']+/)?.[0] || '';
     
-    if (!data || !data.length) return;
-    
-    let sent = 0;
-    for (const row of data) {
-      try {
-        const info = JSON.parse(row.value);
-        // Check if this agent should receive the notification
-        if (targetDepts && targetDepts.length > 0) {
-          const agentDepts = info.depts || [];
-          const relevant = agentDepts.some(d => targetDepts.includes(d));
-          if (!relevant) continue;
-        }
-        // Use Web Push API via fetch to a push service
-        // Store pending notifications in Supabase for SW to pick up
-        await _sb.from('app_settings').upsert({
-          key: 'pending_push_' + Date.now() + '_' + (info.agentId||''),
-          value: JSON.stringify({
-            subscription: info.subscription,
-            payload: {
-              title: 'תדריך חדש! 📋',
-              body: briefingTitle,
-              tag: 'briefing-' + Date.now(),
-              url: window.location.href
-            }
-          })
-        }, {onConflict:'key'});
-        sent++;
-      } catch(e) {}
-    }
-    console.log('[Push] Queued', sent, 'notifications');
+    const res = await fetch(supabaseUrl + '/functions/v1/send-push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI3NjI5MzAsImV4cCI6MjAyODMzODkzMH0.abc'
+      },
+      body: JSON.stringify({
+        title: 'תדריך חדש! 📋',
+        body: briefingTitle,
+        targetDepts: targetDepts || []
+      })
+    });
+    const result = await res.json();
+    console.log('[Push] Sent to', result.sent, 'agents');
   } catch(e) {
     console.log('[Push] Send failed:', e);
   }
