@@ -1598,6 +1598,17 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- RIGHT SIDEBAR -->
       <div id="dashboard-sidebar" style="width:180px;flex-shrink:0;position:sticky;top:80px">
         <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px;overflow:hidden">
+          <button onclick="showDashPanel(null)" id="sb-main" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">🏠</span><span>דשבורד ראשי</span>
+          </button>
+
+          <button onclick="showDashPanel('briefings-history')" id="sb-briefings-history" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:2px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">📋</span>
+            <span>תדריכים</span>
+          </button>
+
+          <div style="height:1px;background:var(--line);margin:10px 4px 12px"></div>
+
           <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">📊 ניתוח</div>
           <button onclick="showDashPanel('verbal')" id="sb-verbal" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">🎤</span><span>מבחן מילולי</span>
@@ -1623,9 +1634,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <span style="font-size:18px">📅</span><span>לוח שנה</span>
           </button>
           <div style="height:1px;background:var(--line);margin:8px 4px"></div>
-          <button onclick="showDashPanel(null)" id="sb-main" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
-            <span style="font-size:18px">🏠</span><span>דשבורד ראשי</span>
-          </button>
+          
+
+          
         </div>
       </div>
 
@@ -2818,16 +2829,13 @@ function buildKnowledgeContext(dept){
   // Articles are the primary knowledge source - include more content
   const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,600)).join('\n\n---\n\n');
 
-  // Briefings relevant to this dept
-  // Include: briefings for this specific dept, for agent's group, or for all
-  const agentAllDepts = S.agent ? (S.agent.depts||[]) : [];
+  // Briefings: only for selected dept (or all depts briefings)
   const relBriefs=S.briefings.filter(b=>{
-    if(!b.targetDepts||b.targetDepts.length===0) return true;
-    // Match if any of agent's depts is in the briefing's targetDepts
+    if(!b.targetDepts||b.targetDepts.length===0) return true; // all-depts briefing
+    const deptLower=(dept||'').trim().toLowerCase();
     return b.targetDepts.some(td=>
-      td===dept ||
-      agentAllDepts.some(ad=>ad.toLowerCase()===td.toLowerCase()) ||
-      (agentGrp && td===agentGrp)
+      td.toLowerCase()===deptLower ||           // exact match
+      (agentGrp && td.toLowerCase()===agentGrp.toLowerCase()) // group-level briefing
     );
   });
   const briefCtx=relBriefs.map(b=>{
@@ -4980,6 +4988,7 @@ const DASH_PANEL_META = {
   weak:        {eyebrow:'ניתוח טעויות', title:'שאלות <em>בעייתיות</em>',     render:renderWeakPanel},
   feedback:    {eyebrow:'קול השטח',      title:'משובי <em>נציגים</em>',       render:renderFeedbackPanel},
   calendar:    {eyebrow:'לו"ז תדריכים', title:'לוח <em>שנה</em>',            render:renderCalendarPanel},
+  'briefings-history': {eyebrow:'תדריכים', title:'ניהול <em>תדריכים</em>', render:renderBriefingsHistoryPanel},
 };
 
 const PANEL_FILTERS = {
@@ -4999,6 +5008,13 @@ const PANEL_FILTERS = {
              <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">◀</button>
              <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);min-width:110px;text-align:center;display:inline-block"></span>
              <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
+
+  'briefings-history': `<select id="bh-dept-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+    <select id="bh-status-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer">
+      <option value="all">הכל</option>
+      <option value="pending">ממתינים</option>
+      <option value="completed">הושלמו</option>
+    </select>`,
 };
 
 let _currentDashPanel = null;
@@ -6262,6 +6278,112 @@ async function polishContent(){
     btn.disabled=false;
   }
 }
+
+/* ══ BRIEFINGS HISTORY PANEL ══════════════════════════════ */
+function renderBriefingsHistoryPanel(){
+  const el=document.getElementById('briefings-history-panel-content');
+  if(!el) return;
+
+  const deptFilter=document.getElementById('bh-dept-filter')?.value||'all';
+  const statusFilter=document.getElementById('bh-status-filter')?.value||'all';
+
+  let briefs=[...S.briefings];
+
+  if(deptFilter!=='all'){
+    const grp=GROUPS.find(g=>g.key===deptFilter);
+    const depts=grp?grp.depts:[deptFilter];
+    briefs=briefs.filter(b=>{
+      if(!b.targetDepts||!b.targetDepts.length) return true;
+      return b.targetDepts.some(d=>depts.includes(d));
+    });
+  }
+
+  const rows=briefs.map(b=>{
+    const relevant=S.agents.filter(a=>{
+      if(!b.targetDepts||!b.targetDepts.length) return true;
+      return (a.depts||[]).some(d=>b.targetDepts.includes(d));
+    });
+    const completedAgents=relevant.filter(a=>b.completions[String(a.id)]);
+    const pendingAgents=relevant.filter(a=>!b.completions[String(a.id)]);
+    const pct=relevant.length?Math.round(completedAgents.length/relevant.length*100):0;
+    const dl=b.deadline?new Date(b.deadline):null;
+    const daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
+    return {b,relevant,completedAgents,pendingAgents,pct,daysLeft};
+  });
+
+  const filtered=statusFilter==='pending'?rows.filter(r=>r.pendingAgents.length>0)
+    :statusFilter==='completed'?rows.filter(r=>r.pct===100)
+    :rows;
+
+  if(!filtered.length){
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--ice3)"><div style="font-size:32px;margin-bottom:8px">📋</div><div>אין תדריכים תואמים</div></div>';
+    return;
+  }
+
+  filtered.sort((a,b2)=>(b2.pendingAgents.length-a.pendingAgents.length)||0);
+
+  el.innerHTML=filtered.map(({b,relevant,completedAgents,pendingAgents,pct,daysLeft})=>{
+    const overdue=daysLeft!==null&&daysLeft<0;
+    const completedIds=completedAgents.map(a=>a.id).join(',');
+    const pendingIds=pendingAgents.map(a=>a.id).join(',');
+    const pendingNames=pendingAgents.map(a=>a.name).join('\n');
+
+    return `<div style="background:var(--ink3);border:1px solid var(--line2);border-radius:16px;padding:16px 18px;margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+        <!-- RIGHT: title + tags -->
+        <div style="flex:1;min-width:0;text-align:right">
+          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">${b.title}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            ${(b.targetDepts||[]).map(d=>`<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 8px">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">כל הנציגים</span>'}
+            ${daysLeft!==null?`<span style="font-size:11px;background:${overdue?'rgba(220,50,50,0.1)':'rgba(240,170,50,0.1)'};color:${overdue?'var(--danger)':'var(--warn)'};border-radius:20px;padding:2px 8px">⏰ ${overdue?'פג תוקף לפני '+Math.abs(daysLeft)+' ימים':'נותרו '+daysLeft+' ימים'}</span>`:''}
+          </div>
+        </div>
+        <!-- LEFT: delete button -->
+        <button onclick="deleteBriefing('${b.id}')" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:var(--danger);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer;flex-shrink:0">🗑</button>
+      </div>
+
+      <!-- Action buttons row -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="showCompletedAgents('${b.id}')" style="background:rgba(26,158,110,0.1);border:1px solid rgba(26,158,110,0.3);color:var(--ok);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+          ✓ ${completedAgents.length} השלימו
+        </button>
+        <button onclick="showPendingAgents('${b.id}')" style="background:rgba(240,170,50,0.1);border:1px solid rgba(240,170,50,0.3);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+          ⏳ ${pendingAgents.length} ממתינים
+        </button>
+        <button onclick="requestRefresh('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+          🔄 רענון חוזר
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showCompletedAgents(briefingId){
+  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
+  if(!b) return;
+  const agents=S.agents.filter(a=>b.completions[String(a.id)]);
+  if(!agents.length){alert('אין נציגים שהשלימו עדיין.');return;}
+  const rows=agents.map(a=>{
+    const comp=b.completions[String(a.id)];
+    return a.name+' — '+comp.score+'%';
+  }).join('\n');
+  alert('✓ השלימו:\n'+rows);
+}
+
+function showPendingAgents(briefingId){
+  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
+  if(!b) return;
+  const agents=S.agents.filter(a=>{
+    if(b.completions[String(a.id)]) return false;
+    if(!b.targetDepts||!b.targetDepts.length) return true;
+    return (a.depts||[]).some(d=>b.targetDepts.includes(d));
+  });
+  if(!agents.length){alert('כל הנציגים הרלוונטיים השלימו!');return;}
+  alert('⏳ ממתינים:\n'+agents.map(a=>a.name).join('\n'));
+}
+
+
+
 </script>
 
 <!-- AGENT KNOWLEDGE CHAT MODAL -->
