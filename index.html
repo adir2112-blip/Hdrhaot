@@ -2897,7 +2897,7 @@ async function sendKnowledgeChat(mode){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
-        model:'llama-3.1-8b-instant',
+        model:'meta-llama/llama-4-scout-17b-16e-instruct',
         messages:groqMessages,
         temperature:0.2,
         max_tokens:500
@@ -3350,7 +3350,7 @@ todo = מה צריך לעשות`;
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
@@ -3405,7 +3405,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
@@ -4224,7 +4224,7 @@ ${content.slice(0,3000)}
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
+      body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
@@ -6253,7 +6253,7 @@ async function polishContent(){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
-        model:'llama-3.1-8b-instant',
+        model:'meta-llama/llama-4-scout-17b-16e-instruct',
         messages:[
           {role:'user',content:
             'אתה עוזר לכתיבת תדריכים מקצועיים לנציגי שירות ומכירה בישראל.\n'+
