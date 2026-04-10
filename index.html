@@ -970,7 +970,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2)">
             <span style="font-size:16px">✦</span>
             <span>שפר ונסח עם AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">GEMINI</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">GROQ</span>
           </button>
           <div id="polish-loading" style="display:none;font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;align-items:center;gap:6px">
             <div class="dot-row"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
@@ -1320,7 +1320,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2),0 0 0 0 rgba(184,134,42,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(184,134,42,0.35),0 0 0 4px rgba(184,134,42,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(184,134,42,0.2)';this.style.transform=''">
             <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span>
             <span>סיכום AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">GEMINI</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">GROQ</span>
           </button>
         </div>
       </div>
@@ -1455,9 +1455,25 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div class="sec-title" style="margin-bottom:16px">מאמרי <em>ידע</em></div>
             <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
               <select id="k-dept-filter" onchange="renderKnowledgeArticles()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
-                <option value="all">כל המחלקות</option><option value="כללי">כללי</option>
-                <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-                <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+                <option value="all">כל המחלקות</option>
+                <option value="כללי">כללי (לכולם)</option>
+                <optgroup label="── מובמנט ──">
+                  <option value="כללית אקטיב">כללית אקטיב</option>
+                  <option value="עובדים בריא">עובדים בריא</option>
+                  <option value="מעוף לעמית">מעוף לעמית</option>
+                  <option value="מעוף לעמית מכירות">מעוף לעמית מכירות</option>
+                  <option value="לאומית FIT">לאומית FIT</option>
+                </optgroup>
+                <optgroup label="── פריפיט ──">
+                  <option value="פריפיט שירות">פריפיט שירות</option>
+                  <option value="פריפיט מכירות">פריפיט מכירות</option>
+                </optgroup>
+                <optgroup label="── סחר ──">
+                  <option value="מחלקת סחר">מחלקת סחר</option>
+                </optgroup>
+                <optgroup label="── מאוחדת ──">
+                  <option value="מאוחדת">מאוחדת</option>
+                </optgroup>
               </select>
               <input type="text" id="k-search" placeholder="🔍 חפש..." oninput="renderKnowledgeArticles()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
             </div>
@@ -1500,9 +1516,26 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div class="sec-title" style="margin-bottom:16px">שאל את ה-<em>AI</em></div>
             <div style="margin-bottom:12px">
               <select id="k-chat-dept" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
-                <option value="כללי">כללי</option><option value="מובמנט">מובמנט</option>
-                <option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
-              </select>
+              <option value="all">כל המחלקות</option>
+                <option value="כללי">כללי (לכולם)</option>
+                <optgroup label="── מובמנט ──">
+                  <option value="כללית אקטיב">כללית אקטיב</option>
+                  <option value="עובדים בריא">עובדים בריא</option>
+                  <option value="מעוף לעמית">מעוף לעמית</option>
+                  <option value="מעוף לעמית מכירות">מעוף לעמית מכירות</option>
+                  <option value="לאומית FIT">לאומית FIT</option>
+                </optgroup>
+                <optgroup label="── פריפיט ──">
+                  <option value="פריפיט שירות">פריפיט שירות</option>
+                  <option value="פריפיט מכירות">פריפיט מכירות</option>
+                </optgroup>
+                <optgroup label="── סחר ──">
+                  <option value="מחלקת סחר">מחלקת סחר</option>
+                </optgroup>
+                <optgroup label="── מאוחדת ──">
+                  <option value="מאוחדת">מאוחדת</option>
+                </optgroup>
+            </select>
             </div>
             <div id="k-admin-chat-box" style="background:var(--ink3);border:1px solid var(--line2);border-radius:16px;padding:16px;min-height:200px;max-height:400px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
             <div style="display:flex;gap:8px">
@@ -2015,12 +2048,11 @@ function closeApiModal(){document.getElementById('api-modal').classList.add('hid
 async function saveApiKey(){
   const k=document.getElementById('api-modal-key').value.trim();
   if(k==='••••••••••••••••'){closeApiModal();return;}
-  if(!k.startsWith('AIza')){
+  if(!k.startsWith('gsk_')&&!k.startsWith('AIza')){
     document.getElementById('api-modal-err').style.display='block';
-    document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-AIza';
+    document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-gsk_';
     return;
   }
-  // Save to Supabase settings table
   await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
   localStorage.setItem('bs_api_key',k);
   closeApiModal();
@@ -2345,11 +2377,11 @@ async function loadConfigValues(){
 async function saveConfigApiKey(){
   const k = document.getElementById('config-api-key')?.value?.trim();
   if(!k||k==='••••••••••••••••') return;
-  if(!k.startsWith('AIza')){ alert('מפתח לא תקין'); return; }
+  if(!k.startsWith('gsk_')&&!k.startsWith('AIza')){ alert('מפתח לא תקין — חייב להתחיל ב-gsk_'); return; }
   await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
   localStorage.setItem('bs_api_key',k);
   document.getElementById('config-api-key').value='••••••••••••••••';
-  alert('✓ מפתח API נשמר');
+  alert('✓ מפתח Groq API נשמר');
 }
 
 function saveConfigPw(){
@@ -2772,25 +2804,31 @@ function viewFolderArticle(id){
 function buildKnowledgeContext(dept){
   // dept = group key (e.g. 'מובמנט') OR agent's specific dept
   // For AI: show only articles relevant to THIS specific agent
-  const agentActualDepts = S.agent ? (S.agent.depts||[]).map(d=>d.trim().toLowerCase()) : [];
   const agentGrp = S.agent ? agentGroup(S.agent) : null;
+  // dept = specific dept chosen by agent (e.g. 'עובדים בריא')
+  // Show: articles for that exact dept + 'כללי' + group key articles
   const articles=S_knowledge.filter(a=>{
     if(a.dept==='כללי'||!a.dept) return true;
     const ad=a.dept.trim().toLowerCase();
-    if(ad===(dept||'').toLowerCase()) return true; // exact dept/group match
-    if(agentActualDepts.includes(ad)) return true; // specific dept match
-    if(agentGrp && ad===agentGrp.toLowerCase()) return true; // agent's group key
+    const deptLower=(dept||'').trim().toLowerCase();
+    if(ad===deptLower) return true; // exact match
+    if(agentGrp && ad===agentGrp.toLowerCase() && (dept===agentGrp||!dept)) return true; // group key only when no specific dept
     return false;
   });
   // Articles are the primary knowledge source - include more content
   const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,2000)).join('\n\n---\n\n');
 
   // Briefings relevant to this dept
-  const grp=GROUPS.find(g=>g.key===dept);
-  const depts=grp?grp.depts:[dept];
+  // Include: briefings for this specific dept, for agent's group, or for all
+  const agentAllDepts = S.agent ? (S.agent.depts||[]) : [];
   const relBriefs=S.briefings.filter(b=>{
     if(!b.targetDepts||b.targetDepts.length===0) return true;
-    return b.targetDepts.some(d=>depts.includes(d));
+    // Match if any of agent's depts is in the briefing's targetDepts
+    return b.targetDepts.some(td=>
+      td===dept ||
+      agentAllDepts.some(ad=>ad.toLowerCase()===td.toLowerCase()) ||
+      (agentGrp && td===agentGrp)
+    );
   });
   const briefCtx=relBriefs.map(b=>{
     const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
@@ -2955,7 +2993,36 @@ function openAgentKnowledgeChat(){
         'שלום '+S.agent.name.split(' ')[0]+'! 👋\nאני כאן לעזור בכל שאלה על נהלים ומוצרים של '+_agentKbDept+'.\nשאל אותי כל שאלה!'
       );
     }
+    // Always render switcher if multiple depts
+    renderAgentDeptSwitcher(agentDepts);
   });
+}
+
+function renderAgentDeptSwitcher(depts){
+  const sw=document.getElementById('agent-kb-dept-switcher');
+  if(!sw) return;
+  if(!depts||depts.length<=1){ sw.style.display='none'; return; }
+  // Only show depts that actually have articles in knowledge base
+  const deptsWithContent=depts.filter(d=>{
+    return S_knowledge.some(a=>{
+      if(!a.dept||a.dept==='כללי') return false;
+      const ad=a.dept.trim().toLowerCase();
+      return ad===d.trim().toLowerCase()||ad===agentGroup(S.agent).toLowerCase();
+    });
+  });
+  // If only 1 dept has content, no need for switcher
+  if(deptsWithContent.length<=1){ sw.style.display='none'; return; }
+  sw.style.display='flex';
+  sw.innerHTML=deptsWithContent.map(d=>`
+    <button onclick="setAgentKbDept('${d}')" id="sw-btn-${d.replace(/[\s']/g,'_')}"
+      style="background:${d===_agentKbDept?'rgba(184,134,42,0.35)':'rgba(255,255,255,0.08)'};
+             border:1px solid ${d===_agentKbDept?'rgba(184,134,42,0.6)':'rgba(255,255,255,0.15)'};
+             color:${d===_agentKbDept?'#E8C97A':'rgba(240,237,230,0.6)'};
+             border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;
+             font-family:'Sora',sans-serif;font-weight:${d===_agentKbDept?'700':'400'};
+             transition:all 0.15s">
+      ${d}
+    </button>`).join('');
 }
 
 function setAgentKbDept(dept){
@@ -2963,10 +3030,13 @@ function setAgentKbDept(dept){
   _agentKbHistory=[];
   const deptLabel=document.getElementById('agent-kb-dept-label');
   if(deptLabel) deptLabel.textContent='ידע '+dept;
+  // Update switcher highlights
+  const agentDepts=(S.agent&&S.agent.depts)||[];
+  renderAgentDeptSwitcher(agentDepts);
   // Clear and restart with new context
   document.getElementById('agent-kb-messages').innerHTML='';
   appendKbMessage('agent-kb-messages','ai',
-    'מצוין! עכשיו אני עונה בהקשר של **'+dept+'**.\nשאל אותי כל שאלה!'
+    '✅ עברתי להקשר של **'+dept+'**. שאל אותי כל שאלה!'
   );
 }
 
@@ -3278,13 +3348,14 @@ important = מה הכי חשוב לדעת
 forbidden = מה אסור להגיד/לעשות  
 todo = מה צריך לעשות`;
 
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:2000}})
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
-    const raw=data.candidates[0].content.parts[0].text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const raw=(data.choices?.[0]?.message?.content||'').replace(/\`\`\`json|\`\`\`/g,'').trim();
     const parsed=JSON.parse(raw);
 
     const section=(icon,color,bg,title,items)=>`
@@ -3310,7 +3381,7 @@ todo = מה צריך לעשות`;
     contentEl.innerHTML=`<div style="color:var(--danger);font-size:13px">שגיאה: ${e.message}</div>`;
   } finally{
     loading.style.display='none';
-    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">GEMINI</span>';
+    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">GROQ</span>';
   }
 }
 
@@ -3332,13 +3403,14 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
 כותרת: ${title}
 תוכן: ${content}
 צור בדיוק ${numQ} שאלות.`;
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:3000}})
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
     });
     const data=await res.json();
     if(data.error)throw new Error(data.error.message);
-    const raw=data.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
+    const raw=(data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(raw);
     S.eq=JSON.parse(JSON.stringify(parsed.questions));
     S.cur={title,content};
@@ -4148,13 +4220,14 @@ ${content.slice(0,3000)}
   "summary": "משפט אחד קצר על ההבנה הכללית"
 }`;
 
-    const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:600}})
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
     });
     const data=await res.json();
     if(data.error) throw new Error(data.error.message);
-    const raw=data.candidates[0].content.parts[0].text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const raw=(data.choices?.[0]?.message?.content||'').replace(/\`\`\`json|\`\`\`/g,'').trim();
     const parsed=JSON.parse(raw);
     const score=parsed.score||0;
     const scoreColor=score>=80?'#1A9E6E':score>=60?'#D4820A':'#D94040';
@@ -5850,10 +5923,11 @@ async function appInit(){
     if(!localStorage.getItem('bs_api_key'))
       document.getElementById('api-modal').classList.remove('hidden');
   }
-  // Clear any stale Gemini key that starts with 'AIza'
+  // Clear any stale Gemini key (AIza...) - replaced by Groq
   const storedKey=localStorage.getItem('bs_api_key')||'';
   if(storedKey.startsWith('AIza')){
     localStorage.removeItem('bs_api_key');
+    console.log('[API] Cleared stale Gemini key, will use Supabase key');
   }
   await loadAll();
   renderAgentLogin();initBriefingDeptPicker();
@@ -6029,7 +6103,7 @@ function showAgentArticle(article){
   el.innerHTML='<div style="background:#fff;border:1px solid var(--line2);border-radius:16px;padding:20px 22px">'+
     '<div style="font-size:18px;font-weight:800;color:var(--ice);margin-bottom:8px">'+article.title+'</div>'+
     '<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 10px;font-family:DM Mono,monospace">'+( article.dept||'כללי')+'</span>'+
-    '<div style="font-size:14px;line-height:1.85;color:var(--ice2);margin-top:16px;white-space:pre-wrap">'+( article.content||'')+'</div>'+
+    '<div style="margin-top:16px">'+formatContent(article.content||'')+'</div>'+
   '</div>';
 }
 
@@ -6123,6 +6197,80 @@ function renderAgentBriefingsPanel(){
         '</div>';
     }).join('');
 }
+
+function formatContent(raw){
+  if(!raw) return '';
+  var lines=raw.split('\n');
+  var html='';
+  lines.forEach(function(line){
+    var l=line.trim();
+    if(!l){ html+='<div style="height:8px"></div>'; return; }
+    if(l.startsWith('▸ ')){
+      // Main header
+      html+='<div style="font-size:15px;font-weight:800;color:var(--ice);margin:14px 0 6px;padding-right:0;border-right:3px solid var(--gold);padding-right:10px">'+l.slice(2)+'</div>';
+    } else if(l==='─────────────'||l.match(/^─+$/)){
+      html+='<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0">';
+    } else if(l.startsWith('• ')){
+      // Bullet point - process **bold** inside
+      var content=l.slice(2).replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>');
+      html+='<div style="display:flex;gap:8px;margin:3px 0;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+content+'</span></div>';
+    } else {
+      // Regular line - process **bold** inside
+      var content=l.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>');
+      html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px 0">'+content+'</div>';
+    }
+  });
+  return html;
+}
+
+/* ══ POLISH CONTENT WITH GROQ ══════════════════════════════ */
+async function polishContent(){
+  const contentEl=document.getElementById('briefing-content');
+  if(!contentEl||!contentEl.value.trim()){
+    alert('אנא הכנס תוכן לפני השיפור');
+    return;
+  }
+  const key=localStorage.getItem('bs_api_key');
+  if(!key){ alert('נדרש מפתח Groq API'); return; }
+
+  const btn=document.getElementById('polish-btn');
+  const originalHtml=btn.innerHTML;
+  btn.innerHTML='<span style="font-size:16px">⏳</span><span>משפר...</span>';
+  btn.disabled=true;
+
+  const originalText=contentEl.value.trim();
+  try{
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        messages:[
+          {role:'user',content:
+            'אתה עוזר לכתיבת תדריכים מקצועיים לנציגי שירות ומכירה בישראל.\n'+
+            'שפר ונסח מחדש את הטקסט הבא בעברית — ברור, מקצועי ותמציתי.\n'+
+            'שמור על כל המידע העובדתי. החזר רק את הטקסט המשופר, ללא הסברים נוספים.\n\n'+
+            'טקסט מקורי:\n'+originalText
+          }
+        ],
+        temperature:0.3,
+        max_tokens:2000
+      })
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const improved=data.choices[0].message.content.trim();
+    contentEl.value=improved;
+    // Flash green to indicate success
+    contentEl.style.border='2px solid var(--ok)';
+    setTimeout(()=>contentEl.style.border='',1500);
+  } catch(e){
+    alert('שגיאה: '+e.message);
+  } finally{
+    btn.innerHTML=originalHtml;
+    btn.disabled=false;
+  }
+}
 </script>
 
 <!-- AGENT KNOWLEDGE CHAT MODAL -->
@@ -6135,6 +6283,7 @@ function renderAgentBriefingsPanel(){
         <div>
           <div style="font-size:13px;font-weight:800;color:#F0EDE6" id="agent-kb-title">עוזר AI</div>
           <div style="font-size:10px;color:rgba(240,237,230,0.45);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
+          <div id="agent-kb-dept-switcher" style="display:none;margin-top:6px;display:flex;flex-wrap:wrap;gap:4px"></div>
 
         </div>
       </div>
@@ -6167,8 +6316,23 @@ function renderAgentBriefingsPanel(){
       <label class="field-label">מחלקה</label>
       <select id="k-edit-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
         <option value="כללי">כללי (לכולם)</option>
-        <option value="מובמנט">מובמנט</option><option value="פריפיט">פריפיט</option>
-        <option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+        <optgroup label="── מובמנט ──">
+          <option value="כללית אקטיב">כללית אקטיב</option>
+          <option value="עובדים בריא">עובדים בריא</option>
+          <option value="מעוף לעמית">מעוף לעמית</option>
+          <option value="מעוף לעמית מכירות">מעוף לעמית מכירות</option>
+          <option value="לאומית FIT">לאומית FIT</option>
+        </optgroup>
+        <optgroup label="── פריפיט ──">
+          <option value="פריפיט שירות">פריפיט שירות</option>
+          <option value="פריפיט מכירות">פריפיט מכירות</option>
+        </optgroup>
+        <optgroup label="── סחר ──">
+          <option value="מחלקת סחר">מחלקת סחר</option>
+        </optgroup>
+        <optgroup label="── מאוחדת ──">
+          <option value="מאוחדת">מאוחדת</option>
+        </optgroup>
       </select>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
