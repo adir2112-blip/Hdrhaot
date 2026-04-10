@@ -3478,6 +3478,7 @@ async function publishBriefing(){
   S.briefings.push(data);
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
+  sendPushToAgents(data.title, targetDepts);
   const deptLabel=targetDepts.length?` · פעילויות: ${targetDepts.join(', ')}`:'· לכל הנציגים';
   document.getElementById('pub-msg').textContent=`"${data.title}" · ${targetAgents.length} נציגים${deptLabel} · ${ts}`;
   resetManager();
@@ -3556,6 +3557,7 @@ async function selectAgent(id){
   updateAgentSidebar();
   showAgentPanel('main');
   renderAgentBriefings();
+  setTimeout(promptPushSubscription, 2000);
 }
 async function refreshAgentBriefings(){
   S.briefings=await dbBriefings();
@@ -6339,7 +6341,10 @@ function renderBriefingsHistoryPanel(){
           </div>
         </div>
         <!-- LEFT: delete button -->
-        <button onclick="deleteBriefing('${b.id}')" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:var(--danger);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer;flex-shrink:0">🗑</button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="loadBriefingForEdit('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">✏️</button>
+          <button onclick="deleteBriefing('${b.id}')" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:var(--danger);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">🗑</button>
+        </div>
       </div>
 
       <!-- Action buttons row -->
@@ -6384,6 +6389,262 @@ function showPendingAgents(briefingId){
 
 
 
+
+/* ══ EDIT EXISTING BRIEFING ══════════════════════════════ */
+let _editingBriefingId = null;
+
+function loadBriefingForEdit(id){
+  const b=S.briefings.find(x=>String(x.id)===String(id));
+  if(!b){ alert('תדריך לא נמצא'); return; }
+
+  _editingBriefingId=id;
+
+  // Switch to builder tab
+  switchTab('manager');
+  if(!_adminUnlocked){ alert('נדרשת סיסמת מנהל'); return; }
+
+  // Fill form fields
+  document.getElementById('briefing-title').value=b.title||'';
+  document.getElementById('briefing-content').value=b.content||'';
+  if(b.deadline) document.getElementById('briefing-deadline').value=b.deadline.slice(0,10);
+
+  // Set featured toggle
+  const featVal=document.getElementById('briefing-featured');
+  if(featVal){ featVal.value=b.featured?'1':'0'; }
+  const tog=document.getElementById('featured-toggle');
+  const knob=document.getElementById('featured-knob');
+  if(tog&&b.featured){ tog.style.background='var(--gold)'; knob.style.transform='translateX(22px)'; }
+
+  // Set reverse toggle
+  const revVal=document.getElementById('briefing-reverse');
+  if(revVal){ revVal.value=b.reverse_mode?'1':'0'; }
+
+  // Set dept checkboxes
+  document.querySelectorAll('[id^=bdl-]').forEach(btn=>{
+    btn.dataset.checked='0'; btn.classList.remove('checked');
+    const sp=btn.querySelector('span');
+    if(sp){ sp.style.border='1px solid var(--line2)'; sp.style.background='transparent'; sp.textContent=''; }
+  });
+  (b.targetDepts||[]).forEach(dept=>{
+    const idx=DEPTS.indexOf(dept);
+    if(idx>=0){
+      const btn=document.getElementById('bdl-'+idx);
+      if(btn){ btn.dataset.checked='1'; btn.classList.add('checked');
+        const sp=btn.querySelector('span');
+        if(sp){ sp.style.background='var(--gold)'; sp.style.border='1px solid var(--gold)'; sp.textContent='✓'; }
+      }
+    }
+  });
+
+  // Load questions into S.eq
+  S.eq=JSON.parse(JSON.stringify(b.questions||[]));
+  S.cur={title:b.title, content:b.content};
+
+  // Show edit mode indicator
+  const header=document.querySelector('#manager-content .sec-title');
+  if(header) header.innerHTML='עריכת <em>תדריך קיים</em>';
+
+  // Change publish button to update
+  const pubBtn=document.getElementById('publish-btn');
+  if(pubBtn){ pubBtn.textContent='💾 שמור שינויים'; pubBtn.onclick=updateBriefing; }
+
+  // Scroll to top
+  window.scrollTo(0,0);
+  document.getElementById('preview-section').style.display='none';
+  renderPreviewQuestions();
+}
+
+async function updateBriefing(){
+  if(!_editingBriefingId){ publishBriefing(); return; }
+  const b=S.briefings.find(x=>String(x.id)===String(_editingBriefingId));
+  if(!b){ alert('תדריך לא נמצא'); return; }
+
+  const targetDepts=DEPTS.filter((_,i)=>{
+    const btn=document.getElementById('bdl-'+i);
+    return btn&&btn.dataset.checked==='1';
+  });
+  const deadlineVal=document.getElementById('briefing-deadline').value||null;
+  const featuredVal=document.getElementById('briefing-featured').value==='1';
+  const reverseVal=document.getElementById('briefing-reverse').value==='1';
+
+  const updates={
+    title:S.cur.title,
+    content:S.cur.content,
+    questions:JSON.stringify(S.eq),
+    targetDepts:JSON.stringify(targetDepts),
+    deadline:deadlineVal,
+    featured:featuredVal,
+    reverse_mode:reverseVal
+  };
+
+  const {error}=await _sb.from('briefings').update(updates).eq('id',_editingBriefingId);
+  if(error){ alert('שגיאה בשמירה: '+error.message); return; }
+
+  // Update local state
+  Object.assign(b, {
+    title:S.cur.title, content:S.cur.content,
+    questions:S.eq, targetDepts, deadline:deadlineVal,
+    featured:featuredVal, reverse_mode:reverseVal
+  });
+
+  alert('✓ התדריך עודכן בהצלחה!');
+
+  // Reset to new briefing mode
+  _editingBriefingId=null;
+  const header=document.querySelector('#manager-content .sec-title');
+  if(header) header.innerHTML='תדריך <em>חדש</em>';
+  const pubBtn=document.getElementById('publish-btn');
+  if(pubBtn){ pubBtn.textContent='✦ פרסם תדריך'; pubBtn.onclick=publishBriefing; }
+  resetManager();
+}
+
+/* ══ WEB PUSH NOTIFICATIONS ══════════════════════════════ */
+const VAPID_PUBLIC_KEY = 'BAbrPLnENlplv_jOlhBX-bRWt3cYw5cpzD95wHTPsxGb-nvYWxhsRQY5Upwb7ZZeqRR0ovGj_SrkXaLCzk4XXbg';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Register service worker and subscribe to push
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push not supported');
+    return false;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('/Hdrhaot/sw.js');
+    console.log('[Push] SW registered');
+    return reg;
+  } catch(e) {
+    console.log('[Push] SW registration failed:', e);
+    return false;
+  }
+}
+
+async function subscribeToPush() {
+  const reg = await initPushNotifications();
+  if (!reg) return null;
+  
+  try {
+    // Check existing subscription
+    let sub = await reg.pushManager.getSubscription();
+    if (sub) return sub;
+    
+    // Request permission
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return null;
+    
+    // Subscribe
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    
+    // Save subscription to Supabase
+    const agentId = S.agent ? S.agent.id : null;
+    await _sb.from('app_settings').upsert({
+      key: 'push_sub_' + (agentId||'anon') + '_' + Date.now(),
+      value: JSON.stringify({
+        subscription: sub.toJSON(),
+        agentId,
+        agentName: S.agent?.name||'',
+        depts: S.agent?.depts||[]
+      })
+    }, {onConflict:'key'});
+    
+    console.log('[Push] Subscribed ✓');
+    return sub;
+  } catch(e) {
+    console.log('[Push] Subscribe failed:', e);
+    return null;
+  }
+}
+
+// Show subscribe prompt to agent after login
+async function promptPushSubscription() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    await initPushNotifications();
+    return;
+  }
+  if (Notification.permission === 'denied') return;
+  
+  // Show friendly prompt
+  const box = document.getElementById('agent-briefings');
+  if (!box) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'push-prompt-banner';
+  banner.style.cssText = 'background:linear-gradient(135deg,#1A4A7A,#2A6AAA);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;direction:rtl';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:22px">🔔</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#fff">קבל התראות על תדריכים חדשים</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7)">גם כשהאתר סגור</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="subscribeToPush().then(s=>{if(s)document.getElementById('push-prompt-banner')?.remove()})" 
+        style="background:#fff;color:#1A4A7A;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">
+        אפשר 👍
+      </button>
+      <button onclick="document.getElementById('push-prompt-banner')?.remove()" 
+        style="background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:7px 12px;font-size:12px;cursor:pointer">
+        לא עכשיו
+      </button>
+    </div>`;
+  
+  // Insert at top of main panel
+  const mainPanel = document.getElementById('abp-main');
+  if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
+}
+
+// Send push to all agents with specific depts (called after publishBriefing)
+async function sendPushToAgents(briefingTitle, targetDepts) {
+  try {
+    // Get all subscriptions from Supabase
+    const {data} = await _sb.from('app_settings')
+      .select('key,value')
+      .like('key', 'push_sub_%');
+    
+    if (!data || !data.length) return;
+    
+    let sent = 0;
+    for (const row of data) {
+      try {
+        const info = JSON.parse(row.value);
+        // Check if this agent should receive the notification
+        if (targetDepts && targetDepts.length > 0) {
+          const agentDepts = info.depts || [];
+          const relevant = agentDepts.some(d => targetDepts.includes(d));
+          if (!relevant) continue;
+        }
+        // Use Web Push API via fetch to a push service
+        // Store pending notifications in Supabase for SW to pick up
+        await _sb.from('app_settings').upsert({
+          key: 'pending_push_' + Date.now() + '_' + (info.agentId||''),
+          value: JSON.stringify({
+            subscription: info.subscription,
+            payload: {
+              title: 'תדריך חדש! 📋',
+              body: briefingTitle,
+              tag: 'briefing-' + Date.now(),
+              url: window.location.href
+            }
+          })
+        }, {onConflict:'key'});
+        sent++;
+      } catch(e) {}
+    }
+    console.log('[Push] Queued', sent, 'notifications');
+  } catch(e) {
+    console.log('[Push] Send failed:', e);
+  }
+}
 </script>
 
 <!-- AGENT KNOWLEDGE CHAT MODAL -->
