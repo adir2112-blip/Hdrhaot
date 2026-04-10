@@ -2872,28 +2872,19 @@ async function sendKnowledgeChat(mode){
   const history=mode==='admin'?_adminKbHistory:_agentKbHistory;
   // Always inject knowledge as first turn, then last 8 messages
   const recentHistory=history.slice(-8);
-  // Build contents: knowledge context as first user/model pair, then chat
-  const contents=[
-    {role:'user',parts:[{text:sysMsg}]},
-    {role:'model',parts:[{text:'הבנתי. אענה רק לפי בסיס הידע שסיפקת.'}]},
-    ...recentHistory.map(m=>({role:m.role==='ai'?'model':'user',parts:[{text:m.content}]}))
-  ];
-  // ── Rate limit protection: max 1 request per 3 seconds ──────────────────
+  // ── Rate limit: Groq allows 30 RPM → 2s gap is enough ──────────────────
   const now_rl=Date.now();
   const elapsed=now_rl-(_lastAiRequest||0);
-  const minGap=4000; // 4 seconds = ~15 req/min max (safe for free tier)
-  if(elapsed<minGap){
-    const wait=minGap-elapsed;
-    updateKbMessage(boxId,thinkingId,'⏳ ממתין רגע...');
-    await new Promise(r=>setTimeout(r,wait));
-  }
+  if(elapsed<2000) await new Promise(r=>setTimeout(r,2000-elapsed));
   _lastAiRequest=Date.now();
 
+  // Build Groq messages (OpenAI format: system + chat history)
+  const groqMessages=[
+    {role:'system', content:sysMsg},
+    ...recentHistory.map(m=>({role:m.role==='ai'?'assistant':'user', content:m.content}))
+  ];
+
   try{
-    // Build messages for Groq (OpenAI-compatible format)
-    const groqMessages=contents.map(function(c){
-      return {role:c.role==='model'?'assistant':c.role, content:c.parts[0].text};
-    });
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
@@ -2908,7 +2899,7 @@ async function sendKnowledgeChat(mode){
     if(data.error){
       const msg=data.error.message||'';
       if(msg.includes('rate_limit')||msg.includes('Rate limit')){
-        throw new Error('עומס זמני — המתן מספר שניות ונסה שוב.');
+        throw new Error('עומס זמני (מגבלת Groq) — המתן 10 שניות ונסה שוב.');
       }
       throw new Error(msg);
     }
