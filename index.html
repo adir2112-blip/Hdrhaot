@@ -6499,7 +6499,7 @@ async function updateBriefing(){
 }
 
 /* ══ WEB PUSH NOTIFICATIONS ══════════════════════════════ */
-const VAPID_PUBLIC_KEY = 'BAbrPLnENlplv_jOlhBX-bRWt3cYw5cpzD95wHTPsxGb-nvYWxhsRQY5Upwb7ZZeqRR0ovGj_SrkXaLCzk4XXbg';
+const VAPID_PUBLIC_KEY = 'BDF3n7BznfAYO1S_O9PjuWP4MkwEVhi4JJ2NhwMGjQqlD2dMQ_J-zNA2hYDeY616G-XYtdCBVdoeGVDn17K9QfE';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -6623,9 +6623,10 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
       })
     });
     const result = await res.json();
-    console.log('[Push] Sent to', result.sent, 'agents');
+    console.log('[Push] Response:', JSON.stringify(result));
+    if(result.errors?.length) console.warn('[Push] Errors:', result.errors);
   } catch(e) {
-    console.log('[Push] Send failed:', e);
+    console.error('[Push] Send failed:', e.message);
   }
 }
 </script>
