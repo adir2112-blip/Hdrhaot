@@ -1,15 +1,28 @@
 self.addEventListener('push', e => {
-  const data = e.data?.json() || {};
+  let title = 'תדריך חדש 📋';
+  let body = '';
+  let url = 'https://adir2112-blip.github.io/Hdrhaot/';
+
+  try {
+    const data = e.data?.json();
+    title = data.title || title;
+    body  = data.body  || body;
+    url   = data.data?.url || url;
+  } catch {
+    // אם לא JSON — השתמש בטקסט כ-body
+    body = e.data?.text() || '';
+  }
+
   e.waitUntil(
-    self.registration.showNotification(data.title || 'תדריך חדש 📋', {
-      body: data.body || '',
+    self.registration.showNotification(title, {
+      body,
       icon: '/Hdrhaot/icon-192.png',
       badge: '/Hdrhaot/icon-192.png',
       dir: 'rtl',
       lang: 'he',
       tag: 'briefing-new',
       renotify: true,
-      data: { url: 'https://adir2112-blip.github.io/Hdrhaot/' }
+      data: { url }
     })
   );
 });
