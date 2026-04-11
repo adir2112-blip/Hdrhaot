@@ -1,4 +1,6 @@
 self.addEventListener('push', e => {
+  console.log('[SW] Push received!', e.data?.text());
+  
   let title = 'תדריך חדש 📋';
   let body = '';
   let url = 'https://adir2112-blip.github.io/Hdrhaot/';
@@ -9,9 +11,10 @@ self.addEventListener('push', e => {
     body  = data.body  || body;
     url   = data.data?.url || url;
   } catch {
-    // אם לא JSON — השתמש בטקסט כ-body
     body = e.data?.text() || '';
   }
+
+  console.log('[SW] Showing notification:', title, body);
 
   e.waitUntil(
     self.registration.showNotification(title, {
@@ -23,7 +26,8 @@ self.addEventListener('push', e => {
       tag: 'briefing-new',
       renotify: true,
       data: { url }
-    })
+    }).then(() => console.log('[SW] Notification shown!'))
+      .catch(err => console.error('[SW] Notification error:', err))
   );
 });
 
