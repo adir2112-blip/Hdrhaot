@@ -6562,43 +6562,24 @@ async function enablePushNotifications() {
   }
 }
 
-// שלח push דרך OneSignal REST API
+// שלח push דרך Supabase Edge Function
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
-    // קבל את כל ה-Player IDs הרלוונטיים
-    const { data: rows } = await _sb.from('app_settings').select('key,value').like('key', 'onesignal_%');
-    if (!rows?.length) { console.log('[Push] No subscribers'); return; }
-
-    const playerIds = [];
-    for (const row of rows) {
-      try {
-        const parsed = JSON.parse(row.value);
-        const agentDepts = parsed.depts || [];
-        if (targetDepts?.length) {
-          if (!agentDepts.some(d => targetDepts.includes(d))) continue;
-        }
-        if (parsed.playerId) playerIds.push(parsed.playerId);
-      } catch {}
-    }
-
-    if (!playerIds.length) { console.log('[Push] No matching subscribers'); return; }
-
-    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+    const res = await fetch('https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/send-push', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Basic 4buznow5febum3jigynoqys6x'
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc'
       },
       body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        include_player_ids: playerIds,
-        headings: { he: 'תדריך חדש! 📋', en: 'New Briefing! 📋' },
-        contents: { he: briefingTitle, en: briefingTitle },
-        url: 'https://adir2112-blip.github.io/Hdrhaot/'
+        title: 'תדריך חדש! 📋',
+        body: briefingTitle,
+        targetDepts: targetDepts || []
       })
     });
     const result = await res.json();
-    console.log('[Push] OneSignal Response:', JSON.stringify(result));
+    console.log('[Push] Response:', JSON.stringify(result));
+    if(result.errors?.length) console.warn('[Push] Errors:', result.errors);
   } catch(e) {
     console.error('[Push] Send failed:', e.message);
   }
