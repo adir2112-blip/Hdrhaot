@@ -6524,37 +6524,48 @@ async function initPushNotifications() {
   }
 }
 
+async function savePushSubToSupabase(sub) {
+  // תיקון: key קבוע לפי agentId — כך upsert מעדכן במקום ליצור כפולות
+  const agentId = S.agent ? S.agent.id : null;
+  const key = 'push_sub_' + (agentId || 'anon');
+  await _sb.from('app_settings').upsert({
+    key,
+    value: JSON.stringify({
+      subscription: sub.toJSON(),
+      agentId,
+      agentName: S.agent?.name || '',
+      depts: S.agent?.depts || []
+    })
+  }, { onConflict: 'key' });
+  console.log('[Push] Saved to Supabase ✓ key=', key);
+}
+
 async function subscribeToPush() {
   const reg = await initPushNotifications();
   if (!reg) return null;
-  
+
   try {
-    // Check existing subscription
     let sub = await reg.pushManager.getSubscription();
-    if (sub) return sub;
-    
-    // Request permission
+
+    if (sub) {
+      // תיקון: גם אם המנוי קיים — שמור ל-Supabase (ייתכן שלא נשמר בפעם הקודמת)
+      await savePushSubToSupabase(sub);
+      return sub;
+    }
+
+    // בקש הרשאה
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return null;
-    
-    // Subscribe
+
+    // צור מנוי חדש
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
-    
-    // Save subscription to Supabase
-    const agentId = S.agent ? S.agent.id : null;
-    await _sb.from('app_settings').upsert({
-      key: 'push_sub_' + (agentId||'anon') + '_' + Date.now(),
-      value: JSON.stringify({
-        subscription: sub.toJSON(),
-        agentId,
-        agentName: S.agent?.name||'',
-        depts: S.agent?.depts||[]
-      })
-    }, {onConflict:'key'});
-    
+
+    // שמור ל-Supabase
+    await savePushSubToSupabase(sub);
+
     console.log('[Push] Subscribed ✓');
     return sub;
   } catch(e) {
@@ -6566,16 +6577,18 @@ async function subscribeToPush() {
 // Show subscribe prompt to agent after login
 async function promptPushSubscription() {
   if (!('Notification' in window)) return;
+
   if (Notification.permission === 'granted') {
-    await initPushNotifications();
+    // תיקון: קורא ל-subscribeToPush כדי לוודא שהמנוי נשמר ב-Supabase
+    await subscribeToPush();
     return;
   }
+
   if (Notification.permission === 'denied') return;
-  
-  // Show friendly prompt
-  const box = document.getElementById('agent-briefings');
-  if (!box) return;
-  
+
+  // הצג באנר רק פעם אחת (מניעת כפילות)
+  if (document.getElementById('push-prompt-banner')) return;
+
   const banner = document.createElement('div');
   banner.id = 'push-prompt-banner';
   banner.style.cssText = 'background:linear-gradient(135deg,#1A4A7A,#2A6AAA);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;direction:rtl';
@@ -6597,8 +6610,7 @@ async function promptPushSubscription() {
         לא עכשיו
       </button>
     </div>`;
-  
-  // Insert at top of main panel
+
   const mainPanel = document.getElementById('abp-main');
   if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
 }
