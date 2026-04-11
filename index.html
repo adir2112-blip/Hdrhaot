@@ -6539,7 +6539,7 @@ async function enablePushNotifications() {
   try {
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({ appId: ONESIGNAL_APP_ID, allowLocalhostAsSecureOrigin: true });
+      await OneSignal.init({ appId: ONESIGNAL_APP_ID, serviceWorkerPath: '/Hdrhaot/OneSignalSDKWorker.js', serviceWorkerParam: { scope: '/Hdrhaot/' }, allowLocalhostAsSecureOrigin: true });
       await OneSignal.Notifications.requestPermission();
       // שמור את ה-Player ID עם פרטי הנציג
       const playerId = await OneSignal.User.PushSubscription.id;
