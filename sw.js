@@ -31,6 +31,11 @@ self.addEventListener('push', e => {
   );
 });
 
+self.addEventListener('message', e => {
+  console.log('[SW] Message received:', e.data);
+  e.source?.postMessage({type: 'pong'});
+});
+
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(clients.openWindow(e.notification.data?.url || '/'));
