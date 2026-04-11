@@ -8,7 +8,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת תדריכים — מוקד שירות</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-<!-- v5.2 pdf-alerts -->
+<!-- v5.3 onesignal-push -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -6498,95 +6499,13 @@ async function updateBriefing(){
   resetManager();
 }
 
-/* ══ WEB PUSH NOTIFICATIONS ══════════════════════════════ */
-const VAPID_PUBLIC_KEY = 'BPYziy-gWj_Nx2imuJO_HKMKDbLGlublq6DyUhG1MYax1LNyyB00sRMwGSAIVnLdT1hfpWHCzaaWwSRzo3Z2jkY';
+/* ══ WEB PUSH — OneSignal ══════════════════════════════ */
+const ONESIGNAL_APP_ID = '5a3df65e-cf68-462e-9af4-fc654ac34bf7';
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-
-// Register service worker and subscribe to push
-async function initPushNotifications() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Push not supported');
-    return false;
-  }
-  try {
-    const reg = await navigator.serviceWorker.register('/Hdrhaot/sw.js');
-    console.log('[Push] SW registered');
-    return reg;
-  } catch(e) {
-    console.log('[Push] SW registration failed:', e);
-    return false;
-  }
-}
-
-async function savePushSubToSupabase(sub) {
-  // תיקון: key קבוע לפי agentId — כך upsert מעדכן במקום ליצור כפולות
-  const agentId = S.agent ? S.agent.id : null;
-  const key = 'push_sub_' + (agentId || 'anon');
-  await _sb.from('app_settings').upsert({
-    key,
-    value: JSON.stringify({
-      subscription: sub.toJSON(),
-      agentId,
-      agentName: S.agent?.name || '',
-      depts: S.agent?.depts || []
-    })
-  }, { onConflict: 'key' });
-  console.log('[Push] Saved to Supabase ✓ key=', key);
-}
-
-async function subscribeToPush() {
-  const reg = await initPushNotifications();
-  if (!reg) return null;
-
-  try {
-    let sub = await reg.pushManager.getSubscription();
-
-    if (sub) {
-      // תיקון: גם אם המנוי קיים — שמור ל-Supabase (ייתכן שלא נשמר בפעם הקודמת)
-      await savePushSubToSupabase(sub);
-      return sub;
-    }
-
-    // בקש הרשאה
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return null;
-
-    // צור מנוי חדש
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-
-    // שמור ל-Supabase
-    await savePushSubToSupabase(sub);
-
-    console.log('[Push] Subscribed ✓');
-    return sub;
-  } catch(e) {
-    console.log('[Push] Subscribe failed:', e);
-    return null;
-  }
-}
-
-// Show subscribe prompt to agent after login
+// אתחול OneSignal אחרי התחברות נציג
 async function promptPushSubscription() {
   if (!('Notification' in window)) return;
-
-  if (Notification.permission === 'granted') {
-    // תיקון: קורא ל-subscribeToPush כדי לוודא שהמנוי נשמר ב-Supabase
-    await subscribeToPush();
-    return;
-  }
-
   if (Notification.permission === 'denied') return;
-
-  // הצג באנר רק פעם אחת (מניעת כפילות)
   if (document.getElementById('push-prompt-banner')) return;
 
   const banner = document.createElement('div');
@@ -6601,7 +6520,7 @@ async function promptPushSubscription() {
       </div>
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="subscribeToPush().then(s=>{if(s)document.getElementById('push-prompt-banner')?.remove()})" 
+      <button onclick="enablePushNotifications()" 
         style="background:#fff;color:#1A4A7A;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">
         אפשר 👍
       </button>
@@ -6615,28 +6534,71 @@ async function promptPushSubscription() {
   if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
 }
 
-// Send push to all agents via Supabase Edge Function
+async function enablePushNotifications() {
+  document.getElementById('push-prompt-banner')?.remove();
+  try {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({ appId: ONESIGNAL_APP_ID, allowLocalhostAsSecureOrigin: true });
+      await OneSignal.Notifications.requestPermission();
+      // שמור את ה-Player ID עם פרטי הנציג
+      const playerId = await OneSignal.User.PushSubscription.id;
+      if (playerId && S.agent) {
+        const key = 'onesignal_' + S.agent.id;
+        await _sb.from('app_settings').upsert({
+          key,
+          value: JSON.stringify({
+            playerId,
+            agentId: S.agent.id,
+            agentName: S.agent.name,
+            depts: S.agent.depts || []
+          })
+        }, { onConflict: 'key' });
+        console.log('[Push] OneSignal registered ✓', playerId);
+      }
+    });
+  } catch(e) {
+    console.error('[Push] OneSignal error:', e);
+  }
+}
+
+// שלח push דרך OneSignal REST API
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
-    const supabaseUrl = 'https://hbjtpjdthvjikfxsufdo.supabase.co';
-    const anonKey = _sb.rest?.headers?.['apikey'] || 
-      document.querySelector('script')?.textContent?.match(/eyJ[^']+/)?.[0] || '';
-    
-    const res = await fetch(supabaseUrl + '/functions/v1/send-push', {
+    // קבל את כל ה-Player IDs הרלוונטיים
+    const { data: rows } = await _sb.from('app_settings').select('key,value').like('key', 'onesignal_%');
+    if (!rows?.length) { console.log('[Push] No subscribers'); return; }
+
+    const playerIds = [];
+    for (const row of rows) {
+      try {
+        const parsed = JSON.parse(row.value);
+        const agentDepts = parsed.depts || [];
+        if (targetDepts?.length) {
+          if (!agentDepts.some(d => targetDepts.includes(d))) continue;
+        }
+        if (parsed.playerId) playerIds.push(parsed.playerId);
+      } catch {}
+    }
+
+    if (!playerIds.length) { console.log('[Push] No matching subscribers'); return; }
+
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc'
+        'Authorization': 'Basic 4buznow5febum3jigynoqys6x'
       },
       body: JSON.stringify({
-        title: 'תדריך חדש! 📋',
-        body: briefingTitle,
-        targetDepts: targetDepts || []
+        app_id: ONESIGNAL_APP_ID,
+        include_player_ids: playerIds,
+        headings: { he: 'תדריך חדש! 📋', en: 'New Briefing! 📋' },
+        contents: { he: briefingTitle, en: briefingTitle },
+        url: 'https://adir2112-blip.github.io/Hdrhaot/'
       })
     });
     const result = await res.json();
-    console.log('[Push] Response:', JSON.stringify(result));
-    if(result.errors?.length) console.warn('[Push] Errors:', result.errors);
+    console.log('[Push] OneSignal Response:', JSON.stringify(result));
   } catch(e) {
     console.error('[Push] Send failed:', e.message);
   }
