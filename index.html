@@ -2826,7 +2826,7 @@ function buildKnowledgeContext(dept){
     return false;
   });
   // Articles are the primary knowledge source - include more content
-  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,600)).join('\n\n---\n\n');
+  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,4000)).join('\n\n---\n\n');
 
   // Briefings: only for selected dept (or all depts briefings)
   const relBriefs=S.briefings.filter(b=>{
@@ -2839,7 +2839,7 @@ function buildKnowledgeContext(dept){
   });
   const briefCtx=relBriefs.map(b=>{
     const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
-    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,800):'');
+    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,1500):'');
   }).join('\n\n---\n\n');
 
   const combined=[articleCtx,briefCtx].filter(Boolean).join('\n\n===\n\n');
