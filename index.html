@@ -3200,6 +3200,7 @@ function renderSettings(){
             ${a.active!==false?'● פעיל':'○ לא פעיל'}
           </button>
           <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
+          <button class="btn btn-outline btn-sm" onclick="openExamReview(${a.id})" style="font-size:11px;padding:5px 10px;color:var(--gold);border-color:var(--gold-line)">📋 מבחנים</button>
           <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
         </div>
       </div>
@@ -4049,7 +4050,7 @@ function answerQ(qi,oi){
   if(S.answers.filter(x=>x!==undefined).length===S.active.questions.length)
     document.getElementById('submit-btn').style.display='inline-flex';
 }
-function submitQuiz(){
+async function submitQuiz(){
   const qs=S.active.questions;
   const c=S.answers.filter((a,i)=>a===qs[i].correct).length;
   S.score=Math.round(c/qs.length*100);
@@ -4058,6 +4059,22 @@ function submitQuiz(){
   big.className='score-num '+(S.score>=80?'s-great':S.score>=60?'s-mid':'s-low');
   document.getElementById('score-label').textContent=`${c} מתוך ${qs.length} תשובות נכונות`;
   goStep('sign');
+  // שמירה אוטומטית — גם לפני לחיצה על חתום
+  try{
+    const ts=now();
+    const b=S.briefings.find(b=>b.id===S.active.id);
+    const _agId=String(S.agent.id);
+    const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
+    const prevComp=b.completions[_agId];
+    const histKey='_hist_'+_agId;
+    const prevHist=b.completions[histKey]?.history||[];
+    const history=[...prevHist];
+    if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
+    b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
+    delete b.completions[histKey];
+    await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+    console.log('[Quiz] Auto-saved score:', S.score);
+  }catch(e){ console.warn('[Quiz] Auto-save failed:', e.message); }
 }
 async function signBriefing(){
   const ts=now();
@@ -4638,6 +4655,90 @@ function openAgentStats(agentId){
 function closeAgentStats(){
   document.getElementById('agent-stats-modal').style.display='none';
   if(_chartInstance){_chartInstance.destroy();_chartInstance=null;}
+}
+
+/* ── EXAM REVIEW MODAL ────────────────────────────── */
+let _examReviewAgentId = null;
+
+function openExamReview(agentId) {
+  _examReviewAgentId = String(agentId);
+  const a = S.agents.find(x => String(x.id) === _examReviewAgentId);
+  if (!a) return;
+
+  document.getElementById('exam-review-agent-name').textContent = a.name;
+
+  // Fill briefing selector with briefings this agent completed
+  const done = S.briefings.filter(b => b.completions[_examReviewAgentId]);
+  const select = document.getElementById('exam-review-select');
+  select.innerHTML = '<option value="">— בחר תדריך —</option>' +
+    done.sort((a,b) => new Date(b.completions[_examReviewAgentId].ts) - new Date(a.completions[_examReviewAgentId].ts))
+        .map(b => `<option value="${b.id}">${b.title} · ${b.completions[_examReviewAgentId].score}% · ${b.completions[_examReviewAgentId].ts}</option>`)
+        .join('');
+
+  document.getElementById('exam-review-content').innerHTML =
+    done.length ? '<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:13px">בחר תדריך מהרשימה למעלה</div>'
+                : '<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:13px">הנציג טרם השלים תדריכים</div>';
+
+  document.getElementById('exam-review-modal').style.display = 'flex';
+}
+
+function renderExamAnswers() {
+  const briefingId = document.getElementById('exam-review-select').value;
+  const el = document.getElementById('exam-review-content');
+  if (!briefingId) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:13px">בחר תדריך מהרשימה למעלה</div>'; return; }
+
+  const b = S.briefings.find(x => String(x.id) === String(briefingId));
+  if (!b) return;
+  const comp = b.completions[_examReviewAgentId];
+  if (!comp) return;
+
+  const answers = comp.answers || [];
+  if (!answers.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:13px">אין נתוני תשובות לתדריך זה</div>';
+    return;
+  }
+
+  const correct = answers.filter(a => a.chosen === a.correct).length;
+  const total = answers.length;
+
+  el.innerHTML = `
+    <!-- Summary -->
+    <div style="display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--ink3);border-radius:14px;margin-bottom:18px">
+      <div style="font-size:42px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'};font-family:'Playfair Display',serif">${comp.score}%</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--ice)">${b.title}</div>
+        <div style="font-size:12px;color:var(--ice3);margin-top:3px;font-family:'DM Mono',monospace">${correct} מתוך ${total} נכונות · ${comp.ts}</div>
+      </div>
+    </div>
+    <!-- Questions -->
+    ${answers.map((a, i) => {
+      const isCorrect = a.chosen === a.correct;
+      const chosenOpt = a.options?.[a.chosen] ?? '—';
+      const correctOpt = a.options?.[a.correct] ?? '—';
+      return `
+      <div style="border:1.5px solid ${isCorrect?'rgba(45,212,164,0.25)':'rgba(240,101,101,0.25)'};border-radius:14px;padding:14px 16px;margin-bottom:12px;background:${isCorrect?'rgba(45,212,164,0.04)':'rgba(240,101,101,0.04)'}">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+          <div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:${isCorrect?'var(--ok)':'var(--danger)'};display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700">${isCorrect?'✓':'✗'}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--ice);line-height:1.5">${i+1}. ${a.q}</div>
+        </div>
+        <div style="margin-right:34px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ice3);min-width:60px">ענה:</span>
+            <span style="padding:4px 10px;border-radius:8px;background:${isCorrect?'rgba(45,212,164,0.12)':'rgba(240,101,101,0.12)'};color:${isCorrect?'var(--ok)':'var(--danger)'};font-weight:600">${chosenOpt}</span>
+          </div>
+          ${!isCorrect ? `<div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ice3);min-width:60px">נכון:</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(45,212,164,0.12);color:var(--ok);font-weight:600">${correctOpt}</span>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function closeExamReview() {
+  document.getElementById('exam-review-modal').style.display = 'none';
+  _examReviewAgentId = null;
 }
 
 /* ── HISTORY MODAL ────────────────────────────── */
@@ -5833,7 +5934,29 @@ function downloadPDF(){
       <tbody>${completedRows}</tbody>
     </table>
     <div class="footer">כל הזכויות שמורות לאדיר לוי · מערכת תדריכים</div>
-  </body></html>`);
+  
+<!-- EXAM REVIEW MODAL -->
+<div id="exam-review-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:680px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <!-- Header -->
+    <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📋 סקירת מבחנים</div>
+        <div style="font-size:18px;font-weight:700;color:var(--ice)" id="exam-review-agent-name"></div>
+      </div>
+      <button onclick="closeExamReview()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Briefing selector -->
+    <div style="padding:16px 22px;border-bottom:1px solid var(--line)">
+      <select id="exam-review-select" onchange="renderExamAnswers()" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
+        <option value="">— בחר תדריך —</option>
+      </select>
+    </div>
+    <!-- Answers -->
+    <div id="exam-review-content" style="padding:20px 22px"></div>
+  </div>
+</div>
+</body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),500);
 }
@@ -6835,5 +6958,27 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
 ">
   כל הזכויות של בניית המערכת שמורות לאדיר לוי
 </footer>
+
+<!-- EXAM REVIEW MODAL -->
+<div id="exam-review-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:680px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <!-- Header -->
+    <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📋 סקירת מבחנים</div>
+        <div style="font-size:18px;font-weight:700;color:var(--ice)" id="exam-review-agent-name"></div>
+      </div>
+      <button onclick="closeExamReview()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Briefing selector -->
+    <div style="padding:16px 22px;border-bottom:1px solid var(--line)">
+      <select id="exam-review-select" onchange="renderExamAnswers()" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
+        <option value="">— בחר תדריך —</option>
+      </select>
+    </div>
+    <!-- Answers -->
+    <div id="exam-review-content" style="padding:20px 22px"></div>
+  </div>
+</div>
 </body>
 </html>
