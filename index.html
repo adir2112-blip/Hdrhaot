@@ -1889,12 +1889,17 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <input type="text" id="new-agent-pin" placeholder="1234" maxlength="4" inputmode="numeric"
             style="letter-spacing:0.3em;font-family:'DM Mono',monospace;font-size:18px;text-align:center">
         </div>
+        <div class="field">
+          <label class="field-label">📱 מספר טלפון (לוואטסאפ)</label>
+          <input type="text" id="new-agent-phone" placeholder="0501234567" inputmode="tel"
+            style="direction:ltr;font-family:'DM Mono',monospace">
+        </div>
         <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
           <button class="btn btn-gold" onclick="addAgent()">+ הוסף נציג</button>
           <button class="btn btn-outline" onclick="document.getElementById('excel-upload').click()">📥 טען מאקסל</button>
           <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
         </div>
-        <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">פורמט אקסל: שם מלא | פעילות | 4 ספרות</div>
+        <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">פורמט אקסל: שם מלא | פעילות | 4 ספרות | טלפון</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;margin-bottom:12px;flex-wrap:wrap;gap:10px">
         <div class="eyebrow" style="margin:0">נציגים פעילים</div>
@@ -1924,6 +1929,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <div style="flex:1;min-width:100px">
                   <label class="field-label" style="margin-bottom:6px;display:block">PIN (4 ספרות)</label>
                   <input type="text" id="new-agent-pin2" placeholder="1234" maxlength="4" inputmode="numeric" style="width:100%;letter-spacing:0.2em;font-family:'DM Mono',monospace;text-align:center">
+                </div>
+                <div style="flex:1;min-width:120px">
+                  <label class="field-label" style="margin-bottom:6px;display:block">📱 טלפון</label>
+                  <input type="text" id="new-agent-phone2" placeholder="0501234567" inputmode="tel" style="width:100%;direction:ltr;font-family:'DM Mono',monospace">
                 </div>
                 <button class="btn btn-gold btn-sm" onclick="addAgentFromPanel()" style="flex-shrink:0;align-self:flex-end">+ הוסף</button>
               </div>
@@ -2365,14 +2374,17 @@ async function addAgentFromPanel(){
   const pin = document.getElementById('new-agent-pin2')?.value?.trim();
   if(pin && !/^\d{4}$/.test(pin)){ alert('PIN חייב להיות 4 ספרות'); return; }
   const depts = DEPTS.filter((_,i)=>{const b=document.getElementById('na2-'+i);return b&&b.dataset.checked==='1';});
+  const phone2 = document.getElementById('new-agent-phone2')?.value?.trim()||'';
   const row = {name, depts:JSON.stringify(depts)};
   if(pin) row.pin = pin;
+  if(phone2) row.phone = phone2;
   const {data,error} = await _sb.from('agents').insert(row).select().single();
   if(error){ alert('שגיאה: '+error.message); return; }
   data.depts = depts;
   S.agents.push(data);
   document.getElementById('new-agent-name2').value='';
   document.getElementById('new-agent-pin2').value='';
+  if(document.getElementById('new-agent-phone2')) document.getElementById('new-agent-phone2').value='';
   document.querySelectorAll('[id^=na2-]').forEach(b=>{b.dataset.checked='0';b.classList.remove('checked');const sp=b.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';}});
   renderSettingsAgents();
   renderSettings();
@@ -3232,13 +3244,15 @@ async function addAgent(){
   const pinRaw=document.getElementById('new-agent-pin').value.trim();
   if(pinRaw&&(!/^\d{4}$/.test(pinRaw))){alert('קוד ת"ז חייב להיות 4 ספרות');return;}
   const depts=DEPTS.filter((_,i)=>{const btn=document.getElementById('ncbl-'+i);return btn&&btn.dataset.checked==='1';});
+  const phoneRaw=document.getElementById('new-agent-phone')?.value?.trim()||'';
   const row={name,depts:JSON.stringify(depts)};
   if(pinRaw) row.pin=pinRaw;
+  if(phoneRaw) row.phone=phoneRaw;
   const {data,error}=await _sb.from('agents').insert(row).select().single();
   if(error){alert('שגיאה בהוספת נציג: '+error.message);return;}
   data.depts=depts;
   S.agents.push(data);
-  inp.value='';document.getElementById('new-agent-pin').value='';
+  inp.value='';document.getElementById('new-agent-pin').value='';document.getElementById('new-agent-phone').value='';
   document.querySelectorAll('[id^=ncbl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';} });
   renderSettings();renderAgentLogin();
 }
@@ -3254,12 +3268,13 @@ async function importFromExcel(input){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   let added=0,skipped=0;
   for(let i=1;i<rows.length;i++){
-    const [name,dept,pin]=rows[i].map(c=>String(c||'').trim());
+    const [name,dept,pin,phone]=rows[i].map(c=>String(c||'').trim());
     if(!name)continue;
     if(S.agents.find(a=>a.name===name)){skipped++;continue;}
     const depts=dept?[dept]:[];
     const row={name,depts:JSON.stringify(depts)};
     if(pin&&/^\d{4}$/.test(pin)) row.pin=pin;
+    if(phone) row.phone=phone;
     const {data,error}=await _sb.from('agents').insert(row).select().single();
     if(!error){data.depts=depts;S.agents.push(data);added++;}
     else skipped++;
@@ -6812,12 +6827,21 @@ async function sendWhatsAppToAgents(briefingTitle, targetDepts) {
     return;
   }
 
-  const message = `📋 *תדריך חדש במערכת!*
+  const message = `🔔 *עדכון חשוב — תדריך חדש!*
 
-*${briefingTitle}*
+שלום 👋
+פורסם תדריך חדש הממתין לך:
 
-היכנס למערכת לקריאה ומילוי המבחן:
-https://adir2112-blip.github.io/Hdrhaot/`;
+📌 *${briefingTitle}*
+
+✅ קרא את התדריך בעיון
+✅ מלא את המבחן בסיום
+✅ חתום על קריאה והבנה
+
+⏱ יש למלא בהקדם האפשרי
+
+👇 לכניסה ומילוי:
+https://did.li/tdrihim`;
 
   let sent = 0;
   for (const agent of relevant) {
@@ -6847,13 +6871,21 @@ async function sendWhatsAppReminders() {
 
     for (const agent of pending) {
       const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-      const msg = `⏰ *תזכורת — תדריך ממתין!*
+      const msg = `⏰ *תזכורת חשובה!*
 
-*${b.title}*
+שלום 👋
+עדיין לא מילאת את התדריך הבא:
 
-נותרו *${daysLeft} ימים* למילוי.
-אנא היכנס למערכת בהקדם:
-https://adir2112-blip.github.io/Hdrhaot/`;
+📌 *${b.title}*
+
+⚠️ נותרו *${daysLeft} ימים* בלבד למילוי!
+
+✅ קרא את התדריך בעיון
+✅ מלא את המבחן בסיום
+✅ חתום על קריאה והבנה
+
+👇 לכניסה ומילוי:
+https://did.li/tdrihim`;
       await sendWhatsApp(agent.phone, msg);
     }
   }
