@@ -6758,33 +6758,44 @@ async function updateBriefing(){
   resetManager();
 }
 
-/* ══ WHATSAPP NOTIFICATIONS ══════════════════════════════ */
-const WA_TOKEN = 'EAANLtkyJQPgBRDbxMq7CUMTTolVq0ubMXa20JaalmZAkZCnsrrDeotV2fERhN3ZAACoLUJVrA8n3Q6qEsoPnfvCTjZBIikiJnGEonsB1rpMzq03B3UFJZClNiXMfM1d3Qm8b1CWNkRmvka9EIEB9sYXIGjoi20wONfJXVIrILzsCCGnXLlRlJcWuCfyMfTKV4Mb1KpuAZC1TuhBnGcLQTaKNshttmfbFGVxbLjtDfd6abSXJjwsYwjwyyovycRL657Knf9LasmpvpblnbBLeeiWzkC';
-const WA_PHONE_ID = '1078883618639266';
+/* ══ WHATSAPP NOTIFICATIONS — Green API ══════════════════════════════ */
+const GREEN_API_INSTANCE = '7107586490';
+const GREEN_API_TOKEN    = 'b76e1da4c0a84de29d4366024a081d40ae85ddb6e6c24b30b8';
+const GREEN_API_BASE     = `https://api.green-api.com/waInstance${GREEN_API_INSTANCE}`;
 
-// שלח הודעת WhatsApp לנציג בודד
+// שלח הודעת WhatsApp לנציג בודד (מספר טלפון)
 async function sendWhatsApp(phone, message) {
   try {
     const cleaned = phone.replace(/[^0-9]/g, '');
-    const intl = cleaned.startsWith('0') ? '972' + cleaned.slice(1) : cleaned;
-    const res = await fetch(`https://graph.facebook.com/v18.0/${WA_PHONE_ID}/messages`, {
+    const chatId = (cleaned.startsWith('0') ? '972' + cleaned.slice(1) : cleaned) + '@c.us';
+    const res = await fetch(`${GREEN_API_BASE}/sendMessage/${GREEN_API_TOKEN}`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${WA_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: intl,
-        type: 'text',
-        text: { body: message }
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId, message })
     });
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error || !data.idMessage) throw new Error(JSON.stringify(data));
     return true;
   } catch(e) {
     console.error('[WA] Failed to send to', phone, ':', e.message);
+    return false;
+  }
+}
+
+// שלח לקבוצת WhatsApp לפי Chat ID של הקבוצה
+async function sendWhatsAppGroup(groupChatId, message) {
+  try {
+    const res = await fetch(`${GREEN_API_BASE}/sendMessage/${GREEN_API_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: groupChatId, message })
+    });
+    const data = await res.json();
+    if (data.error || !data.idMessage) throw new Error(JSON.stringify(data));
+    console.log('[WA] Group message sent ✓');
+    return true;
+  } catch(e) {
+    console.error('[WA] Group failed:', e.message);
     return false;
   }
 }
