@@ -974,6 +974,31 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .page { padding-bottom:max(110px, calc(80px + env(safe-area-inset-bottom)))!important; }
   .bottom-nav { padding-bottom:max(14px, env(safe-area-inset-bottom))!important; }
 }
+
+/* ══ RICH EDITOR TOOLBAR ══════════════════════════════ */
+.rich-toolbar {
+  display:flex; flex-wrap:wrap; gap:3px;
+  background:var(--ink3); border:1px solid var(--line2);
+  border-radius:10px 10px 0 0; padding:6px 8px;
+  border-bottom:none;
+}
+.rich-toolbar button {
+  background:var(--ink2); border:1px solid var(--line2);
+  border-radius:6px; padding:4px 8px; cursor:pointer;
+  font-size:13px; color:var(--ice2); font-family:'Sora',sans-serif;
+  transition:all 0.15s; min-width:28px; height:28px;
+  display:flex;align-items:center;justify-content:center;
+}
+.rich-toolbar button:hover { background:var(--gold-bg); border-color:var(--gold-line); color:var(--gold); }
+.rich-toolbar .sep { width:1px; background:var(--line2); margin:2px 3px; align-self:stretch; }
+.rich-editor {
+  border-radius:0 0 10px 10px !important;
+  border-top:none !important;
+  min-height:160px;
+  font-family:'Sora',sans-serif;
+  font-size:14px;
+  line-height:1.7;
+}
 </style>
 </head>
 <body>
@@ -1599,7 +1624,28 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div class="sec-title" style="margin-bottom:16px">הוסף <em>ידע חדש</em></div>
             <div class="card">
               <div class="field"><label class="field-label">כותרת</label><input type="text" id="k-title" placeholder="למשל: נוהל טיפול בהתנגדויות"></div>
-              <div class="field"><label class="field-label">תוכן</label><textarea id="k-content" placeholder="הכנס כאן את תוכן הידע..." style="min-height:160px"></textarea></div>
+              <div class="field"><label class="field-label">תוכן</label>
+<div class="rich-toolbar" id="tb-k-content">
+  <button onclick="richCmd('k-content','bold')" title="הדגשה"><b>B</b></button>
+  <button onclick="richCmd('k-content','italic')" title="נטוי"><i>I</i></button>
+  <button onclick="richCmd('k-content','underline')" title="קו תחתון"><u>U</u></button>
+  <div class="sep"></div>
+  <button onclick="richHeader('k-content')" title="כותרת">H</button>
+  <button onclick="richBullet('k-content')" title="נקודה">•</button>
+  <div class="sep"></div>
+  <select onchange="richFontSize('k-content',this.value);this.value=''" title="גודל גופן" style="height:28px;font-size:12px;border-radius:6px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice2);padding:0 4px;cursor:pointer">
+    <option value="">גודל</option>
+    <option value="small">קטן</option>
+    <option value="normal">רגיל</option>
+    <option value="large">גדול</option>
+    <option value="xlarge">גדול מאוד</option>
+  </select>
+  <div class="sep"></div>
+  <button onclick="richLink('k-content')" title="קישור">🔗</button>
+  <button onclick="richImage('k-content')" title="תמונה">🖼</button>
+  <button onclick="richImageUpload('k-content')" title="העלה תמונה">📤</button>
+</div>
+<textarea id="k-content" class="rich-editor" placeholder="הכנס כאן את תוכן הידע..." style="min-height:160px"></textarea></div>
               <div class="field">
                 <label class="field-label">העלה קובץ PDF / Word (אופציונלי)</label>
                 <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:14px;padding:1.5rem;text-align:center">
@@ -2566,6 +2612,7 @@ function showKnowledgePanel(key){
     const el=document.getElementById('kp-'+p);
     if(el) el.style.display=p===key?'block':'none';
   });
+  if(key==='add') setTimeout(()=>{ initRichDragDrop('k-content'); }, 100);
   document.querySelectorAll('.ksb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
   const ab=document.getElementById('ksb-'+key);
   if(ab){ab.style.background='var(--gold-bg)';ab.style.border='1px solid var(--gold-line)';ab.style.color='var(--gold)';ab.style.fontWeight='700';}
@@ -2675,6 +2722,7 @@ function editKnowledgeArticle(id){
   if(contentEl) contentEl.value=item.content||'';
   if(deptEl) deptEl.value=item.dept||'כללי';
   const modal=document.getElementById('knowledge-edit-modal');
+  setTimeout(()=>{ initRichDragDrop('k-edit-content'); }, 100);
   if(modal){ modal.style.display='flex'; }
 }
 function closeKnowledgeEdit(){
@@ -2695,7 +2743,10 @@ async function saveKnowledgeEdit(){
   renderKnowledgeArticles();
 }
 async function deleteKnowledgeArticle(id){
-  if(!confirm('למחוק פריט ידע זה?')) return;
+  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
+  if (pw === null) return;
+  if (pw !== ADMIN_PW && pw !== SUPER_ADMIN_PW) { alert('✗ סיסמה שגויה — המחיקה בוטלה'); return; }
+  if (!confirm('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?')) return;
   await _sb.from('knowledge_base').delete().eq('id',id);
   S_knowledge=S_knowledge.filter(a=>String(a.id)!==String(id));
   renderKnowledgeArticles();
@@ -2771,7 +2822,10 @@ async function createFolder(parentId){
 }
 
 async function deleteFolder(id){
-  if(!confirm('למחוק תיקיה זו וכל תכניה?')) return;
+  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
+  if (pw === null) return;
+  if (pw !== ADMIN_PW && pw !== SUPER_ADMIN_PW) { alert('✗ סיסמה שגויה — המחיקה בוטלה'); return; }
+  if (!confirm('האם אתה בטוח שברצונך למחוק תיקיה זו וכל תכניה לצמיתות?')) return;
   // Delete all articles in this folder and sub-folders recursively
   const allIds = getFolderAndChildren(id);
   for(const fid of allIds){
@@ -6484,27 +6538,162 @@ function renderAgentBriefingsPanel(){
 
 function formatContent(raw){
   if(!raw) return '';
+  // Helper to process inline formatting (bold, italic, links, images)
+  function processInline(text){
+    return text
+      // Font size: [size:large]text[/size]
+      .replace(/\[size:(small|normal|large|xlarge)\](.*?)\[\/size\]/g, function(m,sz,t){
+        const sizeMap = {small:'11px', normal:'14px', large:'18px', xlarge:'24px'};
+        return '<span style="font-size:'+sizeMap[sz]+'">'+t+'</span>';
+      })
+      // Images: ![alt](url)
+      .replace(/!\[([^\]]*?)\]\(([^)]+?)\)/g, function(m,alt,url){
+        return '<img src="'+url+'" alt="'+alt+'" style="max-width:100%;border-radius:10px;margin:6px 0;display:block">';
+      })
+      // Links: [text](url)
+      .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
+        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
+      })
+      // Auto URLs: http(s)://... (only bare URLs not already inside markdown links)
+      .replace(/(?<!\]\()(?<!href=")(https?:\/\/[^\s<>"\)]+)/g, function(m,url){
+        var short=url.length>50?url.slice(0,50)+'…':url;
+        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+short+' ↗</a>';
+      })
+      // Bold: **text**
+      .replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>')
+      // Italic: _text_
+      .replace(/\_([^_]+?)\_/g,'<em style="font-style:italic;color:var(--ice2)">$1</em>');
+  }
+
   var lines=raw.split('\n');
   var html='';
   lines.forEach(function(line){
     var l=line.trim();
     if(!l){ html+='<div style="height:8px"></div>'; return; }
     if(l.startsWith('▸ ')){
-      // Main header
-      html+='<div style="font-size:15px;font-weight:800;color:var(--ice);margin:14px 0 6px;padding-right:0;border-right:3px solid var(--gold);padding-right:10px">'+l.slice(2)+'</div>';
+      html+='<div style="font-size:15px;font-weight:800;color:var(--ice);margin:14px 0 6px;border-right:3px solid var(--gold);padding-right:10px">'+processInline(l.slice(2))+'</div>';
     } else if(l==='─────────────'||l.match(/^─+$/)){
       html+='<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0">';
     } else if(l.startsWith('• ')){
-      // Bullet point - process **bold** inside
-      var content=l.slice(2).replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>');
-      html+='<div style="display:flex;gap:8px;margin:3px 0;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+content+'</span></div>';
+      html+='<div style="display:flex;gap:8px;margin:3px 0;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.slice(2))+'</span></div>';
     } else {
-      // Regular line - process **bold** inside
-      var content=l.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>');
-      html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px 0">'+content+'</div>';
+      html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px 0">'+processInline(l)+'</div>';
     }
   });
   return html;
+}
+
+/* ── Rich Editor Helpers ── */
+function richCmd(areaId, cmd) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.substring(start, end);
+  let wrap = '';
+  if (cmd === 'bold') wrap = '**';
+  if (cmd === 'italic') wrap = '_';
+  if (cmd === 'underline') { richInsert(areaId, '<u>' + sel + '</u>'); return; }
+  if (!sel) { richInsert(areaId, wrap + 'טקסט' + wrap); return; }
+  richInsert(areaId, wrap + sel + wrap);
+}
+
+function richHeader(areaId) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
+  const before = ta.value.substring(0, lineStart);
+  const after = ta.value.substring(lineStart);
+  ta.value = before + '▸ ' + after;
+  ta.selectionStart = ta.selectionEnd = lineStart + 2;
+  ta.focus();
+}
+
+function richBullet(areaId) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1;
+  const before = ta.value.substring(0, lineStart);
+  const after = ta.value.substring(lineStart);
+  ta.value = before + '• ' + after;
+  ta.selectionStart = ta.selectionEnd = lineStart + 2;
+  ta.focus();
+}
+
+function richLink(areaId) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const url = prompt('הכנס כתובת URL:');
+  if (!url) return;
+  const sel = ta.value.substring(ta.selectionStart, ta.selectionEnd) || 'לחץ כאן';
+  richInsert(areaId, '[' + sel + '](' + url + ')');
+}
+
+function richImage(areaId) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const url = prompt('הכנס כתובת תמונה (URL):');
+  if (!url) return;
+  const alt = prompt('תיאור תמונה (אופציונלי):') || 'תמונה';
+  richInsert(areaId, '![' + alt + '](' + url + ')');
+}
+
+function richInsert(areaId, text) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + text + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + text.length;
+  ta.focus();
+}
+
+function richFontSize(areaId, size) {
+  if (!size) return;
+  const map = { small: '@@small@@', normal: '@@normal@@', large: '@@large@@', xlarge: '@@xlarge@@' };
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.substring(start, end) || 'טקסט';
+  richInsert(areaId, '[size:' + size + ']' + sel + '[/size]');
+}
+
+function richImageUpload(areaId) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = async function() {
+    const file = inp.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      richInsert(areaId, '![' + file.name + '](' + dataUrl + ')');
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+// Drag & Drop image support on textarea
+function initRichDragDrop(areaId) {
+  const ta = document.getElementById(areaId);
+  if (!ta) return;
+  ta.addEventListener('dragover', e => { e.preventDefault(); ta.style.borderColor = 'var(--gold)'; });
+  ta.addEventListener('dragleave', () => { ta.style.borderColor = ''; });
+  ta.addEventListener('drop', e => {
+    e.preventDefault();
+    ta.style.borderColor = '';
+    const files = e.dataTransfer.files;
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        richInsert(areaId, '![' + file.name + '](' + ev.target.result + ')');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 }
 
 /* ══ POLISH CONTENT WITH GROQ ══════════════════════════════ */
@@ -7083,7 +7272,28 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
       <button onclick="closeKnowledgeEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ice3)">✕</button>
     </div>
     <div class="field"><label class="field-label">כותרת</label><input type="text" id="k-edit-title" style="width:100%"></div>
-    <div class="field"><label class="field-label">תוכן</label><textarea id="k-edit-content" style="min-height:200px;width:100%"></textarea></div>
+    <div class="field"><label class="field-label">תוכן</label>
+<div class="rich-toolbar" id="tb-k-edit-content">
+  <button onclick="richCmd('k-edit-content','bold')" title="הדגשה"><b>B</b></button>
+  <button onclick="richCmd('k-edit-content','italic')" title="נטוי"><i>I</i></button>
+  <button onclick="richCmd('k-edit-content','underline')" title="קו תחתון"><u>U</u></button>
+  <div class="sep"></div>
+  <button onclick="richHeader('k-edit-content')" title="כותרת">H</button>
+  <button onclick="richBullet('k-edit-content')" title="נקודה">•</button>
+  <div class="sep"></div>
+  <select onchange="richFontSize('k-edit-content',this.value);this.value=''" title="גודל גופן" style="height:28px;font-size:12px;border-radius:6px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice2);padding:0 4px;cursor:pointer">
+    <option value="">גודל</option>
+    <option value="small">קטן</option>
+    <option value="normal">רגיל</option>
+    <option value="large">גדול</option>
+    <option value="xlarge">גדול מאוד</option>
+  </select>
+  <div class="sep"></div>
+  <button onclick="richLink('k-edit-content')" title="קישור">🔗</button>
+  <button onclick="richImage('k-edit-content')" title="תמונה">🖼</button>
+  <button onclick="richImageUpload('k-edit-content')" title="העלה תמונה">📤</button>
+</div>
+<textarea id="k-edit-content" class="rich-editor" style="min-height:200px;width:100%"></textarea></div>
     <div class="field">
       <label class="field-label">מחלקה</label>
       <select id="k-edit-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
