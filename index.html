@@ -1048,6 +1048,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('knowledge')" id="nav-knowledge">
         <span class="nav-icon">🧠</span><span class="nav-label">ניהול ידע</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('controls')" id="nav-controls">
+        <span class="nav-icon">📋</span><span class="nav-label">בקרות</span>
+      </button>
       <button class="nav-btn active" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
         <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
@@ -1068,6 +1071,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </button>
     <button class="bnav-btn" id="bnav-knowledge" onclick="switchTab('knowledge')">
       <span class="bni">🧠</span><span class="bnl">ידע</span>
+    </button>
+    <button class="bnav-btn" id="bnav-controls" onclick="switchTab('controls')">
+      <span class="bni">📋</span><span class="bnl">בקרות</span>
     </button>
     <button class="bnav-btn bnav-agent-special" id="bnav-agent" onclick="switchTab('agent')">
       <span class="bni">👤</span><span class="bnl">כניסת עובד</span>
@@ -1236,6 +1242,103 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   </div>
 
     </div><!-- /manager-content -->
+
+  <!-- CONTROLS -->
+  <div class="sec" id="tab-controls">
+    <div id="controls-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">📋</div>
+        <div class="lock-title">בקרות</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="controls-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkControlsPw()">
+        </div>
+        <div id="controls-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%" onclick="checkControlsPw()">כניסה</button>
+      </div>
+    </div>
+    <div id="controls-content" style="display:none">
+      <!-- Header -->
+      <div class="sec-header">
+        <div class="sec-eyebrow">ניהול איכות</div>
+        <div class="sec-title">בקרות <em>נציגים</em></div>
+      </div>
+
+      <!-- Sub tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0">
+        <button id="ctrl-tab-monthly" onclick="showControlsPanel('monthly')"
+          style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-family:'Sora',sans-serif">
+          📊 בקרות חודשיות
+        </button>
+        <button id="ctrl-tab-history" onclick="showControlsPanel('history')"
+          style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+          📅 היסטוריית בקרות
+        </button>
+        <button id="ctrl-tab-table" onclick="showControlsPanel('table')"
+          style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+          📋 טבלת בקרות חודשית
+        </button>
+      </div>
+
+      <!-- MONTHLY PANEL -->
+      <div id="ctrl-panel-monthly">
+        <!-- Filters -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <select id="ctrl-month-filter" onchange="renderControlsMonthly()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+          </select>
+          <select id="ctrl-dept-filter" onchange="renderControlsMonthly()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל הפעילויות</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetMonthlyFilters()" title="איפוס סינון">↺ איפוס</button>
+          <button class="btn btn-gold" onclick="openControlModal()" style="margin-right:auto">
+            + הוספת בקרה
+          </button>
+        </div>
+        <!-- Table -->
+        <div style="overflow-x:auto">
+          <div id="controls-monthly-list"></div>
+        </div>
+      </div>
+
+      <!-- HISTORY PANEL -->
+      <div id="ctrl-panel-history" style="display:none">
+        <!-- Filters -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <select id="ctrl-hist-month" onchange="renderControlsHistory()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל החודשים</option>
+          </select>
+          <select id="ctrl-hist-dept" onchange="renderControlsHistory()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל הפעילויות</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetHistoryFilters()">↺ איפוס</button>
+        </div>
+        <div id="controls-history-list"></div>
+      </div>
+
+      <!-- TABLE PANEL -->
+      <div id="ctrl-panel-table" style="display:none">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <select id="ctrl-tbl-month" onchange="renderControlsTable()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל החודשים</option>
+          </select>
+          <select id="ctrl-tbl-dept" onchange="renderControlsTable()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל הפעילויות</option>
+          </select>
+          <select id="ctrl-tbl-status" onchange="renderControlsTable()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל הסטטוסים</option>
+            <option value="done">✅ בוצע (4 בקרות)</option>
+            <option value="pending">❌ טרם בוצע</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="resetTableFilters()">↺ איפוס</button>
+          <button class="btn btn-outline btn-sm" onclick="exportControlsExcel()" style="margin-right:auto">
+            📥 ייצוא לאקסל
+          </button>
+        </div>
+        <div id="controls-table-list" style="overflow-x:auto"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- AGENT -->
   <div class="sec active" id="tab-agent">
     <div id="agent-login">
@@ -2286,6 +2389,18 @@ function switchTab(name){
     }
   }
   if(name==='agent'){ renderAgentLogin(); const sd=document.getElementById('search-detail-view'); if(sd) sd.style.display='none'; }
+  if(name==='controls'){
+    if(!_adminUnlocked){
+      const lock=document.getElementById('controls-lock');
+      const cont=document.getElementById('controls-content');
+      if(lock) lock.style.display='flex';
+      if(cont) cont.style.display='none';
+    } else {
+      document.getElementById('controls-lock').style.display='none';
+      document.getElementById('controls-content').style.display='block';
+      if(!_controlsLoaded) loadControls();
+    }
+  }
   if(name==='manager'){
     if(!_adminUnlocked){
       const lock=document.getElementById('manager-lock');
@@ -2303,7 +2418,7 @@ let _adminUnlocked = false;
 
 function unlockAll(){
   _adminUnlocked = true;
-  ['manager','tracking','settings'].forEach(panel => {
+  ['manager','tracking','settings','controls'].forEach(panel => {
     const lock = document.getElementById(panel+'-lock');
     const content = document.getElementById(panel+'-content');
     if(lock) lock.style.display='none';
@@ -2316,7 +2431,7 @@ function unlockAll(){
 }
 function lockAll(){
   _adminUnlocked = false;
-  ['manager','tracking','settings'].forEach(panel => {
+  ['manager','tracking','settings','controls'].forEach(panel => {
     const lock = document.getElementById(panel+'-lock');
     const content = document.getElementById(panel+'-content');
     if(lock) lock.style.display='flex';
@@ -6163,6 +6278,143 @@ function downloadPDF(){
     </div>
   </div>
 </div>
+
+<!-- CONTROL ADD/EDIT MODAL -->
+<div id="control-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:640px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📋 הוספת / עריכת בקרה</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)" id="ctrl-modal-title">בקרה חדשה</div>
+      </div>
+      <button onclick="closeControlModal()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:20px 22px">
+      <input type="hidden" id="ctrl-edit-id">
+
+      <!-- Row 0: Dept filter -->
+      <div style="margin-bottom:14px">
+        <label class="field-label">סנן לפי פעילות</label>
+        <select id="ctrl-modal-dept-filter" onchange="filterModalAgents()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+          <option value="all">כל הפעילויות</option>
+        </select>
+      </div>
+      <!-- Row 1: Agent + Dept -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">נציג</label>
+          <select id="ctrl-agent" onchange="fillAgentDept()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+            <option value="">בחר נציג...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">פעילות</label>
+          <input type="text" id="ctrl-dept" readonly style="width:100%;background:var(--ink4);color:var(--ice3)" placeholder="מתמלא אוטומטית">
+        </div>
+      </div>
+
+      <!-- Row 2: Date + Time + Supervisor -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">תאריך משוב</label>
+          <input type="date" id="ctrl-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">שעה</label>
+          <input type="time" id="ctrl-time" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">גורם ממשב</label>
+          <select id="ctrl-supervisor" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+            <option value="">בחר ממשב...</option>
+            <option>הודיה מזרחי</option>
+            <option>בקי ביטון</option>
+            <option>טל אברהם</option>
+            <option>לבנה דניאל</option>
+            <option>תהילה כהן</option>
+            <option>אליה ביטון</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 3: Topic + Customer -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">נושא</label>
+          <input type="text" id="ctrl-topic" placeholder="נושא השיחה" style="width:100%">
+        </div>
+        <div>
+          <label class="field-label">שם לקוח</label>
+          <input type="text" id="ctrl-customer" placeholder="שם הלקוח" style="width:100%">
+        </div>
+      </div>
+
+      <!-- Row 4: Phone -->
+      <div style="margin-bottom:18px">
+        <label class="field-label">טלפון לקוח</label>
+        <input type="text" id="ctrl-phone" placeholder="05X-XXXXXXX" inputmode="tel" style="width:100%;direction:ltr">
+      </div>
+
+      <!-- Parameters -->
+      <div style="background:var(--ink3);border-radius:14px;padding:16px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:14px">פרמטרים — כל סעיף שווה 0.25</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-doc" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">📝 תיעוד</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-opening" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">🤝 פתיח</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-body" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">💬 גוף שיחה</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-closing" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">🏁 סיום שיחה</span>
+          </label>
+        </div>
+        <!-- Live score -->
+        <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace">ציון בקרה זו:</div>
+          <div id="ctrl-live-score" style="font-size:24px;font-weight:800;color:var(--ok);font-family:'Playfair Display',serif">0.00</div>
+          <div style="font-size:11px;color:var(--ice3)">/ 1.00</div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div>
+          <label class="field-label">🌟 שימור</label>
+          <textarea id="ctrl-retention" placeholder="מה הנציג עשה טוב ויש לשמר..." style="width:100%;min-height:80px"></textarea>
+        </div>
+        <div>
+          <label class="field-label">📈 שיפור</label>
+          <textarea id="ctrl-improvement" placeholder="מה צריך לשפר ולתקן..." style="width:100%;min-height:80px"></textarea>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-gold" style="flex:1" onclick="saveControl()">💾 שמור בקרה</button>
+        <button class="btn btn-outline" onclick="closeControlModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROL DETAILS MODAL -->
+<div id="ctrl-details-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:520px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">פרטי בקרה</div>
+      <button onclick="closeControlDetails()" style="background:var(--ink3);border:1px solid var(--line2);width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="ctrl-details-content"></div>
+  </div>
+</div>
 </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),500);
@@ -7110,6 +7362,562 @@ function closeEditPhone() {
   _editPhoneAgentId = null;
 }
 
+/* ══ CONTROLS — בקרות ══════════════════════════════ */
+// SQL needed: ALTER TABLE controls ADD COLUMN IF NOT EXISTS control_time TEXT;
+let S_controls = [];
+let _controlsLoaded = false;
+
+function checkControlsPw(){
+  const val = document.getElementById('controls-pw-input').value;
+  if(val === ADMIN_PW || val === SUPER_ADMIN_PW){
+    document.getElementById('controls-lock').style.display='none';
+    document.getElementById('controls-content').style.display='block';
+    document.getElementById('controls-pw-input').value='';
+    loadControls();
+  } else {
+    document.getElementById('controls-pw-error').style.display='block';
+    document.getElementById('controls-pw-input').value='';
+  }
+}
+
+async function loadControls(){
+  const {data} = await _sb.from('controls').select('*').order('control_date', {ascending:false});
+  S_controls = data||[];
+  _controlsLoaded = true;
+  populateControlFilters();
+  renderControlsMonthly();
+}
+
+function populateControlFilters(){
+  // Months
+  const months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  const now = new Date();
+  const curMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  if(!months.includes(curMonth)) months.unshift(curMonth);
+
+  const mSel = document.getElementById('ctrl-month-filter');
+  const hSel = document.getElementById('ctrl-hist-month');
+  const opts = months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
+  if(mSel){ mSel.innerHTML = opts; mSel.value = curMonth; }
+  if(hSel){ hSel.innerHTML = '<option value="all">כל החודשים</option>' + opts; }
+
+  // Depts
+  const depts = [...new Set(S.agents.map(a=>(a.depts||[])).flat())].sort();
+  const deptOpts = '<option value="all">כל הפעילויות</option><option value="מובמנט">🔷 מובמנט (כולל כל הפעילויות)</option>' + depts.map(d=>`<option value="${d}">${d}</option>`).join('');
+  ['ctrl-dept-filter','ctrl-hist-dept'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=deptOpts;
+  });
+}
+
+function formatMonth(m){
+  if(!m) return '';
+  const [y,mo] = m.split('-');
+  const names=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  return (names[parseInt(mo)-1]||mo)+' '+y;
+}
+
+function showControlsPanel(panel){
+  ['monthly','history','table'].forEach(p=>{
+    const el=document.getElementById('ctrl-panel-'+p);
+    const btn=document.getElementById('ctrl-tab-'+p);
+    if(el) el.style.display=p===panel?'block':'none';
+    if(btn){
+      btn.style.borderBottomColor = p===panel?'var(--gold)':'transparent';
+      btn.style.color = p===panel?'var(--gold)':'var(--ice3)';
+    }
+  });
+  if(panel==='history') renderControlsHistory();
+  if(panel==='table') { populateTableFilters(); renderControlsTable(); }
+}
+
+function renderControlsMonthly(){
+  const month = document.getElementById('ctrl-month-filter')?.value||'';
+  const dept  = document.getElementById('ctrl-dept-filter')?.value||'all';
+  const el    = document.getElementById('controls-monthly-list');
+  if(!el) return;
+
+  // Get agents for this dept
+  let agents = S.agents.filter(a=>a.active!==false);
+
+  // Define מובמנט group depts
+  const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT'];
+
+  if(dept==='מובמנט'){
+    agents = agents.filter(a=>(a.depts||[]).some(d=>MOVMENT_DEPTS.includes(d)));
+  } else if(dept!=='all'){
+    agents = agents.filter(a=>(a.depts||[]).includes(dept));
+  }
+
+  if(!agents.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נציגים לסינון זה</div>';
+    return;
+  }
+
+  // Controls for this month
+  const monthControls = S_controls.filter(c=>c.month===month);
+
+  el.innerHTML = agents.map(a=>{
+    const agentControls = monthControls.filter(c=>String(c.agent_id)===String(a.id))
+                                        .sort((x,y)=>x.control_date>y.control_date?1:-1);
+    const scores = agentControls.map(c=>c.score||0);
+    const avg = scores.length ? (scores.reduce((s,x)=>s+x,0)/scores.length).toFixed(2) : '—';
+    const avgColor = avg==='—'?'var(--ice3)':parseFloat(avg)>=0.8?'var(--ok)':parseFloat(avg)>=0.5?'var(--warn)':'var(--danger)';
+
+    return `<div class="card" style="margin-bottom:14px">
+      <!-- Agent header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av" style="width:38px;height:38px;background:${col(a.id).bg};color:${col(a.id).c};font-size:13px">${ini(a.name)}</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--ice)">${a.name}</div>
+            <div style="font-size:11px;color:var(--ice3);margin-top:2px">${(a.depts||[]).join(' · ')||'—'}</div>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:28px;font-weight:800;color:${avgColor};font-family:'Playfair Display',serif">${avg}</div>
+          <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">ממוצע חודשי</div>
+        </div>
+      </div>
+
+      <!-- Controls grid -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        ${[0,1,2,3].map(i=>{
+          const c = agentControls[i];
+          if(!c) return `<div onclick="openControlModal(null,'${a.id}')" style="border:1.5px dashed var(--line2);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--ice4)" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--line2)'">
+            <div style="font-size:20px;margin-bottom:4px">+</div>
+            <div style="font-size:11px">בקרה ${i+1}</div>
+          </div>`;
+          const scoreColor = c.score>=0.8?'var(--ok)':c.score>=0.5?'var(--warn)':'var(--danger)';
+          return `<div style="background:var(--ink3);border-radius:12px;padding:12px 10px;position:relative;cursor:pointer" onclick="openControlModal('${c.id}')">
+            <div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:6px">בקרה ${i+1}</div>
+            <div style="font-size:22px;font-weight:800;color:${scoreColor};font-family:'Playfair Display',serif;margin-bottom:4px">${c.score.toFixed(2)}</div>
+            <div style="font-size:10px;color:var(--ice3)">${c.control_date||''}</div>
+            <div style="font-size:10px;color:var(--ice3);margin-top:2px">${c.supervisor||''}</div>
+            <div style="display:flex;gap:3px;margin-top:6px;flex-wrap:wrap">
+              ${[['📝',c.doc_done],['🤝',c.opening_done],['💬',c.body_done],['🏁',c.closing_done]]
+                .map(([icon,done])=>`<span style="font-size:13px;opacity:${done?1:0.25}">${icon}</span>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Summary row -->
+      <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace">סיכום חודשי</div>
+        <div style="font-size:12px;color:var(--ice3)">בוצעו: <strong style="color:var(--ice)">${agentControls.length}/4</strong></div>
+        ${scores.map((s,i)=>`<div style="font-size:12px;color:var(--ice3)">בקרה ${i+1}: <strong style="color:${s>=0.8?'var(--ok)':s>=0.5?'var(--warn)':'var(--danger)'}">${s.toFixed(2)}</strong></div>`).join('')}
+        ${agentControls.length ? `<div style="font-size:12px;color:var(--ice3)">ממוצע: <strong style="color:${avgColor}">${avg}</strong></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderControlsHistory(){
+  const month = document.getElementById('ctrl-hist-month')?.value||'all';
+  const dept  = document.getElementById('ctrl-hist-dept')?.value||'all';
+  const el    = document.getElementById('controls-history-list');
+  if(!el) return;
+
+  let filtered = S_controls;
+  if(month!=='all') filtered = filtered.filter(c=>c.month===month);
+  if(dept!=='all')  filtered = filtered.filter(c=>c.dept===dept||(!c.dept&&dept==='all'));
+
+  if(!filtered.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין בקרות לסינון זה</div>';
+    return;
+  }
+
+  // Group by month
+  const byMonth = {};
+  filtered.forEach(c=>{
+    const m=c.month||'ללא תאריך';
+    if(!byMonth[m]) byMonth[m]=[];
+    byMonth[m].push(c);
+  });
+
+  el.innerHTML = Object.keys(byMonth).sort().reverse().map(m=>{
+    const controls = byMonth[m];
+
+    // Group by agent for summary rows
+    const byAgent = {};
+    controls.forEach(c=>{
+      const key = String(c.agent_id)||c.agent_name;
+      if(!byAgent[key]) byAgent[key]=[];
+      byAgent[key].push(c);
+    });
+
+    // Build rows with summary after each agent's controls
+    let rows = '';
+    const agentKeys = Object.keys(byAgent);
+    agentKeys.forEach((key, ai)=>{
+      const agControls = byAgent[key].sort((a,b)=>a.control_date>b.control_date?1:-1);
+      agControls.forEach((c,i)=>{
+        const sc=c.score||0;
+        const scColor=sc>=0.8?'var(--ok)':sc>=0.5?'var(--warn)':'var(--danger)';
+        rows += `<tr style="border-bottom:1px solid var(--line);background:${ai%2===0?'transparent':'rgba(0,0,0,0.02)'}">
+          <td style="padding:8px 12px;color:var(--ice);font-weight:600">${i===0?c.agent_name||'—':''}</td>
+          <td style="padding:8px 12px;color:var(--ice3)">${i===0?c.dept||'—':''}</td>
+          <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${c.control_date||'—'}</td>
+          <td style="padding:8px 12px;color:var(--ice3)">${c.supervisor||'—'}</td>
+          <td style="padding:8px 12px;color:var(--ice3)">${c.topic||'—'}</td>
+          <td style="padding:8px 12px;text-align:center">${c.doc_done?'✅':'❌'}</td>
+          <td style="padding:8px 12px;text-align:center">${c.opening_done?'✅':'❌'}</td>
+          <td style="padding:8px 12px;text-align:center">${c.body_done?'✅':'❌'}</td>
+          <td style="padding:8px 12px;text-align:center">${c.closing_done?'✅':'❌'}</td>
+          <td style="padding:8px 12px;text-align:center;font-weight:800;color:${scColor}">${sc.toFixed(2)}</td>
+        </tr>`;
+      });
+      // Summary row after agent's controls
+      const avgScore = agControls.length ? (agControls.reduce((s,c)=>s+(c.score||0),0)/agControls.length) : 0;
+      const avgColor = avgScore>=0.8?'var(--ok)':avgScore>=0.5?'var(--warn)':'var(--danger)';
+      rows += `<tr style="background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent);border-bottom:2px solid var(--gold-line)">
+        <td colspan="9" style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace">
+          סיכום — ${agControls[0]?.agent_name||''} · ${agControls.length} בקרות
+        </td>
+        <td style="padding:8px 12px;text-align:center;font-size:16px;font-weight:800;color:${avgColor};background:rgba(201,168,76,0.05)">
+          ${avgScore.toFixed(2)}
+        </td>
+      </tr>`;
+    });
+
+    return `<div style="margin-bottom:24px">
+      <div style="font-size:13px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--line)">${formatMonth(m)}</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:var(--ink3)">
+              <th style="padding:8px 12px;text-align:right;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase">נציג</th>
+              <th style="padding:8px 12px;text-align:right;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">פעילות</th>
+              <th style="padding:8px 12px;text-align:right;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">תאריך ושעה</th>
+              <th style="padding:8px 12px;text-align:right;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">ממשב</th>
+              <th style="padding:8px 12px;text-align:right;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">נושא</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">📝</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">🤝</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">💬</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">🏁</th>
+              <th style="padding:8px 12px;text-align:center;font-weight:600;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">ציון</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── CONTROL MODAL ── */
+let _editControlId = null;
+
+function openControlModal(controlId, presetAgentId){
+  _editControlId = controlId||null;
+  const modal = document.getElementById('control-modal');
+
+  // Populate dept filter
+  const deptFilterSel = document.getElementById('ctrl-modal-dept-filter');
+  if(deptFilterSel){
+    const depts = [...new Set(S.agents.filter(a=>a.active!==false).flatMap(a=>a.depts||[]))].sort();
+    deptFilterSel.innerHTML = '<option value="all">כל הפעילויות</option>' +
+      depts.map(d=>`<option value="${d}">${d}</option>`).join('');
+  }
+  // Populate agent select
+  const agentSel = document.getElementById('ctrl-agent');
+  agentSel.innerHTML = '<option value="">בחר נציג...</option>' +
+    S.agents.filter(a=>a.active!==false)
+            .sort((a,b)=>a.name.localeCompare(b.name,'he'))
+            .map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+
+  // Set today's date
+  const today = new Date().toISOString().slice(0,10);
+
+  if(controlId){
+    const c = S_controls.find(x=>String(x.id)===String(controlId));
+    if(!c) return;
+    document.getElementById('ctrl-modal-title').textContent = 'עריכת בקרה';
+    document.getElementById('ctrl-edit-id').value = c.id;
+    agentSel.value = c.agent_id;
+    document.getElementById('ctrl-dept').value = c.dept||'';
+    document.getElementById('ctrl-date').value = c.control_date||today;
+    document.getElementById('ctrl-time').value = c.control_time||'';
+    document.getElementById('ctrl-supervisor').value = c.supervisor||'';
+    document.getElementById('ctrl-topic').value = c.topic||'';
+    document.getElementById('ctrl-customer').value = c.customer_name||'';
+    document.getElementById('ctrl-phone').value = c.customer_phone||'';
+    document.getElementById('ctrl-doc').checked = !!c.doc_done;
+    document.getElementById('ctrl-opening').checked = !!c.opening_done;
+    document.getElementById('ctrl-body').checked = !!c.body_done;
+    document.getElementById('ctrl-closing').checked = !!c.closing_done;
+    document.getElementById('ctrl-retention').value = c.retention||'';
+    document.getElementById('ctrl-improvement').value = c.improvement||'';
+  } else {
+    document.getElementById('ctrl-modal-title').textContent = 'בקרה חדשה';
+    document.getElementById('ctrl-edit-id').value = '';
+    agentSel.value = presetAgentId||'';
+    if(presetAgentId) fillAgentDept();
+    document.getElementById('ctrl-dept').value = '';
+    document.getElementById('ctrl-date').value = today;
+    document.getElementById('ctrl-time').value = new Date().toTimeString().slice(0,5);
+    document.getElementById('ctrl-supervisor').value = '';
+    document.getElementById('ctrl-topic').value = '';
+    document.getElementById('ctrl-customer').value = '';
+    document.getElementById('ctrl-phone').value = '';
+    document.getElementById('ctrl-doc').checked = false;
+    document.getElementById('ctrl-opening').checked = false;
+    document.getElementById('ctrl-body').checked = false;
+    document.getElementById('ctrl-closing').checked = false;
+    document.getElementById('ctrl-retention').value = '';
+    document.getElementById('ctrl-improvement').value = '';
+  }
+
+  updateLiveScore();
+  ['ctrl-doc','ctrl-opening','ctrl-body','ctrl-closing'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', updateLiveScore);
+  });
+
+  modal.style.display = 'flex';
+}
+
+function fillAgentDept(){
+  const agentId = document.getElementById('ctrl-agent').value;
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  document.getElementById('ctrl-dept').value = agent ? (agent.depts||[])[0]||'' : '';
+}
+
+function filterModalAgents(){
+  const deptVal = document.getElementById('ctrl-modal-dept-filter')?.value||'all';
+  const agentSel = document.getElementById('ctrl-agent');
+  if(!agentSel) return;
+  let agents = S.agents.filter(a=>a.active!==false);
+  if(deptVal!=='all') agents = agents.filter(a=>(a.depts||[]).includes(deptVal));
+  agentSel.innerHTML = '<option value="">בחר נציג...</option>' +
+    agents.sort((a,b)=>a.name.localeCompare(b.name,'he'))
+          .map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+
+function updateLiveScore(){
+  const score = (['ctrl-doc','ctrl-opening','ctrl-body','ctrl-closing']
+    .filter(id=>document.getElementById(id)?.checked).length * 0.25).toFixed(2);
+  const el = document.getElementById('ctrl-live-score');
+  if(el){
+    el.textContent = score;
+    el.style.color = parseFloat(score)>=0.8?'var(--ok)':parseFloat(score)>=0.5?'var(--warn)':'var(--danger)';
+  }
+}
+
+async function saveControl(){
+  const agentId = document.getElementById('ctrl-agent').value;
+  if(!agentId){ alert('יש לבחור נציג'); return; }
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  const date = document.getElementById('ctrl-date').value;
+  if(!date){ alert('יש לבחור תאריך'); return; }
+  const supervisor = document.getElementById('ctrl-supervisor').value;
+  if(!supervisor){ alert('יש לבחור גורם ממשב'); return; }
+
+  const doc_done     = document.getElementById('ctrl-doc').checked;
+  const opening_done = document.getElementById('ctrl-opening').checked;
+  const body_done    = document.getElementById('ctrl-body').checked;
+  const closing_done = document.getElementById('ctrl-closing').checked;
+  const score = [doc_done,opening_done,body_done,closing_done].filter(Boolean).length * 0.25;
+  const month = date.slice(0,7);
+
+  const row = {
+    agent_id: parseInt(agentId),
+    agent_name: agent?.name||'',
+    dept: document.getElementById('ctrl-dept').value,
+    control_date: date,
+    control_time: document.getElementById('ctrl-time')?.value||'',
+    supervisor,
+    topic: document.getElementById('ctrl-topic').value,
+    customer_name: document.getElementById('ctrl-customer').value,
+    customer_phone: document.getElementById('ctrl-phone').value,
+    doc_done, opening_done, body_done, closing_done,
+    score,
+    notes: (document.getElementById('ctrl-retention')?.value||'') + (document.getElementById('ctrl-improvement')?.value ? '\n📈 שיפור: ' + document.getElementById('ctrl-improvement').value : ''),
+    retention: document.getElementById('ctrl-retention')?.value||'',
+    improvement: document.getElementById('ctrl-improvement')?.value||'',
+    month
+  };
+
+  const editId = document.getElementById('ctrl-edit-id').value;
+  if(editId){
+    const {error} = await _sb.from('controls').update(row).eq('id',editId);
+    if(error){ alert('שגיאה: '+error.message); return; }
+    const idx = S_controls.findIndex(c=>String(c.id)===String(editId));
+    if(idx>=0) S_controls[idx]={...S_controls[idx],...row,id:parseInt(editId)};
+  } else {
+    const {data,error} = await _sb.from('controls').insert(row).select().single();
+    if(error){ alert('שגיאה: '+error.message); return; }
+    S_controls.unshift(data);
+  }
+
+  closeControlModal();
+  populateControlFilters();
+  renderControlsMonthly();
+}
+
+function populateTableFilters(){
+  const months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('ctrl-tbl-month');
+  if(sel) sel.innerHTML = '<option value="all">כל החודשים</option>' +
+    months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
+  const depts = [...new Set(S.agents.flatMap(a=>a.depts||[]))].sort();
+  const dsel = document.getElementById('ctrl-tbl-dept');
+  if(dsel) dsel.innerHTML = '<option value="all">כל הפעילויות</option>' +
+    depts.map(d=>`<option value="${d}">${d}</option>`).join('');
+}
+
+function renderControlsTable(){
+  const month  = document.getElementById('ctrl-tbl-month')?.value||'all';
+  const dept   = document.getElementById('ctrl-tbl-dept')?.value||'all';
+  const status = document.getElementById('ctrl-tbl-status')?.value||'all';
+  const el     = document.getElementById('controls-table-list');
+  if(!el) return;
+
+  let agents = S.agents.filter(a=>a.active!==false);
+  if(dept!=='all') agents = agents.filter(a=>(a.depts||[]).includes(dept));
+
+  // Get months to show as columns
+  let months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  if(month!=='all') months = [month];
+  if(!months.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נתונים</div>'; return; }
+
+  // Filter by status (based on first/only selected month, or all months)
+  if(status!=='all' && months.length>0){
+    const checkMonth = month!=='all' ? month : months[0];
+    agents = agents.filter(a=>{
+      const cnt = S_controls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth).length;
+      return status==='done' ? cnt>=4 : cnt<4;
+    });
+  }
+
+  if(!agents.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נציגים לסינון זה</div>'; return; }
+
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px" id="ctrl-export-table">
+    <thead>
+      <tr style="background:var(--ink3)">
+        <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap">מספר ת"ז</th>
+        <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">שם</th>
+        <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">פעילות</th>
+        ${months.map(m=>`<th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap">${formatMonth(m)}</th><th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">סטטוס</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+      ${agents.map((a,i)=>{
+        const pin  = a.pin||'—';
+        const dept1 = (a.depts||[])[0]||'—';
+        return `<tr style="border-bottom:1px solid var(--line);background:${i%2===0?'transparent':'var(--ink3)'}">
+          <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${pin}</td>
+          <td style="padding:8px 12px;color:var(--ice);font-weight:600">${a.name}</td>
+          <td style="padding:8px 12px;color:var(--ice3)">${dept1}</td>
+          ${months.map(m=>{
+            const agentControls = S_controls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===m);
+            const cnt = agentControls.length;
+            const done = cnt>=4;
+            if(!cnt) return '<td style="padding:8px 12px;text-align:center;color:var(--ice4)">—</td><td style="padding:8px 12px;text-align:center"><span style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:DM Mono,monospace">טרם בוצע</span></td>';
+            const avg = (agentControls.reduce((s,c)=>s+c.score,0)/cnt).toFixed(2);
+            const color = parseFloat(avg)>=0.8?'var(--ok)':parseFloat(avg)>=0.5?'var(--warn)':'var(--danger)';
+            const statusBadge = done
+              ? `<span style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace">✅ בוצע</span>`
+              : `<span style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace">❌ טרם בוצע (${cnt}/4)</span>`;
+            return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td>`;
+          }).join('')}
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function exportControlsExcel(){
+  const XLSX = window.XLSX;
+  if(!XLSX){ alert('ספריית אקסל לא נטענה'); return; }
+  const table = document.getElementById('ctrl-export-table');
+  if(!table){ alert('אין נתונים לייצוא'); return; }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(table);
+  XLSX.utils.book_append_sheet(wb, ws, 'בקרות');
+  XLSX.writeFile(wb, 'בקרות_חודשיות.xlsx');
+}
+
+function closeControlModal(){
+  document.getElementById('control-modal').style.display='none';
+  _editControlId = null;
+}
+
+function resetMonthlyFilters(){
+  const now = new Date();
+  const cur = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const m = document.getElementById('ctrl-month-filter');
+  const d = document.getElementById('ctrl-dept-filter');
+  if(m) m.value = cur;
+  if(d) d.value = 'all';
+  renderControlsMonthly();
+}
+
+function resetHistoryFilters(){
+  const m = document.getElementById('ctrl-hist-month');
+  const d = document.getElementById('ctrl-hist-dept');
+  if(m) m.value = 'all';
+  if(d) d.value = 'all';
+  renderControlsHistory();
+}
+
+function resetTableFilters(){
+  const m = document.getElementById('ctrl-tbl-month');
+  const d = document.getElementById('ctrl-tbl-dept');
+  const s = document.getElementById('ctrl-tbl-status');
+  if(m) m.value = 'all';
+  if(d) d.value = 'all';
+  if(s) s.value = 'all';
+  renderControlsTable();
+}
+
+function showControlDetails(controlId){
+  const c = S_controls.find(x=>String(x.id)===String(controlId));
+  if(!c) return;
+  const retention   = c.retention||'—';
+  const improvement = c.improvement||'—';
+  const score = (c.score||0).toFixed(2);
+  const scColor = c.score>=0.8?'var(--ok)':c.score>=0.5?'var(--warn)':'var(--danger)';
+
+  const el = document.getElementById('ctrl-details-modal');
+  document.getElementById('ctrl-details-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)">${c.agent_name||'—'}</div>
+        <div style="font-size:12px;color:var(--ice3);margin-top:3px">${c.dept||''} · ${c.control_date||''} ${c.control_time||''}</div>
+        <div style="font-size:12px;color:var(--ice3)">ממשב: ${c.supervisor||'—'} · נושא: ${c.topic||'—'}</div>
+      </div>
+      <div style="font-size:32px;font-weight:800;color:${scColor};font-family:'Playfair Display',serif">${score}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[['📝 תיעוד',c.doc_done],['🤝 פתיח',c.opening_done],['💬 גוף שיחה',c.body_done],['🏁 סיום',c.closing_done]].map(([label,done])=>`
+        <div style="background:${done?'var(--ok-bg)':'var(--danger-bg)'};border:1px solid ${done?'var(--ok-line)':'var(--danger-line)'};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">${done?'✅':'❌'}</span>
+          <span style="font-size:13px;font-weight:600;color:${done?'var(--ok)':'var(--danger)'}">${label}</span>
+        </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:12px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ok);font-family:'DM Mono',monospace;margin-bottom:8px">🌟 שימור</div>
+        <div style="font-size:13px;color:var(--ice2);line-height:1.6">${retention}</div>
+      </div>
+      <div style="background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:12px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;margin-bottom:8px">📈 שיפור</div>
+        <div style="font-size:13px;color:var(--ice2);line-height:1.6">${improvement}</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="openControlModal('${c.id}');closeControlDetails()">✏ ערוך</button>
+      <button class="btn btn-outline btn-sm" onclick="closeControlDetails()">סגור</button>
+    </div>
+  `;
+  el.style.display='flex';
+}
+
+function closeControlDetails(){
+  document.getElementById('ctrl-details-modal').style.display='none';
+}
+
 /* ══ WEB PUSH NOTIFICATIONS ══════════════════════════════ */
 const VAPID_PUBLIC_KEY = 'BPYziy-gWj_Nx2imuJO_HKMKDbLGlublq6DyUhG1MYax1LNyyB00sRMwGSAIVnLdT1hfpWHCzaaWwSRzo3Z2jkY';
 
@@ -7509,6 +8317,143 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
       <button class="btn btn-gold" style="flex:1;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff" onclick="saveEditPhone()">שמור</button>
       <button class="btn btn-outline" onclick="closeEditPhone()">ביטול</button>
     </div>
+  </div>
+</div>
+
+<!-- CONTROL ADD/EDIT MODAL -->
+<div id="control-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:640px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="position:sticky;top:0;background:var(--ink2);border-bottom:1px solid var(--line);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+      <div>
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📋 הוספת / עריכת בקרה</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)" id="ctrl-modal-title">בקרה חדשה</div>
+      </div>
+      <button onclick="closeControlModal()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:20px 22px">
+      <input type="hidden" id="ctrl-edit-id">
+
+      <!-- Row 0: Dept filter -->
+      <div style="margin-bottom:14px">
+        <label class="field-label">סנן לפי פעילות</label>
+        <select id="ctrl-modal-dept-filter" onchange="filterModalAgents()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+          <option value="all">כל הפעילויות</option>
+        </select>
+      </div>
+      <!-- Row 1: Agent + Dept -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">נציג</label>
+          <select id="ctrl-agent" onchange="fillAgentDept()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+            <option value="">בחר נציג...</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">פעילות</label>
+          <input type="text" id="ctrl-dept" readonly style="width:100%;background:var(--ink4);color:var(--ice3)" placeholder="מתמלא אוטומטית">
+        </div>
+      </div>
+
+      <!-- Row 2: Date + Time + Supervisor -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">תאריך משוב</label>
+          <input type="date" id="ctrl-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">שעה</label>
+          <input type="time" id="ctrl-time" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">גורם ממשב</label>
+          <select id="ctrl-supervisor" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl">
+            <option value="">בחר ממשב...</option>
+            <option>הודיה מזרחי</option>
+            <option>בקי ביטון</option>
+            <option>טל אברהם</option>
+            <option>לבנה דניאל</option>
+            <option>תהילה כהן</option>
+            <option>אליה ביטון</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 3: Topic + Customer -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <label class="field-label">נושא</label>
+          <input type="text" id="ctrl-topic" placeholder="נושא השיחה" style="width:100%">
+        </div>
+        <div>
+          <label class="field-label">שם לקוח</label>
+          <input type="text" id="ctrl-customer" placeholder="שם הלקוח" style="width:100%">
+        </div>
+      </div>
+
+      <!-- Row 4: Phone -->
+      <div style="margin-bottom:18px">
+        <label class="field-label">טלפון לקוח</label>
+        <input type="text" id="ctrl-phone" placeholder="05X-XXXXXXX" inputmode="tel" style="width:100%;direction:ltr">
+      </div>
+
+      <!-- Parameters -->
+      <div style="background:var(--ink3);border-radius:14px;padding:16px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:14px">פרמטרים — כל סעיף שווה 0.25</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-doc" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">📝 תיעוד</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-opening" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">🤝 פתיח</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-body" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">💬 גוף שיחה</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;cursor:pointer">
+            <input type="checkbox" id="ctrl-closing" style="width:18px;height:18px;accent-color:var(--ok);cursor:pointer">
+            <span style="font-size:13px;font-weight:600;color:var(--ice)">🏁 סיום שיחה</span>
+          </label>
+        </div>
+        <!-- Live score -->
+        <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace">ציון בקרה זו:</div>
+          <div id="ctrl-live-score" style="font-size:24px;font-weight:800;color:var(--ok);font-family:'Playfair Display',serif">0.00</div>
+          <div style="font-size:11px;color:var(--ice3)">/ 1.00</div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div>
+          <label class="field-label">🌟 שימור</label>
+          <textarea id="ctrl-retention" placeholder="מה הנציג עשה טוב ויש לשמר..." style="width:100%;min-height:80px"></textarea>
+        </div>
+        <div>
+          <label class="field-label">📈 שיפור</label>
+          <textarea id="ctrl-improvement" placeholder="מה צריך לשפר ולתקן..." style="width:100%;min-height:80px"></textarea>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-gold" style="flex:1" onclick="saveControl()">💾 שמור בקרה</button>
+        <button class="btn btn-outline" onclick="closeControlModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROL DETAILS MODAL -->
+<div id="ctrl-details-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:520px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em">פרטי בקרה</div>
+      <button onclick="closeControlDetails()" style="background:var(--ink3);border:1px solid var(--line2);width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="ctrl-details-content"></div>
   </div>
 </div>
 </body>
