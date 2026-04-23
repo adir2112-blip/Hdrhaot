@@ -1054,7 +1054,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn active" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
         <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
+      <button class="nav-btn" onclick="switchToManagerMode()" id="nav-to-manager" style="color:var(--gold);background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:8px;margin-right:4px">
+        <span class="nav-icon">🔐</span><span class="nav-label">לעולם הניהול</span>
+      </button>
     </nav>
+    <button onclick="signOut()" style="font-size:12px;padding:6px 14px;border-radius:8px;border:1px solid var(--line2);background:none;color:var(--ice3);cursor:pointer;font-family:'Sora',sans-serif;margin-right:8px" title="יציאה">
+      🚪 יציאה
+    </button>
   </div>
 </div>
 
@@ -2244,6 +2250,7 @@ const AV_COLORS=[
   {bg:'rgba(246,114,182,0.15)',c:'#F672B6'},
 ];
 const LETTERS=['א','ב','ג','ד'];
+// Admin passwords kept for internal delete confirmations only
 const ADMIN_PW='Q1w2e3r4!';
 const SUPER_ADMIN_PW='Adirgal123!';
 const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
@@ -2259,8 +2266,90 @@ function agentGroup(a){
   return null;
 }
 
-/* ---- SUPABASE ---- */
+/* ---- SUPABASE AUTH ---- */
 const _sb = supabase.createClient('https://hbjtpjdthvjikfxsufdo.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc');
+
+/* ── AUTH ── */
+async function signIn(){
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl    = document.getElementById('auth-error');
+  const btn      = document.getElementById('auth-btn');
+  if(!email||!password){ errEl.style.display='block'; errEl.textContent='✗ יש למלא אימייל וסיסמה'; return; }
+  btn.disabled=true; btn.textContent='מתחבר...';
+  errEl.style.display='none';
+  const { error } = await _sb.auth.signInWithPassword({ email, password });
+  btn.disabled=false; btn.textContent='כניסה למערכת';
+  if(error){
+    errEl.style.display='block';
+    errEl.textContent='✗ אימייל או סיסמה שגויים';
+    return;
+  }
+  hideAuthModal();
+  onAdminSignedIn();
+}
+
+async function signOut(){
+  await _sb.auth.signOut();
+  lockAll();
+  showAuthModal();
+}
+
+function showAuthModal(){
+  document.getElementById('auth-modal').style.display='flex';
+}
+
+function hideAuthModal(){
+  document.getElementById('auth-modal').style.display='none';
+}
+
+// Agent-only mode (no admin session)
+let _agentOnlyMode = false;
+
+function enterAgentOnlyMode(){
+  _agentOnlyMode = true;
+  hideAuthModal();
+  switchTab('agent');
+  // Hide manager nav buttons
+  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  // Hide logout button
+  const logout=document.querySelector('[onclick="signOut()"]');
+  if(logout) logout.style.display='none';
+}
+
+function switchToManagerMode(){
+  // Show manager login screen
+  showAuthModal();
+  // Reset agent-only mode flags so tabs come back after login
+  _agentOnlyMode = false;
+}
+
+function onAdminSignedIn(){
+  _agentOnlyMode = false;
+  // Restore all nav buttons
+  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='';
+  });
+  const logout=document.querySelector('[onclick="signOut()"]');
+  if(logout) logout.style.display='';
+  unlockAll();
+  switchTab('tracking');
+}
+
+// Check session on page load
+async function checkAuthSession(){
+  const { data: { session } } = await _sb.auth.getSession();
+  if(session){
+    hideAuthModal();
+    onAdminSignedIn();
+  } else {
+    showAuthModal();
+  }
+}
 
 let S={
   agents:[],
@@ -2373,8 +2462,7 @@ function switchTab(name){
       if(lock) lock.style.display='flex';
       if(content) content.style.display='none';
     } else {
-      renderTracking();
-      showDashPanel(null); // reset to main dashboard view
+      renderTracking().then(()=>showDashPanel(null));
     }
   }
   if(name==='settings'){
@@ -2445,9 +2533,13 @@ function lockAll(){
     const el=document.getElementById(id); if(el) el.style.display='none';
   });
 }
-function checkAdminInput(inputId, errorId){
+async function checkAdminInput(inputId, errorId){
   const val = document.getElementById(inputId).value;
-  if(val === ADMIN_PW){
+  // Try Supabase session first
+  const { data: { session } } = await _sb.auth.getSession();
+  if(session){ unlockAll(); return; }
+  // Fallback to password
+  if(val === ADMIN_PW || val === SUPER_ADMIN_PW){
     unlockAll();
   } else {
     document.getElementById(errorId).style.display='block';
@@ -4720,7 +4812,11 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
   </div>`;
 }
 
-function renderTracking(){
+async function renderTracking(){
+  // Always refresh briefings from DB to get latest completions
+  try {
+    S.briefings = await dbBriefings();
+  } catch(e) { console.warn('renderTracking: briefings refresh failed', e); }
   renderFilterBar();
   renderAlertBanner();
   const wb=getWeek();
@@ -6414,6 +6510,31 @@ function downloadPDF(){
       <button onclick="closeControlDetails()" style="background:var(--ink3);border:1px solid var(--line2);width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
     </div>
     <div id="ctrl-details-content"></div>
+  </div>
+</div>
+
+<!-- SUPABASE AUTH LOGIN MODAL -->
+<div id="auth-modal" style="display:flex;position:fixed;inset:0;z-index:1000;background:var(--ink);align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid rgba(184,134,42,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+    <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C97A,var(--gold))"></div>
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:40px;margin-bottom:12px">📚</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
+      <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
+    </div>
+    <div class="field">
+      <label class="field-label">אימייל</label>
+      <input type="email" id="auth-email" placeholder="admin@company.com" style="direction:ltr;text-align:left;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);width:100%;outline:none" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
+    </div>
+    <div class="field">
+      <label class="field-label">סיסמה</label>
+      <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()">
+    </div>
+    <div id="auth-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace;text-align:center">✗ אימייל או סיסמה שגויים</div>
+    <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center" onclick="signIn()" id="auth-btn">כניסה למערכת</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
+      <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
+    </div>
   </div>
 </div>
 </body></html>`);
@@ -8505,6 +8626,31 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
       <button onclick="closeControlDetails()" style="background:var(--ink3);border:1px solid var(--line2);width:28px;height:28px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
     </div>
     <div id="ctrl-details-content"></div>
+  </div>
+</div>
+
+<!-- SUPABASE AUTH LOGIN MODAL -->
+<div id="auth-modal" style="display:flex;position:fixed;inset:0;z-index:1000;background:var(--ink);align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid rgba(184,134,42,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+    <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C97A,var(--gold))"></div>
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:40px;margin-bottom:12px">📚</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
+      <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
+    </div>
+    <div class="field">
+      <label class="field-label">אימייל</label>
+      <input type="email" id="auth-email" placeholder="admin@company.com" style="direction:ltr;text-align:left;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);width:100%;outline:none" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
+    </div>
+    <div class="field">
+      <label class="field-label">סיסמה</label>
+      <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()">
+    </div>
+    <div id="auth-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace;text-align:center">✗ אימייל או סיסמה שגויים</div>
+    <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center" onclick="signIn()" id="auth-btn">כניסה למערכת</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
+      <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
+    </div>
   </div>
 </div>
 </body>
