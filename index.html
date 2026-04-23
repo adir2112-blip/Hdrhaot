@@ -1097,10 +1097,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="lock-title">Manager Access</div>
         <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
         <div class="field">
-          <input type="password" id="manager-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkManagerPw()">
+          <input type="password" id="manager-pw-input" placeholder="סיסמת Supabase" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkManagerPw()">
         </div>
-        <div id="manager-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <div id="manager-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ יש להתחבר דרך מסך הכניסה</div>
         <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkManagerPw()">כניסה</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="showAuthModal()">🔐 מסך כניסה ראשי</button>
       </div>
     </div>
     <div id="manager-content" style="display:none">
@@ -1855,10 +1856,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="lock-title">Manager Access</div>
         <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
         <div class="field">
-          <input type="password" id="tracking-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkTrackingPw()">
+          <input type="password" id="tracking-pw-input" placeholder="סיסמת Supabase" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkTrackingPw()">
         </div>
-        <div id="tracking-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <div id="tracking-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ יש להתחבר דרך מסך הכניסה</div>
         <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkTrackingPw()">כניסה</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="showAuthModal()">🔐 מסך כניסה ראשי</button>
       </div>
     </div>
     <div id="tracking-content" style="display:none">
@@ -1981,10 +1983,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="lock-title">Manager Access</div>
         <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
         <div class="field">
-          <input type="password" id="admin-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkPw()">
+          <input type="password" id="admin-pw-input" placeholder="סיסמת Supabase" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkPw()">
         </div>
-        <div id="admin-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <div id="admin-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ יש להתחבר דרך מסך הכניסה</div>
         <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkPw()">כניסה</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="showAuthModal()">🔐 מסך כניסה ראשי</button>
       </div>
     </div>
     <div id="settings-content" style="display:none">
@@ -2250,9 +2253,9 @@ const AV_COLORS=[
   {bg:'rgba(246,114,182,0.15)',c:'#F672B6'},
 ];
 const LETTERS=['א','ב','ג','ד'];
-// Admin passwords kept for internal delete confirmations only
-const ADMIN_PW='Q1w2e3r4!';
-const SUPER_ADMIN_PW='Adirgal123!';
+// Admin passwords removed — auth via Supabase only
+const ADMIN_PW='__DISABLED__';
+const SUPER_ADMIN_PW='__DISABLED__';
 const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
 const GROUPS=[
   {key:'מובמנט', label:'מובמנט', depts:['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT']},
@@ -2336,8 +2339,10 @@ function onAdminSignedIn(){
   });
   const logout=document.querySelector('[onclick="signOut()"]');
   if(logout) logout.style.display='';
-  unlockAll();
-  switchTab('tracking');
+  unlockAll().then(()=>{
+    applyPermissions();
+    switchTab('tracking');
+  });
 }
 
 // Check session on page load
@@ -2444,10 +2449,14 @@ function switchTab(name){
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='knowledge'){
     if(!_adminUnlocked){
-      const lock=document.getElementById('knowledge-lock');
-      const content=document.getElementById('knowledge-content');
-      if(lock) lock.style.display='flex';
-      if(content) content.style.display='none';
+      // Auto-check Supabase session before showing lock
+      _sb.auth.getSession().then(({data:{session}})=>{
+        if(session){ unlockAll(); return; }
+        const lock=document.getElementById('knowledge-lock');
+        const content=document.getElementById('knowledge-content');
+        if(lock) lock.style.display='flex';
+        if(content) content.style.display='none';
+      });
     } else {
       document.getElementById('knowledge-lock').style.display='none';
       document.getElementById('knowledge-content').style.display='block';
@@ -2467,7 +2476,6 @@ function switchTab(name){
   }
   if(name==='settings'){
     if(!_adminUnlocked){
-      // Just ensure lock is visible and content hidden - don't call lockSettings()
       const lock=document.getElementById('settings-lock');
       const content=document.getElementById('settings-content');
       if(lock) lock.style.display='flex';
@@ -2475,6 +2483,8 @@ function switchTab(name){
     } else {
       renderSettings();
       populateResetSelects();
+      // הסתר כפתור הגדרות למנהלים שאינם סופר אדמין
+      applyPermissions();
     }
   }
   if(name==='agent'){ renderAgentLogin(); const sd=document.getElementById('search-detail-view'); if(sd) sd.style.display='none'; }
@@ -2505,8 +2515,21 @@ function switchTab(name){
 // adminUnlocked lives only in memory — cleared on page close
 let _adminUnlocked = false;
 
-function unlockAll(){
+async function unlockAll(){
+  // חובה — בדוק session אמיתי מול Supabase
+  const { data: { session } } = await _sb.auth.getSession();
+  if(!session){
+    console.warn('[Auth] unlockAll blocked — no valid session');
+    showAuthModal();
+    return;
+  }
   _adminUnlocked = true;
+  _agentOnlyMode = false;
+  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='';
+  });
+  const logout=document.querySelector('[onclick="signOut()"]');
+  if(logout) logout.style.display='';
   ['manager','tracking','settings','controls'].forEach(panel => {
     const lock = document.getElementById(panel+'-lock');
     const content = document.getElementById(panel+'-content');
@@ -2534,16 +2557,14 @@ function lockAll(){
   });
 }
 async function checkAdminInput(inputId, errorId){
-  const val = document.getElementById(inputId).value;
-  // Try Supabase session first
   const { data: { session } } = await _sb.auth.getSession();
-  if(session){ unlockAll(); return; }
-  // Fallback to password
-  if(val === ADMIN_PW || val === SUPER_ADMIN_PW){
-    unlockAll();
+  if(session){
+    await unlockAll();
   } else {
-    document.getElementById(errorId).style.display='block';
-    document.getElementById(inputId).value='';
+    // No Supabase session — redirect to main login
+    const errEl = document.getElementById(errorId);
+    if(errEl) errEl.style.display='block';
+    showAuthModal();
   }
 }
 function checkManagerPw(){ checkAdminInput('manager-pw-input','manager-pw-error'); }
@@ -2554,7 +2575,22 @@ function lockTracking(){ if(!_adminUnlocked){ document.getElementById('tracking-
 /* ── SETTINGS SIDEBAR ────────────────────────── */
 let _currentSettingsPanel = 'main';
 
+function _openConfigPanel(){
+  const panels = ['main','agents','import','delete','stats','config'];
+  panels.forEach(p=>{
+    const el=document.getElementById('sp-'+p);
+    if(el) el.style.display=p==='config'?'block':'none';
+  });
+  const activeBtn=document.getElementById('ssb-config');
+  document.querySelectorAll('.ssb-btn').forEach(b=>{ b.style.background='none'; b.style.border='none'; b.style.color='var(--ice2)'; b.style.fontWeight='600'; });
+  if(activeBtn){ activeBtn.style.background='var(--gold-bg)'; activeBtn.style.border='1px solid var(--gold-line)'; activeBtn.style.color='var(--gold)'; activeBtn.style.fontWeight='700'; }
+  loadConfigValues();
+}
+
 function showConfigAdminModal(){
+  // ביטול המודל הישן — גישה ישירה לפאנל הגדרות
+  _openConfigPanel();
+  return;
   document.getElementById('config-admin-pw').value='';
   document.getElementById('config-admin-err').style.display='none';
   document.getElementById('admin-config-modal').style.display='flex';
@@ -2618,7 +2654,16 @@ function showSettingsPanel(key){
 
   if(key==='agents'){ initAgentPanelDepts(); renderSettingsAgents(); }
   if(key==='stats') renderSettingsStats();
-  if(key==='config'){ showConfigAdminModal(); return; }
+  if(key==='config'){
+    getCurrentUserEmail().then(email=>{
+      if(!isSuperAdmin(email)){
+        alert('⛔ גישה לאזור זה מוגבלת למנהל ראשי בלבד.');
+        return;
+      }
+      _openConfigPanel();
+    });
+    return;
+  }
 }
 
 async function addAgentFromPanel(){
@@ -7489,7 +7534,15 @@ function closeEditPhone() {
 let S_controls = [];
 let _controlsLoaded = false;
 
-function checkControlsPw(){
+async function checkControlsPw(){
+  const { data: { session } } = await _sb.auth.getSession();
+  if(session){
+    document.getElementById('controls-lock').style.display='none';
+    document.getElementById('controls-content').style.display='block';
+    document.getElementById('controls-pw-input').value='';
+    loadControls();
+    return;
+  }
   const val = document.getElementById('controls-pw-input').value;
   if(val === ADMIN_PW || val === SUPER_ADMIN_PW){
     document.getElementById('controls-lock').style.display='none';
@@ -8088,6 +8141,40 @@ function showControlDetails(controlId){
 
 function closeControlDetails(){
   document.getElementById('ctrl-details-modal').style.display='none';
+}
+
+
+/* ══ PERMISSIONS ══════════════════════════════ */
+const SUPER_ADMIN_EMAIL = 'adir2112@gmail.com'; // גישה לכל כולל הגדרות
+
+// כל שאר המנהלים — גישה לכל חוץ מהגדרות
+const MANAGER_EMAILS = [
+  'tala@targetcall.co.il',
+  'thielac@targetcall.co.il',
+  'levanad@m4l.co.il',
+  'hodayam@targetcall.co.il',
+  'eliyab@targetcall.co.il',
+  'bekib@targetcall.co.il'
+];
+
+let _currentUserEmail = '';
+
+async function getCurrentUserEmail(){
+  const { data: { session } } = await _sb.auth.getSession();
+  return session?.user?.email || '';
+}
+
+function isSuperAdmin(email){ return email === SUPER_ADMIN_EMAIL; }
+function isManager(email){ return MANAGER_EMAILS.includes(email) || isSuperAdmin(email); }
+
+async function applyPermissions(){
+  _currentUserEmail = await getCurrentUserEmail();
+  // כל המנהלים רואים לשונית ניהול
+  // רק סופר אדמין רואה את כפתור הגדרות בתוך ניהול
+  const configBtn = document.getElementById('ssb-config');
+  if(configBtn){
+    configBtn.style.display = isSuperAdmin(_currentUserEmail) ? '' : 'none';
+  }
 }
 
 /* ══ WEB PUSH NOTIFICATIONS ══════════════════════════════ */
