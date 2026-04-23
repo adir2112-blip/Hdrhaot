@@ -1289,6 +1289,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <select id="ctrl-dept-filter" onchange="renderControlsMonthly()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
             <option value="all">כל הפעילויות</option>
           </select>
+          <input type="text" id="ctrl-agent-search" placeholder="🔍 חיפוש לפי שם נציג..." oninput="renderControlsMonthly()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;min-width:200px;direction:rtl">
           <button class="btn btn-outline btn-sm" onclick="resetMonthlyFilters()" title="איפוס סינון">↺ איפוס</button>
           <button class="btn btn-gold" onclick="openControlModal()" style="margin-right:auto">
             + הוספת בקרה
@@ -6340,18 +6341,18 @@ function downloadPDF(){
       <!-- Row 3: Topic + Customer -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
         <div>
-          <label class="field-label">נושא</label>
+          <label class="field-label">נושא <span style="color:var(--danger)">*</span></label>
           <input type="text" id="ctrl-topic" placeholder="נושא השיחה" style="width:100%">
         </div>
         <div>
-          <label class="field-label">שם לקוח</label>
+          <label class="field-label">שם לקוח <span style="color:var(--danger)">*</span></label>
           <input type="text" id="ctrl-customer" placeholder="שם הלקוח" style="width:100%">
         </div>
       </div>
 
       <!-- Row 4: Phone -->
       <div style="margin-bottom:18px">
-        <label class="field-label">טלפון לקוח</label>
+        <label class="field-label">טלפון לקוח <span style="color:var(--danger)">*</span></label>
         <input type="text" id="ctrl-phone" placeholder="05X-XXXXXXX" inputmode="tel" style="width:100%;direction:ltr">
       </div>
 
@@ -6387,11 +6388,11 @@ function downloadPDF(){
       <!-- Notes -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
         <div>
-          <label class="field-label">🌟 שימור</label>
+          <label class="field-label">🌟 שימור <span style="color:var(--danger)">*</span></label>
           <textarea id="ctrl-retention" placeholder="מה הנציג עשה טוב ויש לשמר..." style="width:100%;min-height:80px"></textarea>
         </div>
         <div>
-          <label class="field-label">📈 שיפור</label>
+          <label class="field-label">📈 שיפור <span style="color:var(--danger)">*</span></label>
           <textarea id="ctrl-improvement" placeholder="מה צריך לשפר ולתקן..." style="width:100%;min-height:80px"></textarea>
         </div>
       </div>
@@ -7441,13 +7442,17 @@ function renderControlsMonthly(){
   let agents = S.agents.filter(a=>a.active!==false);
 
   // Define מובמנט group depts
-  const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT'];
+  const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','לאומית FIT'];
 
   if(dept==='מובמנט'){
     agents = agents.filter(a=>(a.depts||[]).some(d=>MOVMENT_DEPTS.includes(d)));
   } else if(dept!=='all'){
     agents = agents.filter(a=>(a.depts||[]).includes(dept));
   }
+
+  // Search by name
+  const search = (document.getElementById('ctrl-agent-search')?.value||'').trim().toLowerCase();
+  if(search) agents = agents.filter(a=>a.name.toLowerCase().includes(search));
 
   if(!agents.length){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נציגים לסינון זה</div>';
@@ -7464,6 +7469,10 @@ function renderControlsMonthly(){
     const avg = scores.length ? (scores.reduce((s,x)=>s+x,0)/scores.length).toFixed(2) : '—';
     const avgColor = avg==='—'?'var(--ice3)':parseFloat(avg)>=0.8?'var(--ok)':parseFloat(avg)>=0.5?'var(--warn)':'var(--danger)';
 
+    const isPrifit = (a.depts||[]).some(d=>['פריפיט שירות','פריפיט מכירות'].includes(d));
+    const maxControls = isPrifit ? 99 : 4;
+    const displaySlots = isPrifit ? Math.max(agentControls.length+1, 4) : 4;
+
     return `<div class="card" style="margin-bottom:14px">
       <!-- Agent header -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -7474,15 +7483,20 @@ function renderControlsMonthly(){
             <div style="font-size:11px;color:var(--ice3);margin-top:2px">${(a.depts||[]).join(' · ')||'—'}</div>
           </div>
         </div>
-        <div style="text-align:center">
-          <div style="font-size:28px;font-weight:800;color:${avgColor};font-family:'Playfair Display',serif">${avg}</div>
-          <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">ממוצע חודשי</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <!-- Average — highlighted -->
+          <div style="text-align:center;background:${avg==='—'?'var(--ink3)':avgColor==='var(--ok)'?'rgba(45,212,164,0.1)':avgColor==='var(--warn)'?'rgba(240,160,75,0.1)':'rgba(240,101,101,0.1)'};border:2px solid ${avg==='—'?'var(--line2)':avgColor};border-radius:14px;padding:10px 18px">
+            <div style="font-size:32px;font-weight:900;color:${avgColor};font-family:'Playfair Display',serif;line-height:1">${avg}</div>
+            <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:4px">ממוצע חודשי</div>
+          </div>
+          <!-- Delete all -->
+          ${agentControls.length ? `<button onclick="event.stopPropagation();deleteAgentControls('${a.id}','${month}')" style="background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger);border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif" title="מחק את כל הבקרות של נציג זה בחודש">🗑 מחק הכל</button>` : ''}
         </div>
       </div>
 
       <!-- Controls grid -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
-        ${[0,1,2,3].map(i=>{
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(displaySlots,4)},1fr);gap:8px;margin-bottom:10px">
+        ${Array.from({length:displaySlots},(_, i)=>{
           const c = agentControls[i];
           if(!c) return `<div onclick="openControlModal(null,'${a.id}')" style="border:1.5px dashed var(--line2);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--ice4)" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--line2)'">
             <div style="font-size:20px;margin-bottom:4px">+</div>
@@ -7492,7 +7506,7 @@ function renderControlsMonthly(){
           return `<div style="background:var(--ink3);border-radius:12px;padding:12px 10px;position:relative;cursor:pointer" onclick="openControlModal('${c.id}')">
             <div style="font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;margin-bottom:6px">בקרה ${i+1}</div>
             <div style="font-size:22px;font-weight:800;color:${scoreColor};font-family:'Playfair Display',serif;margin-bottom:4px">${c.score.toFixed(2)}</div>
-            <div style="font-size:10px;color:var(--ice3)">${c.control_date||''}</div>
+            <div style="font-size:10px;color:var(--ice3)">${c.control_date||''}${c.control_time?' '+c.control_time:''}</div>
             <div style="font-size:10px;color:var(--ice3);margin-top:2px">${c.supervisor||''}</div>
             <div style="display:flex;gap:3px;margin-top:6px;flex-wrap:wrap">
               ${[['📝',c.doc_done],['🤝',c.opening_done],['💬',c.body_done],['🏁',c.closing_done]]
@@ -7505,9 +7519,9 @@ function renderControlsMonthly(){
       <!-- Summary row -->
       <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
         <div style="font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace">סיכום חודשי</div>
-        <div style="font-size:12px;color:var(--ice3)">בוצעו: <strong style="color:var(--ice)">${agentControls.length}/4</strong></div>
+        <div style="font-size:12px;color:var(--ice3)">בוצעו: <strong style="color:var(--ice)">${agentControls.length}${isPrifit?'':'/4'}</strong></div>
         ${scores.map((s,i)=>`<div style="font-size:12px;color:var(--ice3)">בקרה ${i+1}: <strong style="color:${s>=0.8?'var(--ok)':s>=0.5?'var(--warn)':'var(--danger)'}">${s.toFixed(2)}</strong></div>`).join('')}
-        ${agentControls.length ? `<div style="font-size:12px;color:var(--ice3)">ממוצע: <strong style="color:${avgColor}">${avg}</strong></div>` : ''}
+        ${agentControls.length ? `<div style="font-size:12px;font-weight:700">ממוצע: <strong style="font-size:15px;color:${avgColor}">${avg}</strong></div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -7555,10 +7569,11 @@ function renderControlsHistory(){
       agControls.forEach((c,i)=>{
         const sc=c.score||0;
         const scColor=sc>=0.8?'var(--ok)':sc>=0.5?'var(--warn)':'var(--danger)';
-        rows += `<tr style="border-bottom:1px solid var(--line);background:${ai%2===0?'transparent':'rgba(0,0,0,0.02)'}">
+        const hasNotes = c.retention||c.improvement;
+        rows += `<tr style="border-bottom:${hasNotes?'none':'1px solid var(--line)'};background:${ai%2===0?'transparent':'rgba(0,0,0,0.02)'};cursor:pointer" onclick="openControlModal('${c.id}')">
           <td style="padding:8px 12px;color:var(--ice);font-weight:600">${i===0?c.agent_name||'—':''}</td>
           <td style="padding:8px 12px;color:var(--ice3)">${i===0?c.dept||'—':''}</td>
-          <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${c.control_date||'—'}</td>
+          <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${c.control_date||'—'}${c.control_time?' <span style="color:var(--ice4)">'+c.control_time+'</span>':''}</td>
           <td style="padding:8px 12px;color:var(--ice3)">${c.supervisor||'—'}</td>
           <td style="padding:8px 12px;color:var(--ice3)">${c.topic||'—'}</td>
           <td style="padding:8px 12px;text-align:center">${c.doc_done?'✅':'❌'}</td>
@@ -7567,6 +7582,16 @@ function renderControlsHistory(){
           <td style="padding:8px 12px;text-align:center">${c.closing_done?'✅':'❌'}</td>
           <td style="padding:8px 12px;text-align:center;font-weight:800;color:${scColor}">${sc.toFixed(2)}</td>
         </tr>`;
+        if(hasNotes){
+          rows += `<tr style="border-bottom:1px solid var(--line);background:${ai%2===0?'transparent':'rgba(0,0,0,0.02)'}">
+            <td colspan="10" style="padding:4px 12px 10px 12px">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                ${c.retention?`<div style="background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--ok)"><span style="font-weight:700">🌟 שימור:</span> ${c.retention}</div>`:''}
+                ${c.improvement?`<div style="background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--warn)"><span style="font-weight:700">📈 שיפור:</span> ${c.improvement}</div>`:''}
+              </div>
+            </td>
+          </tr>`;
+        }
       });
       // Summary row after agent's controls
       const avgScore = agControls.length ? (agControls.reduce((s,c)=>s+(c.score||0),0)/agControls.length) : 0;
@@ -7713,6 +7738,17 @@ async function saveControl(){
   const supervisor = document.getElementById('ctrl-supervisor').value;
   if(!supervisor){ alert('יש לבחור גורם ממשב'); return; }
 
+  const topic = document.getElementById('ctrl-topic').value.trim();
+  if(!topic){ alert('יש למלא נושא'); document.getElementById('ctrl-topic').focus(); return; }
+  const customer = document.getElementById('ctrl-customer').value.trim();
+  if(!customer){ alert('יש למלא שם לקוח'); document.getElementById('ctrl-customer').focus(); return; }
+  const phone = document.getElementById('ctrl-phone').value.trim();
+  if(!phone){ alert('יש למלא טלפון לקוח'); document.getElementById('ctrl-phone').focus(); return; }
+  const retention = document.getElementById('ctrl-retention')?.value?.trim()||'';
+  if(!retention){ alert('יש למלא שדה שימור'); document.getElementById('ctrl-retention').focus(); return; }
+  const improvement = document.getElementById('ctrl-improvement')?.value?.trim()||'';
+  if(!improvement){ alert('יש למלא שדה שיפור'); document.getElementById('ctrl-improvement').focus(); return; }
+
   const doc_done     = document.getElementById('ctrl-doc').checked;
   const opening_done = document.getElementById('ctrl-opening').checked;
   const body_done    = document.getElementById('ctrl-body').checked;
@@ -7727,14 +7763,14 @@ async function saveControl(){
     control_date: date,
     control_time: document.getElementById('ctrl-time')?.value||'',
     supervisor,
-    topic: document.getElementById('ctrl-topic').value,
-    customer_name: document.getElementById('ctrl-customer').value,
-    customer_phone: document.getElementById('ctrl-phone').value,
+    topic,
+    customer_name: customer,
+    customer_phone: phone,
     doc_done, opening_done, body_done, closing_done,
     score,
-    notes: (document.getElementById('ctrl-retention')?.value||'') + (document.getElementById('ctrl-improvement')?.value ? '\n📈 שיפור: ' + document.getElementById('ctrl-improvement').value : ''),
-    retention: document.getElementById('ctrl-retention')?.value||'',
-    improvement: document.getElementById('ctrl-improvement')?.value||'',
+    notes: retention + (improvement ? '\n📈 שיפור: ' + improvement : ''),
+    retention,
+    improvement,
     month
   };
 
@@ -7843,13 +7879,28 @@ function closeControlModal(){
   _editControlId = null;
 }
 
+async function deleteAgentControls(agentId, month){
+  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
+  if(pw===null) return;
+  if(pw!==ADMIN_PW && pw!==SUPER_ADMIN_PW){ alert('✗ סיסמה שגויה'); return; }
+  if(!confirm('האם אתה בטוח שברצונך למחוק את כל הבקרות של נציג זה בחודש זה?')) return;
+  const toDelete = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
+  for(const c of toDelete){
+    await _sb.from('controls').delete().eq('id',c.id);
+  }
+  S_controls = S_controls.filter(c=>!(String(c.agent_id)===String(agentId)&&c.month===month));
+  renderControlsMonthly();
+}
+
 function resetMonthlyFilters(){
   const now = new Date();
   const cur = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const m = document.getElementById('ctrl-month-filter');
   const d = document.getElementById('ctrl-dept-filter');
+  const s = document.getElementById('ctrl-agent-search');
   if(m) m.value = cur;
   if(d) d.value = 'all';
+  if(s) s.value = '';
   renderControlsMonthly();
 }
 
