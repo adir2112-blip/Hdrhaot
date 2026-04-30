@@ -1337,6 +1337,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <option value="done">✅ בוצע (4 בקרות)</option>
             <option value="pending">❌ טרם בוצע</option>
           </select>
+          <select id="ctrl-tbl-debrief" onchange="renderControlsTable()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל הישובים</option>
+            <option value="yes">✅ מושב</option>
+            <option value="no">❌ טרם מושב</option>
+          </select>
           <button class="btn btn-outline btn-sm" onclick="resetTableFilters()">↺ איפוס</button>
           <button class="btn btn-outline btn-sm" onclick="exportControlsExcel()" style="margin-right:auto">
             📥 ייצוא לאקסל
@@ -2053,12 +2058,17 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <input type="text" id="new-agent-phone" placeholder="0501234567" inputmode="tel"
             style="direction:ltr;font-family:'DM Mono',monospace">
         </div>
+        <div class="field">
+          <label class="field-label">🪪 תעודת זהות מלאה</label>
+          <input type="text" id="new-agent-idnumber" placeholder="123456789" inputmode="numeric" maxlength="9"
+            style="direction:ltr;font-family:'DM Mono',monospace">
+        </div>
         <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
           <button class="btn btn-gold" onclick="addAgent()">+ הוסף נציג</button>
           <button class="btn btn-outline" onclick="document.getElementById('excel-upload').click()">📥 טען מאקסל</button>
           <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
         </div>
-        <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">פורמט אקסל: שם מלא | פעילות | 4 ספרות | טלפון</div>
+        <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">פורמט אקסל: שם מלא | פעילות | 4 ספרות | טלפון | תעודת זהות</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;margin-bottom:12px;flex-wrap:wrap;gap:10px">
         <div class="eyebrow" style="margin:0">נציגים פעילים</div>
@@ -2092,6 +2102,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <div style="flex:1;min-width:120px">
                   <label class="field-label" style="margin-bottom:6px;display:block">📱 טלפון</label>
                   <input type="text" id="new-agent-phone2" placeholder="0501234567" inputmode="tel" style="width:100%;direction:ltr;font-family:'DM Mono',monospace">
+                </div>
+                <div style="flex:1;min-width:100px">
+                  <label class="field-label" style="margin-bottom:6px;display:block">🪪 ת"ז</label>
+                  <input type="text" id="new-agent-idnumber2" placeholder="123456789" inputmode="numeric" maxlength="9" style="width:100%;direction:ltr;font-family:'DM Mono',monospace">
                 </div>
                 <button class="btn btn-gold btn-sm" onclick="addAgentFromPanel()" style="flex-shrink:0;align-self:flex-end">+ הוסף</button>
               </div>
@@ -3552,14 +3566,16 @@ async function addAgent(){
   if(pinRaw&&(!/^\d{4}$/.test(pinRaw))){alert('קוד ת"ז חייב להיות 4 ספרות');return;}
   const depts=DEPTS.filter((_,i)=>{const btn=document.getElementById('ncbl-'+i);return btn&&btn.dataset.checked==='1';});
   const phoneRaw=document.getElementById('new-agent-phone')?.value?.trim()||'';
+  const idRaw=document.getElementById('new-agent-idnumber')?.value?.trim()||'';
   const row={name,depts:JSON.stringify(depts)};
   if(pinRaw) row.pin=pinRaw;
   if(phoneRaw) row.phone=phoneRaw;
+  if(idRaw) row.id_number=idRaw;
   const {data,error}=await _sb.from('agents').insert(row).select().single();
   if(error){alert('שגיאה בהוספת נציג: '+error.message);return;}
   data.depts=depts;
   S.agents.push(data);
-  inp.value='';document.getElementById('new-agent-pin').value='';document.getElementById('new-agent-phone').value='';
+  inp.value='';document.getElementById('new-agent-pin').value='';document.getElementById('new-agent-phone').value='';document.getElementById('new-agent-idnumber').value='';
   document.querySelectorAll('[id^=ncbl-]').forEach(btn=>{btn.dataset.checked='0';btn.classList.remove('checked');const sp=btn.querySelector('span');if(sp){sp.style.border='1px solid var(--line2)';sp.style.background='transparent';sp.textContent='';} });
   renderSettings();renderAgentLogin();
 }
@@ -3575,13 +3591,14 @@ async function importFromExcel(input){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
   let added=0,skipped=0;
   for(let i=1;i<rows.length;i++){
-    const [name,dept,pin,phone]=rows[i].map(c=>String(c||'').trim());
+    const [name,dept,pin,phone,id_number]=rows[i].map(c=>String(c||'').trim());
     if(!name)continue;
     if(S.agents.find(a=>a.name===name)){skipped++;continue;}
     const depts=dept?[dept]:[];
     const row={name,depts:JSON.stringify(depts)};
     if(pin&&/^\d{4}$/.test(pin)) row.pin=pin;
     if(phone) row.phone=phone;
+    if(id_number) row.id_number=id_number;
     const {data,error}=await _sb.from('agents').insert(row).select().single();
     if(!error){data.depts=depts;S.agents.push(data);added++;}
     else skipped++;
@@ -3639,6 +3656,7 @@ function renderSettings(){
           </button>
           <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
           <button class="btn btn-outline btn-sm" onclick="openEditPhone(${a.id})" style="font-size:11px;padding:5px 10px;color:#25D366;border-color:rgba(37,211,102,0.3)">📱 טלפון</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditIdNumber(${a.id})" style="font-size:11px;padding:5px 10px;color:#6B8EDD;border-color:rgba(107,142,221,0.3)">🪪 ת"ז</button>
           <button class="btn btn-outline btn-sm" onclick="openExamReview(${a.id})" style="font-size:11px;padding:5px 10px;color:var(--gold);border-color:var(--gold-line)">📋 מבחנים</button>
           <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
         </div>
@@ -6582,6 +6600,84 @@ function downloadPDF(){
     </div>
   </div>
 </div>
+
+<!-- DEBRIEF MODAL -->
+<div id="debrief-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:480px;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:11px;color:var(--warn);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📝 תיעוד ישיבת משוב</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)" id="debrief-agent-name"></div>
+      </div>
+      <button onclick="closeDebriefModal()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Content -->
+    <div style="padding:22px">
+      <input type="hidden" id="debrief-agent-id">
+      <input type="hidden" id="debrief-month">
+
+      <!-- Date + Time -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div>
+          <label class="field-label">תאריך המשוב <span style="color:var(--danger)">*</span></label>
+          <input type="date" id="debrief-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">שעת המשוב <span style="color:var(--danger)">*</span></label>
+          <input type="time" id="debrief-time" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+      </div>
+
+      <!-- Type -->
+      <div style="margin-bottom:20px">
+        <label class="field-label">סוג הישיבה <span style="color:var(--danger)">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <label id="debrief-type-office-label" onclick="selectDebriefType('office')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="debrief-type" id="debrief-type-office" value="office" style="accent-color:var(--ok)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ice)">🏢 פנים מול פנים</div>
+              <div style="font-size:11px;color:var(--ice3)">נציג מהמוקד — מילוי טופס</div>
+            </div>
+          </label>
+          <label id="debrief-type-zoom-label" onclick="selectDebriefType('zoom')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="debrief-type" id="debrief-type-zoom" value="zoom" style="accent-color:var(--ok)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ice)">💻 שיחת זום</div>
+              <div style="font-size:11px;color:var(--ice3)">נציג מהבית — מילוי טופס</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-gold" style="flex:1;background:linear-gradient(135deg,var(--ok),#22A37C);color:#fff;justify-content:center" onclick="saveDebrief()">✅ אשר משוב</button>
+        <button class="btn btn-outline" onclick="closeDebriefModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ID NUMBER MODAL -->
+<div id="edit-id-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;padding:2rem 1.75rem;width:320px;max-width:90vw;position:relative">
+    <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,#6B8EDD,transparent);border-radius:20px 20px 0 0"></div>
+    <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:4px">🪪 תעודת זהות מלאה</div>
+    <div style="font-size:13px;color:var(--ice3);margin-bottom:18px" id="edit-id-agent-label"></div>
+    <div class="field">
+      <label class="field-label">מספר תעודת זהות</label>
+      <input type="text" id="edit-id-input" placeholder="123456789" inputmode="numeric" maxlength="9"
+        style="letter-spacing:0.15em;font-family:'DM Mono',monospace;font-size:16px;text-align:center;direction:ltr"
+        onkeydown="if(event.key==='Enter')saveEditIdNumber()">
+    </div>
+    <div style="font-size:11px;color:var(--ice3);margin-bottom:16px;font-family:'DM Mono',monospace">9 ספרות</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" style="flex:1;background:linear-gradient(135deg,#6B8EDD,#4A6FC4);color:#fff" onclick="saveEditIdNumber()">שמור</button>
+      <button class="btn btn-outline" onclick="closeEditIdNumber()">ביטול</button>
+    </div>
+  </div>
+</div>
 </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(),500);
@@ -7529,6 +7625,31 @@ function closeEditPhone() {
   _editPhoneAgentId = null;
 }
 
+let _editIdAgentId = null;
+function openEditIdNumber(agentId) {
+  _editIdAgentId = agentId;
+  const a = S.agents.find(x=>String(x.id)===String(agentId));
+  if(!a) return;
+  document.getElementById('edit-id-agent-label').textContent = a.name;
+  document.getElementById('edit-id-input').value = a.id_number||'';
+  document.getElementById('edit-id-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('edit-id-input').focus(),100);
+}
+async function saveEditIdNumber() {
+  const val = document.getElementById('edit-id-input').value.trim();
+  const a = S.agents.find(x=>String(x.id)===String(_editIdAgentId));
+  if(!a) return;
+  await _sb.from('agents').update({id_number:val}).eq('id',a.id);
+  a.id_number = val;
+  closeEditIdNumber();
+  renderSettings();
+  renderSettingsAgents();
+}
+function closeEditIdNumber() {
+  document.getElementById('edit-id-modal').style.display='none';
+  _editIdAgentId = null;
+}
+
 /* ══ CONTROLS — בקרות ══════════════════════════════ */
 // SQL needed: ALTER TABLE controls ADD COLUMN IF NOT EXISTS control_time TEXT;
 let S_controls = [];
@@ -7697,6 +7818,29 @@ function renderControlsMonthly(){
         ${scores.map((s,i)=>`<div style="font-size:12px;color:var(--ice3)">בקרה ${i+1}: <strong style="color:${s>=0.8?'var(--ok)':s>=0.5?'var(--warn)':'var(--danger)'}">${s.toFixed(2)}</strong></div>`).join('')}
         ${agentControls.length ? `<div style="font-size:12px;font-weight:700">ממוצע: <strong style="font-size:15px;color:${avgColor}">${avg}</strong></div>` : ''}
       </div>
+
+      ${(agentControls.length>=4) ? (() => {
+        const debrief = agentControls.find(c=>c.debriefed);
+        if(debrief){
+          return `<div style="margin-top:10px;background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:18px">✅</span>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:700;color:var(--ok)">הנציג מושב</div>
+              <div style="font-size:11px;color:var(--ice3)">${debrief.debrief_date||''} ${debrief.debrief_time||''} · ${debrief.debrief_type||''}</div>
+            </div>
+            <button onclick="openDebriefModal('${a.id}','${month}')" style="background:none;border:1px solid var(--ok-line);color:var(--ok);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">✏ ערוך</button>
+          </div>`;
+        } else {
+          return `<div style="margin-top:10px;background:rgba(240,160,75,0.08);border:1.5px solid rgba(240,160,75,0.3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:20px">⚠️</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:var(--warn)">מנהל יקר — עליך לאשר שהנציג מושב על ידך</div>
+              <div style="font-size:11px;color:var(--ice3);margin-top:2px">יש לתעד תאריך ושעת הישיבה עם הנציג</div>
+            </div>
+            <button onclick="openDebriefModal('${a.id}','${month}')" style="background:var(--warn-bg);border:1px solid rgba(240,160,75,0.4);color:var(--warn);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📝 תעד ישיבה</button>
+          </div>`;
+        }
+      })() : ''}
     </div>`;
   }).join('');
 }
@@ -7991,12 +8135,21 @@ function renderControlsTable(){
   if(month!=='all') months = [month];
   if(!months.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נתונים</div>'; return; }
 
-  // Filter by status (based on first/only selected month, or all months)
+  // Filter by status
   if(status!=='all' && months.length>0){
     const checkMonth = month!=='all' ? month : months[0];
     agents = agents.filter(a=>{
       const cnt = S_controls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth).length;
       return status==='done' ? cnt>=4 : cnt<4;
+    });
+  }
+  // Filter by debrief
+  const debriefFilter = document.getElementById('ctrl-tbl-debrief')?.value||'all';
+  if(debriefFilter!=='all' && months.length>0){
+    const checkMonth = month!=='all' ? month : months[0];
+    agents = agents.filter(a=>{
+      const debriefed = S_controls.some(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth&&c.debriefed);
+      return debriefFilter==='yes' ? debriefed : !debriefed;
     });
   }
 
@@ -8008,12 +8161,12 @@ function renderControlsTable(){
         <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap">מספר ת"ז</th>
         <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">שם</th>
         <th style="padding:10px 12px;text-align:right;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">פעילות</th>
-        ${months.map(m=>`<th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap">${formatMonth(m)}</th><th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">סטטוס</th>`).join('')}
+        ${months.map(m=>`<th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;font-size:10px;white-space:nowrap">${formatMonth(m)}</th><th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">סטטוס</th><th style="padding:10px 12px;text-align:center;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;font-size:10px">בוצע משוב</th>`).join('')}
       </tr>
     </thead>
     <tbody>
       ${agents.map((a,i)=>{
-        const pin  = a.pin||'—';
+        const pin  = a.id_number||a.pin||'—';
         const dept1 = (a.depts||[])[0]||'—';
         return `<tr style="border-bottom:1px solid var(--line);background:${i%2===0?'transparent':'var(--ink3)'}">
           <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${pin}</td>
@@ -8029,7 +8182,12 @@ function renderControlsTable(){
             const statusBadge = done
               ? `<span style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace">✅ בוצע</span>`
               : `<span style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace">❌ טרם בוצע (${cnt}/4)</span>`;
-            return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td>`;
+            const debriefed = agentControls.some(c=>c.debriefed);
+            const debriefRecord = agentControls.find(c=>c.debriefed);
+            const debriefBadge = debriefed
+              ? `<span style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">✅ מושב</span>`
+              : `<span style="background:var(--warn-bg);color:var(--warn);border:1px solid rgba(240,160,75,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">❌ טרם מושב</span>`;
+            return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td><td style="padding:8px 12px;text-align:center">${debriefBadge}</td>`;
           }).join('')}
         </tr>`;
       }).join('')}
@@ -8048,6 +8206,85 @@ function exportControlsExcel(){
   XLSX.writeFile(wb, 'בקרות_חודשיות.xlsx');
 }
 
+
+/* ── DEBRIEF FUNCTIONS ── */
+function openDebriefModal(agentId, month){
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  document.getElementById('debrief-agent-name').textContent = agent?.name||'';
+  document.getElementById('debrief-agent-id').value = agentId;
+  document.getElementById('debrief-month').value = month;
+
+  // Check if already debriefed
+  const existing = S_controls.find(c=>String(c.agent_id)===String(agentId)&&c.month===month&&c.debriefed);
+  const today = new Date().toISOString().slice(0,10);
+  const now = new Date().toTimeString().slice(0,5);
+
+  document.getElementById('debrief-date').value = existing?.debrief_date||today;
+  document.getElementById('debrief-time').value = existing?.debrief_time||now;
+
+  // Reset type selection
+  document.getElementById('debrief-type-office').checked = existing?.debrief_type==='office';
+  document.getElementById('debrief-type-zoom').checked  = existing?.debrief_type==='zoom';
+  selectDebriefType(existing?.debrief_type||'');
+
+  document.getElementById('debrief-modal').style.display='flex';
+}
+
+function selectDebriefType(type){
+  ['office','zoom'].forEach(t=>{
+    const label = document.getElementById(`debrief-type-${t}-label`);
+    const radio = document.getElementById(`debrief-type-${t}`);
+    if(label){
+      label.style.borderColor = t===type?'var(--ok)':'var(--line2)';
+      label.style.background  = t===type?'var(--ok-bg)':'var(--ink3)';
+    }
+    if(radio) radio.checked = t===type;
+  });
+}
+
+async function saveDebrief(){
+  const agentId = document.getElementById('debrief-agent-id').value;
+  const month   = document.getElementById('debrief-month').value;
+  const date    = document.getElementById('debrief-date').value;
+  const time    = document.getElementById('debrief-time').value;
+  const type    = document.querySelector('input[name="debrief-type"]:checked')?.value||'';
+
+  if(!date){ alert('יש לבחור תאריך משוב'); return; }
+  if(!time){ alert('יש לבחור שעת משוב'); return; }
+  if(!type){ alert('יש לבחור סוג ישיבה'); return; }
+
+  // Find controls of this agent in this month
+  const agentControls = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
+  if(!agentControls.length){ alert('לא נמצאו בקרות לנציג זה בחודש זה'); return; }
+
+  // Validate 4 controls
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  const isPrifit = (agent?.depts||[]).some(d=>['פריפיט שירות','פריפיט מכירות'].includes(d));
+  if(!isPrifit && agentControls.length < 4){
+    alert('מנהל יקר! יש לבצע 4 משובים מלאים ורק אז לקבוע שיחת משוב עם הנציג');
+    return;
+  }
+
+  // Clear previous debrief on all controls of this agent/month
+  for(const c of agentControls){
+    await _sb.from('controls').update({debriefed:false,debrief_date:null,debrief_time:null,debrief_type:null}).eq('id',c.id);
+    c.debriefed=false; c.debrief_date=null; c.debrief_time=null; c.debrief_type=null;
+  }
+
+  // Set debrief on first control
+  const first = agentControls[0];
+  const update = {debriefed:true, debrief_date:date, debrief_time:time, debrief_type:type};
+  const {error} = await _sb.from('controls').update(update).eq('id',first.id);
+  if(error){ alert('שגיאה: '+error.message); return; }
+
+  Object.assign(first, update);
+  closeDebriefModal();
+  renderControlsMonthly();
+}
+
+function closeDebriefModal(){
+  document.getElementById('debrief-modal').style.display='none';
+}
 function closeControlModal(){
   document.getElementById('control-modal').style.display='none';
   _editControlId = null;
@@ -8737,6 +8974,84 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
     <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center" onclick="signIn()" id="auth-btn">כניסה למערכת</button>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBRIEF MODAL -->
+<div id="debrief-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:480px;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:11px;color:var(--warn);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📝 תיעוד ישיבת משוב</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)" id="debrief-agent-name"></div>
+      </div>
+      <button onclick="closeDebriefModal()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:14px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Content -->
+    <div style="padding:22px">
+      <input type="hidden" id="debrief-agent-id">
+      <input type="hidden" id="debrief-month">
+
+      <!-- Date + Time -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div>
+          <label class="field-label">תאריך המשוב <span style="color:var(--danger)">*</span></label>
+          <input type="date" id="debrief-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+        <div>
+          <label class="field-label">שעת המשוב <span style="color:var(--danger)">*</span></label>
+          <input type="time" id="debrief-time" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        </div>
+      </div>
+
+      <!-- Type -->
+      <div style="margin-bottom:20px">
+        <label class="field-label">סוג הישיבה <span style="color:var(--danger)">*</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <label id="debrief-type-office-label" onclick="selectDebriefType('office')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="debrief-type" id="debrief-type-office" value="office" style="accent-color:var(--ok)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ice)">🏢 פנים מול פנים</div>
+              <div style="font-size:11px;color:var(--ice3)">נציג מהמוקד — מילוי טופס</div>
+            </div>
+          </label>
+          <label id="debrief-type-zoom-label" onclick="selectDebriefType('zoom')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="debrief-type" id="debrief-type-zoom" value="zoom" style="accent-color:var(--ok)">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--ice)">💻 שיחת זום</div>
+              <div style="font-size:11px;color:var(--ice3)">נציג מהבית — מילוי טופס</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-gold" style="flex:1;background:linear-gradient(135deg,var(--ok),#22A37C);color:#fff;justify-content:center" onclick="saveDebrief()">✅ אשר משוב</button>
+        <button class="btn btn-outline" onclick="closeDebriefModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ID NUMBER MODAL -->
+<div id="edit-id-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(245,244,240,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;padding:2rem 1.75rem;width:320px;max-width:90vw;position:relative">
+    <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,#6B8EDD,transparent);border-radius:20px 20px 0 0"></div>
+    <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:4px">🪪 תעודת זהות מלאה</div>
+    <div style="font-size:13px;color:var(--ice3);margin-bottom:18px" id="edit-id-agent-label"></div>
+    <div class="field">
+      <label class="field-label">מספר תעודת זהות</label>
+      <input type="text" id="edit-id-input" placeholder="123456789" inputmode="numeric" maxlength="9"
+        style="letter-spacing:0.15em;font-family:'DM Mono',monospace;font-size:16px;text-align:center;direction:ltr"
+        onkeydown="if(event.key==='Enter')saveEditIdNumber()">
+    </div>
+    <div style="font-size:11px;color:var(--ice3);margin-bottom:16px;font-family:'DM Mono',monospace">9 ספרות</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" style="flex:1;background:linear-gradient(135deg,#6B8EDD,#4A6FC4);color:#fff" onclick="saveEditIdNumber()">שמור</button>
+      <button class="btn btn-outline" onclick="closeEditIdNumber()">ביטול</button>
     </div>
   </div>
 </div>
