@@ -2919,6 +2919,7 @@ function renderKnowledgeArticles(){
         <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:6px">${a.created_at?new Date(a.created_at).toLocaleDateString('he-IL'):''}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="previewArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px;color:var(--gold);border-color:var(--gold-line)">👁 תצוגה</button>
         <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px">✏ ערוך</button>
         <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:5px 10px;font-size:11px">🗑</button>
       </div>
@@ -3009,6 +3010,29 @@ async function saveKnowledgeEdit(){
   closeKnowledgeEdit();
   renderKnowledgeArticles();
 }
+function previewArticle(id){
+  const a = S_knowledge.find(x=>String(x.id)===String(id));
+  if(!a){ alert('מאמר לא נמצא'); return; }
+  const html = formatContent(a.content||'');
+  const win = window.open('','_blank','width=820,height=640');
+  win.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>'+a.title+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Playfair+Display:wght@400;700&family=DM+Mono&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'body{font-family:Sora,sans-serif;padding:36px;max-width:740px;margin:0 auto;background:#F5F4F0;color:#2A2520;direction:rtl}'
+    +'h1{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:#1A1814;margin:0 0 8px;border-right:4px solid #C9A84C;padding-right:12px}'
+    +'.dept{display:inline-block;background:rgba(201,168,76,0.1);color:#C9A84C;border:1px solid rgba(201,168,76,0.3);border-radius:20px;padding:3px 12px;font-size:12px;margin-bottom:20px;font-family:"DM Mono",monospace}'
+    +'img{max-width:100%;border-radius:12px;margin:10px 0;display:block;box-shadow:0 4px 16px rgba(0,0,0,0.12)}'
+    +'a{color:#C9A84C;font-weight:600;text-decoration:underline}'
+    +'strong{color:#1A1814;font-weight:700}'
+    +'hr{border:none;border-top:2px solid #E8E4DE;margin:16px 0}'
+    +'</style></head><body>'
+    +'<h1>'+a.title+'</h1>'
+    +'<div class="dept">'+(a.dept||'כללי')+'</div>'
+    +'<div>'+html+'</div>'
+    +'</body></html>');
+  win.document.close();
+}
+
 async function deleteKnowledgeArticle(id){
   const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
   if (pw === null) return;
@@ -7183,28 +7207,47 @@ function richImageUpload(areaId) {
     const reader = new FileReader();
     reader.onload = function(e) {
       const dataUrl = e.target.result;
-      richInsert(areaId, '![' + file.name + '](' + dataUrl + ')');
+      const ta = document.getElementById(areaId);
+      if (!ta) return;
+      const pos = ta.selectionStart || ta.value.length;
+      const txt = '\n![' + file.name + '](' + dataUrl + ')\n';
+      ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + txt.length;
+      ta.focus();
     };
     reader.readAsDataURL(file);
   };
   inp.click();
 }
 
+
 // Drag & Drop image support on textarea
 function initRichDragDrop(areaId) {
   const ta = document.getElementById(areaId);
   if (!ta) return;
-  ta.addEventListener('dragover', e => { e.preventDefault(); ta.style.borderColor = 'var(--gold)'; });
-  ta.addEventListener('dragleave', () => { ta.style.borderColor = ''; });
+  ta.addEventListener('dragover', e => {
+    e.preventDefault();
+    ta.style.outline = '2px solid var(--gold)';
+    ta.style.borderRadius = '8px';
+  });
+  ta.addEventListener('dragleave', () => {
+    ta.style.outline = '';
+    ta.style.borderRadius = '';
+  });
   ta.addEventListener('drop', e => {
     e.preventDefault();
-    ta.style.borderColor = '';
+    ta.style.outline = '';
+    ta.style.borderRadius = '';
     const files = e.dataTransfer.files;
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
       const reader = new FileReader();
       reader.onload = function(ev) {
-        richInsert(areaId, '![' + file.name + '](' + ev.target.result + ')');
+        const pos = ta.selectionStart || ta.value.length;
+        const txt = '\n![' + file.name + '](' + ev.target.result + ')\n';
+        ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
+        ta.selectionStart = ta.selectionEnd = pos + txt.length;
+        ta.focus();
       };
       reader.readAsDataURL(file);
     }
