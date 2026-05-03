@@ -5129,6 +5129,7 @@ async function renderTracking(){
     const c=col(a.id);
     const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
     const relevantBriefings=S.briefings.filter(b=>{
+      if(b.is_active===false) return false;
       if(!b.targetDepts||b.targetDepts.length===0) return true;
       return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
     });
@@ -6378,6 +6379,7 @@ function renderAlertBanner(){
   // Find overdue briefings with incomplete agents
   const overdueAlerts=[];
   S.briefings.forEach(b=>{
+    if(b.is_active===false) return; // מוסתר
     if(!b.deadline) return;
     const dl=new Date(b.deadline); dl.setHours(0,0,0,0);
     if(dl>=today) return;
@@ -6394,6 +6396,7 @@ function renderAlertBanner(){
   // Find briefings expiring today or tomorrow
   const urgentAlerts=[];
   S.briefings.forEach(b=>{
+    if(b.is_active===false) return; // מוסתר
     if(!b.deadline) return;
     const days=deadlineDays(b.deadline);
     if(days===null||days<0||days>1) return;
@@ -6911,11 +6914,20 @@ function toggleReverse(){
 async function toggleBriefingActive(briefingId){
   const b=S.briefings.find(x=>String(x.id)===String(briefingId));
   if(!b) return;
-  const newActive = b.is_active===false ? true : false;
-  const {error}=await _sb.from('briefings').update({is_active:newActive}).eq('id',briefingId);
-  if(error){alert('שגיאה: '+error.message);return;}
+  // NULL or TRUE = currently active → set to false. FALSE = inactive → set to true
+  const currentlyActive = b.is_active !== false;
+  const newActive = !currentlyActive;
+  console.log('[Toggle] briefing:', b.title, '| was:', b.is_active, '| currentlyActive:', currentlyActive, '| newActive:', newActive);
+  const {data, error}=await _sb.from('briefings').update({is_active:newActive}).eq('id',String(briefingId)).select('id,is_active').single();
+  if(error){
+    console.error('[Toggle] Supabase error:', error);
+    alert('שגיאה בשמירה: '+error.message);
+    return;
+  }
+  console.log('[Toggle] DB confirmed:', data);
   b.is_active=newActive;
   renderBriefingsHistoryPanel();
+  renderTracking();
 }
 
 function toggleFeatured(){
@@ -7196,6 +7208,7 @@ function renderAgentBriefingsPanel(){
   if(!el||!S.agent) return;
   const agId=String(S.agent.id);
   const pending=S.briefings.filter(b=>{
+    if(b.is_active===false) return false;
     if(b.completions[agId]) return false;
     if(!b.targetDepts||!b.targetDepts.length) return true;
     return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
