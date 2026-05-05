@@ -6,6 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<link rel="manifest" href="/Hdrhaot/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="מערכת תדריכים">
@@ -1052,6 +1053,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('controls')" id="nav-controls">
         <span class="nav-icon">📋</span><span class="nav-label">בקרות</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('discipline')" id="nav-discipline">
+        <span class="nav-icon">⚖️</span><span class="nav-label">משמעת</span>
+      </button>
       <button class="nav-btn active" onclick="switchTab('agent')" id="nav-agent" style="border-right:1px solid var(--line2);margin-right:4px;padding-right:18px">
         <span class="nav-icon">👤</span><span class="nav-label">כניסה לנציג</span>
       </button>
@@ -1081,6 +1085,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </button>
     <button class="bnav-btn" id="bnav-controls" onclick="switchTab('controls')">
       <span class="bni">📋</span><span class="bnl">בקרות</span>
+    </button>
+    <button class="bnav-btn" id="bnav-discipline" onclick="switchTab('discipline')">
+      <span class="bni">⚖️</span><span class="bnl">משמעת</span>
     </button>
     <button class="bnav-btn bnav-agent-special" id="bnav-agent" onclick="switchTab('agent')">
       <span class="bni">👤</span><span class="bnl">כניסת עובד</span>
@@ -1250,6 +1257,279 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   </div>
 
     </div><!-- /manager-content -->
+
+  <!-- DISCIPLINE -->
+  <div class="sec" id="tab-discipline">
+    <div id="discipline-lock" class="lock-scene" style="display:flex">
+      <div class="lock-box">
+        <div class="lock-ico">⚖️</div>
+        <div class="lock-title">משמעת</div>
+        <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
+        <div class="field">
+          <input type="password" id="discipline-pw-input" placeholder="••••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkDisciplinePw()">
+        </div>
+        <div id="discipline-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
+        <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkDisciplinePw()">כניסה</button>
+      </div>
+    </div>
+    <div id="discipline-content" style="display:none">
+      <div style="display:flex;gap:20px;align-items:flex-start">
+        <!-- Sidebar -->
+        <div style="width:180px;flex-shrink:0;position:sticky;top:80px">
+          <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px">
+            <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">⚖️ משמעת</div>
+            <button onclick="showDisciplinePanel('list')" id="dsb-list" class="dsb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);font-weight:700;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">📋</span><span>כל הרשומות</span>
+            </button>
+            <button onclick="showDisciplinePanel('add')" id="dsb-add" class="dsb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">➕</span><span>הוסף אירוע</span>
+            </button>
+            <button onclick="showDisciplinePanel('summary')" id="dsb-summary" class="dsb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
+              <span style="font-size:18px">📊</span><span>סיכום עובד</span>
+            </button>
+            <button onclick="showDisciplinePanel('managers')" id="dsb-managers" class="dsb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <span style="font-size:18px">🔒</span><span>מנהל מוקד</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div style="flex:1;min-width:0">
+
+          <!-- PANEL: LIST -->
+          <div id="dp-list">
+            <div class="sec-eyebrow" style="margin-bottom:6px">רשומות משמעת</div>
+            <div class="sec-title" style="margin-bottom:16px">כל <em>האירועים</em></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="disc-filter-dept" onchange="renderDisciplineList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">כל המחלקות</option>
+              </select>
+              <select id="disc-filter-agent" onchange="renderDisciplineList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">כל העובדים</option>
+              </select>
+              <select id="disc-filter-cat" onchange="renderDisciplineList()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">כל הקטגוריות</option>
+                <option value="איחור">⏰ איחור</option>
+                <option value="עבירה על נוהל">📜 עבירה על נוהל</option>
+                <option value="התנהגות">😤 התנהגות</option>
+                <option value="ביצועים">📉 ביצועים</option>
+                <option value="אחר">📌 אחר</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="resetDisciplineFilters()">↺ איפוס</button>
+              <button class="btn btn-gold btn-sm" onclick="showDisciplinePanel('add')" style="margin-right:auto">+ הוסף אירוע</button>
+            </div>
+            <div id="discipline-list-content"></div>
+          </div>
+
+          <!-- PANEL: ADD -->
+          <div id="dp-add" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">הוספת אירוע</div>
+            <div class="sec-title" style="margin-bottom:16px">אירוע <em>משמעתי חדש</em></div>
+            <div class="card">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+                <div>
+                  <label class="field-label">מחלקה</label>
+                  <select id="disc-add-dept" onchange="filterDisciplineAgents()" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+                    <option value="">בחר מחלקה...</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">עובד</label>
+                  <select id="disc-add-agent" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+                    <option value="">בחר עובד...</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+                <div>
+                  <label class="field-label">תאריך</label>
+                  <input type="date" id="disc-add-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                </div>
+                <div>
+                  <label class="field-label">קטגוריה</label>
+                  <select id="disc-add-cat" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+                    <option value="איחור">⏰ איחור</option>
+                    <option value="עבירה על נוהל">📜 עבירה על נוהל</option>
+                    <option value="התנהגות">😤 התנהגות</option>
+                    <option value="ביצועים">📉 ביצועים</option>
+                    <option value="אחר">📌 אחר</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">חומרה</label>
+                  <select id="disc-add-severity" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+                    <option value="low">🟡 קל</option>
+                    <option value="medium" selected>🟠 בינוני</option>
+                    <option value="high">🔴 חמור</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">תיאור האירוע</label>
+                <textarea id="disc-add-desc" placeholder="תאר את האירוע בפירוט..." style="min-height:100px;width:100%"></textarea>
+              </div>
+              <div class="field">
+                <label class="field-label">הערת מנהל (אופציונלי)</label>
+                <textarea id="disc-add-note" placeholder="הערה פנימית למנהל..." style="min-height:70px;width:100%"></textarea>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button class="btn btn-gold" onclick="saveDisciplineEvent()">💾 שמור אירוע</button>
+                <button class="btn btn-outline" onclick="showDisciplinePanel('list')">ביטול</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL: SUMMARY -->
+          <div id="dp-summary" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">סיכום עובד</div>
+            <div class="sec-title" style="margin-bottom:16px">דוח <em>משמעת</em></div>
+            <div class="card" style="margin-bottom:16px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:flex-end">
+                <div>
+                  <label class="field-label">עובד</label>
+                  <select id="disc-sum-agent" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice)">
+                    <option value="">בחר עובד...</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">מתאריך</label>
+                  <input type="date" id="disc-sum-from" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                </div>
+                <div>
+                  <label class="field-label">עד תאריך</label>
+                  <input type="date" id="disc-sum-to" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-gold" onclick="renderDisciplineSummary()" style="flex:1">הצג</button>
+                  <button class="btn btn-outline btn-sm" onclick="exportDisciplinePDF()" title="ייצא PDF">📄</button>
+                </div>
+              </div>
+            </div>
+            <div id="discipline-summary-content"></div>
+          </div>
+
+          <!-- PANEL: MANAGERS (super admin only) -->
+          <div id="dp-managers" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">מנהל מוקד</div>
+            <div class="sec-title" style="margin-bottom:16px">רשומות <em>מנהלים</em></div>
+
+            <!-- LOCK — always shown first -->
+            <div id="managers-lock-box">
+              <div class="lock-scene">
+                <div class="lock-box">
+                  <div class="lock-ico">🔑</div>
+                  <div class="lock-title">גישת מנהל עליון</div>
+                  <div class="lock-sub">הכנס סיסמה אישית</div>
+                  <div class="field">
+                    <input type="password" id="managers-pw-input" placeholder="••••••••" style="text-align:center;letter-spacing:0.15em" onkeydown="if(event.key==='Enter')checkManagersLock()">
+                  </div>
+                  <div id="managers-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px">✗ סיסמה שגויה</div>
+                  <button class="btn btn-gold" style="width:100%" onclick="checkManagersLock()">כניסה</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTENT — shown after correct password -->
+            <div id="managers-content" style="display:none">
+              <!-- Sub-tabs -->
+              <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:0">
+                <button id="mgr-tab-list" onclick="showManagersSubPanel('list')"
+                  style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-family:'Sora',sans-serif">
+                  📋 רשומות
+                </button>
+                <button id="mgr-tab-add" onclick="showManagersSubPanel('add')"
+                  style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+                  ➕ הוסף
+                </button>
+                <button id="mgr-tab-summary" onclick="showManagersSubPanel('summary')"
+                  style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+                  📊 סיכום מנהל
+                </button>
+              </div>
+
+              <!-- SUB-PANEL: LIST -->
+              <div id="mgr-panel-list">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+                  <select id="mgr-filter-who" onchange="renderManagersDiscipline()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                    <option value="all">כל המנהלים</option>
+                  </select>
+                </div>
+                <div id="managers-list-content"></div>
+              </div>
+
+              <!-- SUB-PANEL: ADD -->
+              <div id="mgr-panel-add" style="display:none">
+                <div class="card">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+                    <div><label class="field-label">מנהל</label>
+                      <select id="mgr-add-who" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice)">
+                        <option value="הודיה מזרחי">הודיה מזרחי</option>
+                        <option value="בקי ביטון">בקי ביטון</option>
+                        <option value="טל אברהם">טל אברהם</option>
+                        <option value="לבנה דניאל">לבנה דניאל</option>
+                        <option value="תהילה כהן">תהילה כהן</option>
+                        <option value="אליה ביטון">אליה ביטון</option>
+                      </select>
+                    </div>
+                    <div><label class="field-label">תאריך</label>
+                      <input type="date" id="mgr-add-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                    </div>
+                    <div><label class="field-label">קטגוריה</label>
+                      <select id="mgr-add-cat" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice)">
+                        <option value="ביצועים">📉 ביצועים</option>
+                        <option value="איחור">⏰ איחור</option>
+                        <option value="התנהגות">😤 התנהגות</option>
+                        <option value="אחר">📌 אחר</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field"><label class="field-label">תיאור</label>
+                    <textarea id="mgr-add-desc" placeholder="תאר את האירוע..." style="min-height:80px;width:100%"></textarea>
+                  </div>
+                  <div style="display:flex;gap:10px">
+                    <button class="btn btn-gold" onclick="saveManagerEvent()">💾 שמור</button>
+                    <button class="btn btn-outline" onclick="showManagersSubPanel('list')">ביטול</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SUB-PANEL: SUMMARY -->
+              <div id="mgr-panel-summary" style="display:none">
+                <div class="card" style="margin-bottom:16px">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:flex-end">
+                    <div><label class="field-label">מנהל</label>
+                      <select id="mgr-sum-who" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice)">
+                        <option value="">בחר מנהל...</option>
+                        <option value="הודיה מזרחי">הודיה מזרחי</option>
+                        <option value="בקי ביטון">בקי ביטון</option>
+                        <option value="טל אברהם">טל אברהם</option>
+                        <option value="לבנה דניאל">לבנה דניאל</option>
+                        <option value="תהילה כהן">תהילה כהן</option>
+                        <option value="אליה ביטון">אליה ביטון</option>
+                      </select>
+                    </div>
+                    <div><label class="field-label">מתאריך</label>
+                      <input type="date" id="mgr-sum-from" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                    </div>
+                    <div><label class="field-label">עד תאריך</label>
+                      <input type="date" id="mgr-sum-to" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px">
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button class="btn btn-gold" onclick="renderManagersSummary()" style="flex:1">הצג</button>
+                      <button class="btn btn-outline btn-sm" onclick="exportManagersPDF()" title="PDF">📄</button>
+                    </div>
+                  </div>
+                </div>
+                <div id="managers-summary-content"></div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- CONTROLS -->
   <div class="sec" id="tab-controls">
@@ -1427,6 +1707,23 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             </div>
           </div>
           <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <!-- PWA INSTALL BANNER -->
+      <div id="pwa-install-banner" style="display:none;margin-bottom:14px">
+        <div style="background:linear-gradient(135deg,#1A3A5C,#1E4A7A);border:1.5px solid rgba(91,160,230,0.35);border-radius:18px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:28px">📱</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#F0F6FF">הוסף לדף הבית</div>
+              <div style="font-size:11px;color:rgba(240,246,255,0.6)">גישה מהירה כאפליקציה</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="pwaInstall()" style="background:#fff;color:#1A3A5C;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">התקן</button>
+            <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:transparent;color:rgba(240,246,255,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
+          </div>
         </div>
       </div>
 
@@ -2329,10 +2626,13 @@ function enterAgentOnlyMode(){
   hideAuthModal();
   switchTab('agent');
   // Hide manager nav buttons
-  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
+  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display='none';
   });
+  // Hide bottom nav discipline
+  const bnavDisc=document.getElementById('bnav-discipline');
+  if(bnavDisc) bnavDisc.style.display='none';
   // Hide logout button
   const logout=document.querySelector('[onclick="signOut()"]');
   if(logout) logout.style.display='none';
@@ -2348,10 +2648,12 @@ function switchToManagerMode(){
 function onAdminSignedIn(){
   _agentOnlyMode = false;
   // Restore all nav buttons
-  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
+  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display='';
   });
+  const bnavDiscRestore=document.getElementById('bnav-discipline');
+  if(bnavDiscRestore) bnavDiscRestore.style.display='';
   const logout=document.querySelector('[onclick="signOut()"]');
   if(logout) logout.style.display='';
   unlockAll().then(()=>{
@@ -2504,6 +2806,18 @@ function switchTab(name){
     }
   }
   if(name==='agent'){ renderAgentLogin(); const sd=document.getElementById('search-detail-view'); if(sd) sd.style.display='none'; }
+  if(name==='discipline'){
+    if(!_adminUnlocked){
+      const lock=document.getElementById('discipline-lock');
+      const cont=document.getElementById('discipline-content');
+      if(lock) lock.style.display='flex';
+      if(cont) cont.style.display='none';
+    } else {
+      document.getElementById('discipline-lock').style.display='none';
+      document.getElementById('discipline-content').style.display='block';
+      loadDiscipline().then(()=>{ showDisciplinePanel('list'); });
+    }
+  }
   if(name==='controls'){
     if(!_adminUnlocked){
       const lock=document.getElementById('controls-lock');
@@ -2546,7 +2860,7 @@ async function unlockAll(){
   });
   const logout=document.querySelector('[onclick="signOut()"]');
   if(logout) logout.style.display='';
-  ['manager','tracking','settings','controls'].forEach(panel => {
+  ['manager','tracking','settings','controls','discipline'].forEach(panel => {
     const lock = document.getElementById(panel+'-lock');
     const content = document.getElementById(panel+'-content');
     if(lock) lock.style.display='none';
@@ -4171,6 +4485,7 @@ async function selectAgent(id){
   showAgentPanel('main');
   renderAgentBriefings();
   setTimeout(promptPushSubscription, 2000);
+  setTimeout(checkPWABanner, 3000);
 }
 async function refreshAgentBriefings(){
   S.briefings=await dbBriefings();
@@ -7195,6 +7510,7 @@ function updateAgentSidebar(){
     hdr.innerHTML='<div class="av" style="width:40px;height:40px;background:'+c.bg+';color:'+c.c+';font-size:14px;margin:0 auto 6px">'+ini(S.agent.name)+'</div><div style="font-size:13px;font-weight:700;color:var(--ice)">'+S.agent.name+'</div>';
   }
   const pending=S.briefings.filter(b=>{
+    if(b.is_active===false) return false;
     if(b.completions[String(S.agent.id)]) return false;
     if(!b.targetDepts||!b.targetDepts.length) return true;
     return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
@@ -8737,6 +9053,423 @@ async function sendPushToAgents(briefingTitle, targetDepts) {
   } catch(e) {
     console.error('[Push] Send failed:', e.message);
   }
+}
+
+/* ══ PWA INSTALL ══════════════════════════════════════════════ */
+let _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Show install banner when agent is logged in
+  const banner = document.getElementById('pwa-install-banner');
+  if(banner && S.agent) banner.style.display = 'block';
+});
+
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('pwa-install-banner');
+  if(banner) banner.style.display = 'none';
+  _pwaPrompt = null;
+});
+
+async function pwaInstall(){
+  if(!_pwaPrompt) {
+    // iOS — show instructions
+    alert('באייפון/אייפד:\n1. לחץ על כפתור השיתוף ⎋\n2. בחר "הוסף למסך הבית"\n3. לחץ "הוסף"');
+    return;
+  }
+  _pwaPrompt.prompt();
+  const { outcome } = await _pwaPrompt.userChoice;
+  if(outcome === 'accepted') {
+    const banner = document.getElementById('pwa-install-banner');
+    if(banner) banner.style.display = 'none';
+  }
+  _pwaPrompt = null;
+}
+
+// Show banner when agent logs in (if PWA not installed)
+function checkPWABanner(){
+  const banner = document.getElementById('pwa-install-banner');
+  if(!banner) return;
+  // Check if already installed as PWA
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches
+                   || window.navigator.standalone === true;
+  if(isInstalled){ banner.style.display='none'; return; }
+  if(_pwaPrompt) banner.style.display='block';
+}
+
+/* ══ DISCIPLINE MODULE ══════════════════════════════════════════ */
+let S_discipline = [];
+let S_managers_disc = [];
+let _disciplineLoaded = false;
+let _managersUnlocked = false;
+
+async function checkDisciplinePw(){
+  const { data: { session } } = await _sb.auth.getSession();
+  if(session){
+    document.getElementById('discipline-lock').style.display='none';
+    document.getElementById('discipline-content').style.display='block';
+    loadDiscipline().then(()=>showDisciplinePanel('list'));
+    return;
+  }
+  const val = document.getElementById('discipline-pw-input').value;
+  if(val===ADMIN_PW||val===SUPER_ADMIN_PW){
+    document.getElementById('discipline-lock').style.display='none';
+    document.getElementById('discipline-content').style.display='block';
+    document.getElementById('discipline-pw-input').value='';
+    loadDiscipline().then(()=>showDisciplinePanel('list'));
+  } else {
+    document.getElementById('discipline-pw-error').style.display='block';
+    document.getElementById('discipline-pw-input').value='';
+  }
+}
+
+async function loadDiscipline(force=false){
+  if(!force&&_disciplineLoaded) return;
+  const {data:d1}=await _sb.from('discipline').select('*').eq('is_manager',false).order('event_date',{ascending:false});
+  S_discipline=d1||[];
+  const {data:d2}=await _sb.from('discipline').select('*').eq('is_manager',true).order('event_date',{ascending:false});
+  S_managers_disc=d2||[];
+  _disciplineLoaded=true;
+  populateDisciplineFilters();
+}
+
+function populateDisciplineFilters(){
+  const depts=[...new Set(S.agents.flatMap(a=>a.depts||[]))].sort();
+  const deptOpts='<option value="all">כל המחלקות</option>'+depts.map(d=>`<option value="${d}">${d}</option>`).join('');
+  ['disc-filter-dept','disc-add-dept'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=deptOpts;});
+  const agentOpts=S.agents.filter(a=>a.active!==false).sort((a,b)=>a.name.localeCompare(b.name,'he')).map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  const agEl=document.getElementById('disc-filter-agent');
+  if(agEl) agEl.innerHTML='<option value="all">כל העובדים</option>'+agentOpts;
+  const sumEl=document.getElementById('disc-sum-agent');
+  if(sumEl) sumEl.innerHTML='<option value="">בחר עובד...</option>'+agentOpts;
+  const mgrSel=document.getElementById('mgr-filter-who');
+  const managers=['הודיה מזרחי','בקי ביטון','טל אברהם','לבנה דניאל','תהילה כהן','אליה ביטון'];
+  if(mgrSel) mgrSel.innerHTML='<option value="all">כל המנהלים</option>'+managers.map(m=>`<option value="${m}">${m}</option>`).join('');
+}
+
+function filterDisciplineAgents(){
+  const dept=document.getElementById('disc-add-dept')?.value||'';
+  const sel=document.getElementById('disc-add-agent');
+  if(!sel) return;
+  let agents=S.agents.filter(a=>a.active!==false);
+  if(dept&&dept!=='all') agents=agents.filter(a=>(a.depts||[]).includes(dept));
+  sel.innerHTML='<option value="">בחר עובד...</option>'+agents.sort((a,b)=>a.name.localeCompare(b.name,'he')).map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+}
+
+function showDisciplinePanel(key){
+  ['list','add','summary','managers'].forEach(p=>{
+    const el=document.getElementById('dp-'+p);
+    if(el) el.style.display=p===key?'block':'none';
+  });
+  document.querySelectorAll('.dsb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
+  const ab=document.getElementById('dsb-'+key);
+  if(ab){ab.style.background='var(--gold-bg)';ab.style.border='1px solid var(--gold-line)';ab.style.color='var(--gold)';ab.style.fontWeight='700';}
+  if(key==='list') renderDisciplineList();
+  if(key==='add'){document.getElementById('disc-add-date').value=new Date().toISOString().slice(0,10);filterDisciplineAgents();}
+  if(key==='summary') populateDisciplineFilters();
+  if(key==='managers') initManagersPanel();
+}
+
+const DISC_SEV={low:{label:'🟡 קל',color:'var(--ok)'},medium:{label:'🟠 בינוני',color:'var(--warn)'},high:{label:'🔴 חמור',color:'var(--danger)'}};
+const DISC_CAT={'איחור':'⏰','עבירה על נוהל':'📜','התנהגות':'😤','ביצועים':'📉','אחר':'📌'};
+
+function renderDisciplineList(){
+  const el=document.getElementById('discipline-list-content');
+  if(!el) return;
+  const dept=document.getElementById('disc-filter-dept')?.value||'all';
+  const agentId=document.getElementById('disc-filter-agent')?.value||'all';
+  const cat=document.getElementById('disc-filter-cat')?.value||'all';
+  let items=S_discipline;
+  if(dept!=='all'){const grp=GROUPS.find(g=>g.key===dept);const depts=grp?grp.depts:[dept];items=items.filter(i=>depts.includes(i.dept));}
+  if(agentId!=='all') items=items.filter(i=>String(i.agent_id)===String(agentId));
+  if(cat!=='all') items=items.filter(i=>i.category===cat);
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין רשומות</div>';return;}
+  const now=new Date();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
+  const agentCounts={};
+  S_discipline.filter(i=>i.event_date>=monthStart).forEach(i=>{agentCounts[i.agent_id]=(agentCounts[i.agent_id]||0)+1;});
+  const alertAgents=Object.entries(agentCounts).filter(([,c])=>c>=3).map(([id])=>S.agents.find(a=>String(a.id)===String(id))?.name).filter(Boolean);
+  let alertHtml='';
+  if(alertAgents.length){
+    alertHtml=`<div style="background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><span style="font-size:20px">🚨</span><div><div style="font-size:13px;font-weight:700;color:var(--danger)">התראה: עובדים עם 3+ אירועים החודש</div><div style="font-size:12px;color:var(--ice3)">${alertAgents.join(', ')}</div></div></div>`;
+  }
+  el.innerHTML=alertHtml+items.map(i=>{
+    const sev=DISC_SEV[i.severity]||DISC_SEV.medium;
+    const catIcon=DISC_CAT[i.category]||'📌';
+    return`<div class="track-row" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="font-size:16px">${catIcon}</span>
+            <div style="font-size:14px;font-weight:700;color:var(--ice)">${i.agent_name||'—'}</div>
+            <span style="font-size:11px;color:var(--ice3)">· ${i.dept||''}</span>
+          </div>
+          <div style="font-size:13px;color:var(--ice2);line-height:1.6;margin-bottom:6px">${i.description||''}</div>
+          ${i.manager_note?`<div style="font-size:12px;color:var(--gold);font-style:italic;border-right:2px solid var(--gold);padding-right:8px">📎 ${i.manager_note}</div>`:''}
+        </div>
+        <div style="text-align:left;flex-shrink:0">
+          <div style="font-size:12px;font-weight:700;color:${sev.color}">${sev.label}</div>
+          <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${i.event_date||''}</div>
+          <div style="font-size:11px;color:var(--ice3)">${i.category||''}</div>
+        </div>
+      </div>
+      <button onclick="deleteDisciplineEvent('${i.id}')" class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px;margin-top:8px">🗑 מחק</button>
+    </div>`;
+  }).join('');
+}
+
+async function saveDisciplineEvent(){
+  const agentId=document.getElementById('disc-add-agent').value;
+  if(!agentId){alert('יש לבחור עובד');return;}
+  const agent=S.agents.find(a=>String(a.id)===String(agentId));
+  const date=document.getElementById('disc-add-date').value;
+  if(!date){alert('יש לבחור תאריך');return;}
+  const desc=document.getElementById('disc-add-desc').value.trim();
+  if(!desc){alert('יש למלא תיאור');return;}
+  const row={agent_id:parseInt(agentId),agent_name:agent?.name||'',dept:(agent?.depts||[])[0]||'',event_date:date,category:document.getElementById('disc-add-cat').value,severity:document.getElementById('disc-add-severity').value,description:desc,manager_note:document.getElementById('disc-add-note').value.trim()||null,is_manager:false};
+  const {data,error}=await _sb.from('discipline').insert(row).select().single();
+  if(error){alert('שגיאה: '+error.message);return;}
+  S_discipline.unshift(data);
+  document.getElementById('disc-add-desc').value='';
+  document.getElementById('disc-add-note').value='';
+  alert('✓ האירוע נשמר');
+  showDisciplinePanel('list');
+}
+
+async function deleteDisciplineEvent(id){
+  if(!confirm('למחוק רשומה זו?')) return;
+  await _sb.from('discipline').delete().eq('id',id);
+  S_discipline=S_discipline.filter(i=>String(i.id)!==String(id));
+  S_managers_disc=S_managers_disc.filter(i=>String(i.id)!==String(id));
+  renderDisciplineList();
+  renderManagersDiscipline();
+}
+
+function resetDisciplineFilters(){
+  ['disc-filter-dept','disc-filter-agent','disc-filter-cat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='all';});
+  renderDisciplineList();
+}
+
+function renderDisciplineSummary(){
+  const agentId=document.getElementById('disc-sum-agent').value;
+  const from=document.getElementById('disc-sum-from').value;
+  const to=document.getElementById('disc-sum-to').value;
+  const el=document.getElementById('discipline-summary-content');
+  if(!el) return;
+  if(!agentId){el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:2rem">בחר עובד</div>';return;}
+  const agent=S.agents.find(a=>String(a.id)===String(agentId));
+  let items=S_discipline.filter(i=>String(i.agent_id)===String(agentId));
+  if(from) items=items.filter(i=>i.event_date>=from);
+  if(to) items=items.filter(i=>i.event_date<=to);
+  items.sort((a,b)=>a.event_date>b.event_date?1:-1);
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ok)">✓ אין אירועים בטווח זה</div>';return;}
+  const catCount={};items.forEach(i=>{catCount[i.category]=(catCount[i.category]||0)+1;});
+  const sevHigh=items.filter(i=>i.severity==='high').length;
+
+  el.innerHTML=`<div id="disc-report-body">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ice)">${agent?.name||''}</div><div style="font-size:12px;color:var(--ice3)">${(agent?.depts||[]).join(', ')||'—'}</div></div>
+        <div style="text-align:center;background:var(--danger-bg);border:2px solid var(--danger-line);border-radius:14px;padding:10px 18px"><div style="font-size:28px;font-weight:800;color:var(--danger)">${items.length}</div><div style="font-size:10px;color:var(--ice3)">אירועים</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${Object.entries(catCount).map(([c,n])=>`<span style="background:var(--ink3);border:1px solid var(--line2);border-radius:20px;padding:4px 12px;font-size:12px"><b>${n}</b> ${c}</span>`).join('')}
+        ${sevHigh?`<span style="background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--danger)"><b>${sevHigh}</b> חמורים</span>`:''}
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px">📈 גרף חומרה לאורך זמן</div>
+      <div style="position:relative;height:180px"><canvas id="disc-chart"></canvas></div>
+    </div>
+
+    ${items.map(i=>{const sev=DISC_SEV[i.severity]||DISC_SEV.medium;return`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start"><div style="min-width:90px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${i.event_date}</div><div style="min-width:70px;font-size:12px;font-weight:700;color:${sev.color}">${sev.label}</div><div style="flex:1"><div style="font-size:12px;color:var(--gold);margin-bottom:2px">${DISC_CAT[i.category]||''} ${i.category}</div><div style="font-size:14px;color:var(--ice)">${i.description}</div>${i.manager_note?`<div style="font-size:12px;color:var(--ice3);margin-top:4px">📎 ${i.manager_note}</div>`:''}</div></div>`;}).join('')}
+  </div>`;
+
+  // Draw chart after DOM update
+  setTimeout(()=>{
+    const ctx = document.getElementById('disc-chart');
+    if(!ctx) return;
+    // Map severity to numeric value
+    const sevVal = {low:1, medium:2, high:3};
+    const labels = items.map(i=>i.event_date);
+    const data = items.map(i=>sevVal[i.severity||'medium']||1);
+    const colors = items.map(i=>i.severity==='high'?'rgba(240,101,101,0.8)':i.severity==='low'?'rgba(45,212,164,0.8)':'rgba(240,160,75,0.8)');
+
+    if(window._discChart) window._discChart.destroy();
+    window._discChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'חומרה',
+          data,
+          backgroundColor: colors,
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const sev = ['','קל','בינוני','חמור'][ctx.raw]||'';
+                const item = items[ctx.dataIndex];
+                return `${sev} — ${item?.category||''}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 0, max: 3,
+            ticks: {
+              stepSize: 1,
+              color: '#888',
+              callback: v => ['','🟡 קל','🟠 בינוני','🔴 חמור'][v]||''
+            },
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          },
+          x: {
+            ticks: { color: '#888', font: { size: 10 }, maxRotation: 45 },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }, 50);
+}
+
+function exportDisciplinePDF(){
+  const body=document.getElementById('disc-report-body');
+  if(!body){alert('הצג דוח קודם');return;}
+  const agentId=document.getElementById('disc-sum-agent').value;
+  const agent=S.agents.find(a=>String(a.id)===String(agentId));
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>דוח משמעת</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:700px;margin:0 auto;direction:rtl}h1{font-size:22px}h2{font-size:14px;color:#888;margin-bottom:20px}.track-row{background:#f9f9f7;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:8px}@media print{button{display:none}}</style></head><body><h1>דוח משמעת — ${agent?.name||''}</h1><h2>${(agent?.depts||[]).join(', ')} · ${new Date().toLocaleDateString('he-IL')}</h2><button onclick="window.print()" style="background:#C9A84C;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:16px">🖨️ הדפס</button>${body.innerHTML}</body></html>`);
+  win.document.close();
+}
+
+function initManagersPanel(){
+  const lockBox=document.getElementById('managers-lock-box');
+  const cont=document.getElementById('managers-content');
+  if(_managersUnlocked){
+    if(lockBox)lockBox.style.display='none';
+    if(cont)cont.style.display='block';
+    showManagersSubPanel('list');
+  } else {
+    if(lockBox)lockBox.style.display='block';
+    if(cont)cont.style.display='none';
+    document.getElementById('managers-pw-input').value='';
+    document.getElementById('managers-pw-error').style.display='none';
+  }
+}
+
+function showManagersSubPanel(key){
+  ['list','add','summary'].forEach(p=>{
+    const el=document.getElementById('mgr-panel-'+p);
+    if(el) el.style.display=p===key?'block':'none';
+  });
+  ['list','add','summary'].forEach(p=>{
+    const btn=document.getElementById('mgr-tab-'+p);
+    if(btn){
+      btn.style.borderBottomColor = p===key?'var(--gold)':'transparent';
+      btn.style.color = p===key?'var(--gold)':'var(--ice3)';
+    }
+  });
+  if(key==='list') renderManagersDiscipline();
+  if(key==='add') document.getElementById('mgr-add-date').value=new Date().toISOString().slice(0,10);
+}
+
+function checkManagersLock(){
+  const val=document.getElementById('managers-pw-input').value;
+  if(val===SUPER_ADMIN_PW){
+    _managersUnlocked=true;
+    document.getElementById('managers-pw-input').value='';
+    document.getElementById('managers-lock-box').style.display='none';
+    document.getElementById('managers-content').style.display='block';
+    showManagersSubPanel('list');
+  } else {
+    document.getElementById('managers-pw-error').style.display='block';
+    document.getElementById('managers-pw-input').value='';
+  }
+}
+
+function showManagersAddForm(){
+  const f=document.getElementById('managers-add-form');
+  if(f){f.style.display=f.style.display==='none'?'block':'none';}
+  if(document.getElementById('mgr-add-date')) document.getElementById('mgr-add-date').value=new Date().toISOString().slice(0,10);
+}
+
+async function saveManagerEvent(){
+  const who=document.getElementById('mgr-add-who').value;
+  const date=document.getElementById('mgr-add-date').value;
+  const desc=document.getElementById('mgr-add-desc').value.trim();
+  if(!who||!date||!desc){alert('יש למלא את כל השדות');return;}
+  const row={agent_name:who,agent_id:0,dept:'מנהל',event_date:date,category:document.getElementById('mgr-add-cat').value,severity:'medium',description:desc,is_manager:true};
+  const {data,error}=await _sb.from('discipline').insert(row).select().single();
+  if(error){alert('שגיאה: '+error.message);return;}
+  S_managers_disc.unshift(data);
+  document.getElementById('mgr-add-desc').value='';
+  showManagersSubPanel('list');
+}
+
+function renderManagersSummary(){
+  const who=document.getElementById('mgr-sum-who').value;
+  const from=document.getElementById('mgr-sum-from').value;
+  const to=document.getElementById('mgr-sum-to').value;
+  const el=document.getElementById('managers-summary-content');
+  if(!el) return;
+  if(!who){el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:2rem">בחר מנהל</div>';return;}
+  let items=S_managers_disc.filter(i=>i.agent_name===who);
+  if(from) items=items.filter(i=>i.event_date>=from);
+  if(to) items=items.filter(i=>i.event_date<=to);
+  items.sort((a,b)=>a.event_date>b.event_date?1:-1);
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ok)">✓ אין אירועים בטווח זה</div>';return;}
+  const catCount={};items.forEach(i=>{catCount[i.category]=(catCount[i.category]||0)+1;});
+  el.innerHTML=`<div id="mgr-report-body">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ice)">${who}</div><div style="font-size:12px;color:var(--ice3)">מנהל מוקד</div></div>
+        <div style="text-align:center;background:var(--danger-bg);border:2px solid var(--danger-line);border-radius:14px;padding:10px 18px"><div style="font-size:28px;font-weight:800;color:var(--danger)">${items.length}</div><div style="font-size:10px;color:var(--ice3)">אירועים</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${Object.entries(catCount).map(([c,n])=>`<span style="background:var(--ink3);border:1px solid var(--line2);border-radius:20px;padding:4px 12px;font-size:12px"><b>${n}</b> ${c}</span>`).join('')}</div>
+    </div>
+    ${items.map(i=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start">
+      <div style="min-width:90px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${i.event_date}</div>
+      <div style="flex:1"><div style="font-size:12px;color:var(--gold);margin-bottom:2px">${DISC_CAT[i.category]||''} ${i.category}</div><div style="font-size:14px;color:var(--ice)">${i.description}</div></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function exportManagersPDF(){
+  const body=document.getElementById('mgr-report-body');
+  if(!body){alert('הצג דוח קודם');return;}
+  const who=document.getElementById('mgr-sum-who').value;
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>דוח מנהל</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:700px;margin:0 auto;direction:rtl}h1{font-size:22px}h2{font-size:14px;color:#888;margin-bottom:20px}@media print{button{display:none}}</style></head><body><h1>דוח מנהל מוקד — ${who}</h1><h2>${new Date().toLocaleDateString('he-IL')}</h2><button onclick="window.print()" style="background:#C9A84C;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-bottom:16px">🖨️ הדפס</button>${body.innerHTML}</body></html>`);
+  win.document.close();
+}
+
+function renderManagersDiscipline(){
+  const el=document.getElementById('managers-list-content');
+  if(!el) return;
+  const who=document.getElementById('mgr-filter-who')?.value||'all';
+  let items=S_managers_disc;
+  if(who!=='all') items=items.filter(i=>i.agent_name===who);
+  if(!items.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין רשומות</div>';return;}
+  el.innerHTML=items.map(i=>`<div class="track-row" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:4px">${i.agent_name}</div><div style="font-size:11px;color:var(--gold);margin-bottom:4px">${DISC_CAT[i.category]||''} ${i.category}</div><div style="font-size:13px;color:var(--ice2)">${i.description}</div></div>
+      <div style="text-align:left;flex-shrink:0"><div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">${i.event_date||''}</div><button onclick="deleteDisciplineEvent('${i.id}')" class="btn btn-danger-soft" style="padding:3px 8px;font-size:10px;margin-top:6px">🗑</button></div>
+    </div>
+  </div>`).join('');
 }
 </script>
 
