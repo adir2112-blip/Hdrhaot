@@ -1347,9 +1347,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 </div>
                 <div>
                   <label class="field-label">קטגוריה</label>
-                  <select id="disc-add-cat" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+                  <select id="disc-add-cat" onchange="onDiscCatChange()" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
                     <option value="איחור">⏰ איחור</option>
                     <option value="עבירה על נוהל">📜 עבירה על נוהל</option>
+                    <option value="שיחת אזהרה">⚠️ שיחת אזהרה</option>
                     <option value="התנהגות">😤 התנהגות</option>
                     <option value="ביצועים">📉 ביצועים</option>
                     <option value="אחר">📌 אחר</option>
@@ -1364,6 +1365,18 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                   </select>
                 </div>
               </div>
+              <!-- Warning call template trigger -->
+              <div id="warning-template-btn-wrap" style="display:none;margin-bottom:14px">
+                <button onclick="openWarningTemplate()" style="width:100%;background:linear-gradient(135deg,rgba(240,160,75,0.1),rgba(240,160,75,0.05));border:1.5px solid rgba(240,160,75,0.4);border-radius:14px;padding:14px 18px;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:12px">
+                  <span style="font-size:24px">📋</span>
+                  <div style="text-align:right">
+                    <div style="font-size:14px;font-weight:700;color:var(--warn)">מלא טמפלט שיחת אזהרה</div>
+                    <div style="font-size:11px;color:var(--ice3)">פתח טופס מובנה למילוי ושמירה</div>
+                  </div>
+                  <span style="margin-right:auto;color:var(--warn);font-size:18px">◂</span>
+                </button>
+              </div>
+
               <div class="field">
                 <label class="field-label">תיאור האירוע</label>
                 <textarea id="disc-add-desc" placeholder="תאר את האירוע בפירוט..." style="min-height:100px;width:100%"></textarea>
@@ -1371,6 +1384,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div class="field">
                 <label class="field-label">הערת מנהל (אופציונלי)</label>
                 <textarea id="disc-add-note" placeholder="הערה פנימית למנהל..." style="min-height:70px;width:100%"></textarea>
+              </div>
+              <div class="field">
+                <label class="field-label">📎 קובץ מצורף (אופציונלי)</label>
+                <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:12px;padding:14px;text-align:center">
+                  <label style="cursor:pointer">
+                    <input type="file" id="disc-add-file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" style="display:none" onchange="handleDisciplineFile(this,'disc-add-file-status')">
+                    <span class="btn btn-outline btn-sm">📂 בחר קובץ</span>
+                  </label>
+                  <div id="disc-add-file-status" style="margin-top:8px;font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;display:none"></div>
+                </div>
               </div>
               <div style="display:flex;gap:10px;margin-top:6px">
                 <button class="btn btn-gold" onclick="saveDisciplineEvent()">💾 שמור אירוע</button>
@@ -9192,7 +9215,11 @@ function renderDisciplineList(){
           <div style="font-size:11px;color:var(--ice3)">${i.category||''}</div>
         </div>
       </div>
-      <button onclick="deleteDisciplineEvent('${i.id}')" class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px;margin-top:8px">🗑 מחק</button>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button onclick="openDiscEdit('${i.id}')" class="btn btn-outline btn-sm" style="padding:4px 10px;font-size:11px">✏ ערוך</button>
+        ${i.file_data?`<a href="${i.file_data}" download="${i.file_name||'קובץ'}" class="btn btn-outline btn-sm" style="padding:4px 10px;font-size:11px;color:var(--gold);border-color:var(--gold-line)">📎 הורד</a>`:''}
+        <button onclick="deleteDisciplineEvent('${i.id}')" class="btn btn-danger-soft" style="padding:4px 10px;font-size:11px">🗑 מחק</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -9205,12 +9232,17 @@ async function saveDisciplineEvent(){
   if(!date){alert('יש לבחור תאריך');return;}
   const desc=document.getElementById('disc-add-desc').value.trim();
   if(!desc){alert('יש למלא תיאור');return;}
+  const fileInput=document.getElementById('disc-add-file');
   const row={agent_id:parseInt(agentId),agent_name:agent?.name||'',dept:(agent?.depts||[])[0]||'',event_date:date,category:document.getElementById('disc-add-cat').value,severity:document.getElementById('disc-add-severity').value,description:desc,manager_note:document.getElementById('disc-add-note').value.trim()||null,is_manager:false};
+  if(fileInput?._fileData){row.file_data=fileInput._fileData;row.file_name=fileInput._fileName;}
   const {data,error}=await _sb.from('discipline').insert(row).select().single();
   if(error){alert('שגיאה: '+error.message);return;}
   S_discipline.unshift(data);
   document.getElementById('disc-add-desc').value='';
   document.getElementById('disc-add-note').value='';
+  document.getElementById('disc-add-file').value='';
+  document.getElementById('disc-add-file-status').style.display='none';
+  if(fileInput) fileInput._fileData=null;
   alert('✓ האירוע נשמר');
   showDisciplinePanel('list');
 }
@@ -9222,6 +9254,367 @@ async function deleteDisciplineEvent(id){
   S_managers_disc=S_managers_disc.filter(i=>String(i.id)!==String(id));
   renderDisciplineList();
   renderManagersDiscipline();
+}
+
+function onDiscCatChange(){
+  const cat = document.getElementById('disc-add-cat').value;
+  const wrap = document.getElementById('warning-template-btn-wrap');
+  if(wrap) wrap.style.display = cat === 'שיחת אזהרה' ? 'block' : 'none';
+}
+
+function openWarningTemplate(){
+  // Pre-fill agent name if selected
+  const agentId = document.getElementById('disc-add-agent').value;
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  if(agent){
+    document.getElementById('wt-name').value = agent.name;
+    document.getElementById('wt-role').value = (agent.depts||[])[0]||'';
+  }
+  // Set today's date
+  document.getElementById('wt-date').value = document.getElementById('disc-add-date').value || new Date().toISOString().slice(0,10);
+  document.getElementById('warning-template-modal').style.display = 'flex';
+}
+
+function closeWarningTemplate(){
+  document.getElementById('warning-template-modal').style.display = 'none';
+}
+
+function getWarningText(){
+  const types = [];
+  if(document.getElementById('wt-type-open').checked) types.push('פתיחה');
+  if(document.getElementById('wt-type-periodic').checked) types.push('תקופתית');
+  if(document.getElementById('wt-type-followup').checked) types.push('מעקב');
+  if(document.getElementById('wt-type-warning').checked) types.push('אזהרה');
+  if(document.getElementById('wt-type-summary').checked) types.push('סיכום');
+  if(document.getElementById('wt-type-other').checked) types.push('אחר');
+
+  const name = document.getElementById('wt-name').value.trim();
+  const role = document.getElementById('wt-role').value.trim();
+  const date = document.getElementById('wt-date').value;
+  const topic = document.getElementById('wt-topic').value.trim();
+  const details = document.getElementById('wt-details').value.trim();
+  const empWords = document.getElementById('wt-employee-words').value.trim();
+  const conclusion = document.getElementById('wt-conclusion').value.trim();
+
+  return `סיכום שיחת אזהרה
+שם העובד: ${name}
+תפקיד: ${role}
+תאריך: ${date}
+סוג השיחה: ${types.join(', ')||'אזהרה'}
+
+נושא לשיחה: ${topic}
+
+פירוט: ${details}
+
+דברי העובד: ${empWords}
+
+סיכום השיחה: ${conclusion}`;
+}
+
+async function saveWarningTemplate(){
+  const topic = document.getElementById('wt-topic').value.trim();
+  const details = document.getElementById('wt-details').value.trim();
+  if(!topic && !details){ alert('יש למלא לפחות נושא או פירוט'); return; }
+
+  const modal = document.getElementById('warning-template-modal');
+  const editId = modal._editId;
+
+  if(editId){
+    // Edit mode — update existing discipline item
+    const newDesc = getWarningText();
+    const {error} = await _sb.from('discipline').update({description:newDesc}).eq('id',editId);
+    if(error){ alert('שגיאה: '+error.message); return; }
+    const idx = S_discipline.findIndex(i=>String(i.id)===String(editId));
+    if(idx>=0) S_discipline[idx].description = newDesc;
+    modal._editId = null;
+    closeWarningTemplate();
+    renderDisciplineSummary();
+  } else {
+    // Add mode — fill the add form
+    document.getElementById('disc-add-desc').value = getWarningText();
+    const wtDate = document.getElementById('wt-date').value;
+    if(wtDate) document.getElementById('disc-add-date').value = wtDate;
+    closeWarningTemplate();
+    document.getElementById('disc-add-desc').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function parseWarningText(rawText){
+  const get = (label) => {
+    const regex = new RegExp(label + ':[\\s]*([^\n]+)');
+    const m = rawText.match(regex);
+    return m ? m[1].trim() : '';
+  };
+  const getBlock = (label, nextLabel) => {
+    const regex = new RegExp(label + ':[\\s\\S]*?([\\s\\S]*?)(?=' + nextLabel + ':|$)');
+    const parts = rawText.split(label+':');
+    if(parts.length<2) return '';
+    const after = parts[1];
+    const stopIdx = nextLabel ? after.indexOf(nextLabel+':') : -1;
+    return (stopIdx>=0 ? after.slice(0,stopIdx) : after).trim();
+  };
+  return { get, getBlock };
+}
+
+function exportWarningFromText(itemId){
+  const item = S_discipline.find(i=>String(i.id)===String(itemId));
+  if(!item){ alert('לא נמצא'); return; }
+  const rawText = item.description||'';
+  const { get, getBlock } = parseWarningText(rawText);
+
+  const name = get('שם העובד');
+  const role = get('תפקיד');
+  const date = get('תאריך');
+  const types = get('סוג השיחה');
+  const topic = getBlock('נושא לשיחה', 'פירוט');
+  const details = getBlock('פירוט', 'דברי העובד');
+  const empWords = getBlock('דברי העובד', 'סיכום השיחה');
+  const conclusion = getBlock('סיכום השיחה', '');
+
+  const typeList = ['פתיחה','תקופתית','מעקב','אזהרה','סיכום','אחר'];
+  const typeChecks = typeList.map(t =>
+    `<div class="type-check ${types.includes(t)?'active':''}">${types.includes(t)?'☑':'☐'} ${t}</div>`
+  ).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>שיחת אזהרה — ${name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Heebo',Arial,sans-serif;direction:rtl;padding:40px;max-width:720px;margin:0 auto;color:#1A1814;font-size:14px;line-height:1.7}
+  .logo-area{text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #C9A84C}
+  .logo-area h1{font-size:26px;font-weight:800;color:#1A1814;margin-bottom:4px}
+  .logo-area .subtitle{font-size:13px;color:#888}
+  .section{margin-bottom:22px}
+  .section-title{font-size:11px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;font-family:monospace}
+  .field-row{display:flex;gap:8px;margin-bottom:10px}
+  .field-label{font-size:12px;font-weight:700;color:#555;min-width:100px}
+  .field-value{font-size:14px;color:#1A1814;flex:1;border-bottom:1px solid #eee;padding-bottom:2px}
+  .type-checks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+  .type-check{display:flex;align-items:center;gap:5px;font-size:13px;color:#888}
+  .type-check.active{font-weight:700;color:#C9A84C}
+  .content-field{margin-bottom:18px}
+  .content-label{font-size:12px;font-weight:700;color:#555;margin-bottom:6px}
+  .content-box{border:1px solid #E8E4DE;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
+  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #E8E4DE;color:#555;font-size:13px}
+  .copies{margin-top:16px;font-size:12px;color:#888}
+  @media print{button{display:none}}
+</style></head><body>
+  <div class="logo-area">
+    <h1>📋 סיכום שיחה</h1>
+    <div class="subtitle">מוקד שירות ומכירה — מערכת תדריכים</div>
+  </div>
+  <button onclick="window.print()" style="background:#C9A84C;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;margin-bottom:24px;width:100%">🖨️ הדפס / שמור כ-PDF</button>
+  <div class="section">
+    <div class="section-title">פרטי עובד</div>
+    <div class="field-row"><span class="field-label">שם העובד:</span><span class="field-value">${name||'—'}</span></div>
+    <div class="field-row"><span class="field-label">תפקיד:</span><span class="field-value">${role||'—'}</span></div>
+    <div class="field-row"><span class="field-label">תאריך:</span><span class="field-value">${date||'—'}</span></div>
+  </div>
+  <div class="section">
+    <div class="section-title">סוג השיחה</div>
+    <div class="type-checks">${typeChecks}</div>
+  </div>
+  <div class="content-field"><div class="content-label">נושא לשיחה:</div><div class="content-box">${topic||' '}</div></div>
+  <div class="content-field"><div class="content-label">פירוט:</div><div class="content-box">${details||' '}</div></div>
+  <div class="content-field"><div class="content-label">דברי העובד:</div><div class="content-box">${empWords||' '}</div></div>
+  <div class="content-field"><div class="content-label">סיכום השיחה:</div><div class="content-box">${conclusion||' '}</div></div>
+  <div class="signature">
+    <div>בברכה,</div>
+    <div style="font-weight:700;font-size:15px;color:#1A1814">אדיר לוי</div>
+    <div>מנהל תחום מובמנט</div>
+  </div>
+  <div class="copies">העתקים: העובד · משאבי אנוש</div>
+</body></html>`);
+  win.document.close();
+}
+
+function exportWarningPDF(){
+  const name = document.getElementById('wt-name').value.trim() || 'עובד';
+  const date = document.getElementById('wt-date').value || new Date().toLocaleDateString('he-IL');
+  const types = [];
+  if(document.getElementById('wt-type-open').checked) types.push('פתיחה');
+  if(document.getElementById('wt-type-periodic').checked) types.push('תקופתית');
+  if(document.getElementById('wt-type-followup').checked) types.push('מעקב');
+  if(document.getElementById('wt-type-warning').checked) types.push('אזהרה');
+  if(document.getElementById('wt-type-summary').checked) types.push('סיכום');
+  if(document.getElementById('wt-type-other').checked) types.push('אחר');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>שיחת אזהרה — ${name}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Heebo',Arial,sans-serif;direction:rtl;padding:40px;max-width:720px;margin:0 auto;color:#1A1814;font-size:14px;line-height:1.7}
+  .logo-area{text-align:center;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #C9A84C}
+  .logo-area h1{font-size:26px;font-weight:800;color:#1A1814;margin-bottom:4px}
+  .logo-area .subtitle{font-size:13px;color:#888}
+  .section{margin-bottom:22px}
+  .section-title{font-size:11px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;font-family:monospace}
+  .field-row{display:flex;gap:8px;margin-bottom:10px}
+  .field-label{font-size:12px;font-weight:700;color:#555;min-width:100px}
+  .field-value{font-size:14px;color:#1A1814;flex:1;border-bottom:1px solid #eee;padding-bottom:2px}
+  .type-checks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+  .type-check{display:flex;align-items:center;gap:5px;font-size:13px}
+  .type-check.active{font-weight:700;color:#C9A84C}
+  .content-field{margin-bottom:18px}
+  .content-label{font-size:12px;font-weight:700;color:#555;margin-bottom:6px}
+  .content-box{border:1px solid #E8E4DE;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
+  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #E8E4DE;color:#555;font-size:13px}
+  .copies{margin-top:16px;font-size:12px;color:#888}
+  @media print{button{display:none}body{padding:20px}}
+</style></head><body>
+  <div class="logo-area">
+    <h1>📋 סיכום שיחה</h1>
+    <div class="subtitle">מוקד שירות ומכירה — מערכת תדריכים</div>
+  </div>
+
+  <button onclick="window.print()" style="background:#C9A84C;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;margin-bottom:24px;width:100%">🖨️ הדפס / שמור כ-PDF</button>
+
+  <div class="section">
+    <div class="section-title">פרטי עובד</div>
+    <div class="field-row"><span class="field-label">שם העובד:</span><span class="field-value">${document.getElementById('wt-name').value||'—'}</span></div>
+    <div class="field-row"><span class="field-label">תפקיד:</span><span class="field-value">${document.getElementById('wt-role').value||'—'}</span></div>
+    <div class="field-row"><span class="field-label">תאריך:</span><span class="field-value">${date}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">סוג השיחה</div>
+    <div class="type-checks">
+      <div class="type-check ${document.getElementById('wt-type-open').checked?'active':''}">☐ פתיחה</div>
+      <div class="type-check ${document.getElementById('wt-type-periodic').checked?'active':''}">☐ תקופתית</div>
+      <div class="type-check ${document.getElementById('wt-type-followup').checked?'active':''}">☐ מעקב</div>
+      <div class="type-check ${document.getElementById('wt-type-warning').checked?'active':''}">☑ אזהרה</div>
+      <div class="type-check ${document.getElementById('wt-type-summary').checked?'active':''}">☐ סיכום</div>
+      <div class="type-check ${document.getElementById('wt-type-other').checked?'active':''}">☐ אחר</div>
+    </div>
+  </div>
+
+  <div class="content-field"><div class="content-label">נושא לשיחה:</div><div class="content-box">${document.getElementById('wt-topic').value||' '}</div></div>
+  <div class="content-field"><div class="content-label">פירוט:</div><div class="content-box">${document.getElementById('wt-details').value||' '}</div></div>
+  <div class="content-field"><div class="content-label">דברי העובד:</div><div class="content-box">${document.getElementById('wt-employee-words').value||' '}</div></div>
+  <div class="content-field"><div class="content-label">סיכום השיחה:</div><div class="content-box">${document.getElementById('wt-conclusion').value||' '}</div></div>
+
+  <div class="signature">
+    <div>בברכה,</div>
+    <div style="font-weight:700;font-size:15px;color:#1A1814">אדיר לוי</div>
+    <div>מנהל תחום מובמנט</div>
+  </div>
+  <div class="copies">העתקים: העובד · משאבי אנוש</div>
+</body></html>`);
+  win.document.close();
+}
+
+function handleDisciplineFile(input, statusId){
+  const file=input.files[0];
+  if(!file) return;
+  const maxSize=5*1024*1024; // 5MB
+  if(file.size>maxSize){alert('קובץ גדול מדי — מקסימום 5MB');input.value='';return;}
+  const statusEl=document.getElementById(statusId);
+  if(statusEl){statusEl.style.display='block';statusEl.textContent='⏳ קורא קובץ...';}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    input._fileData=e.target.result;
+    input._fileName=file.name;
+    if(statusEl){statusEl.textContent='✓ '+file.name;}
+  };
+  reader.readAsDataURL(file);
+}
+
+function openDiscEdit(id){
+  const item=S_discipline.find(i=>String(i.id)===String(id));
+  if(!item) return;
+  document.getElementById('disc-edit-id').value=id;
+  document.getElementById('disc-edit-agent-name').textContent=item.agent_name||'—';
+  document.getElementById('disc-edit-date').value=item.event_date||'';
+  document.getElementById('disc-edit-cat').value=item.category||'איחור';
+  document.getElementById('disc-edit-severity').value=item.severity||'medium';
+  document.getElementById('disc-edit-desc').value=item.description||'';
+  document.getElementById('disc-edit-note').value=item.manager_note||'';
+  // Show existing file
+  const curFile=document.getElementById('disc-edit-current-file');
+  if(item.file_name){
+    curFile.style.display='block';
+    curFile.textContent='📎 קובץ קיים: '+item.file_name;
+  } else {
+    curFile.style.display='none';
+  }
+  document.getElementById('disc-edit-file-status').style.display='none';
+  document.getElementById('disc-edit-modal').style.display='flex';
+}
+
+function closeDisciplineEdit(){
+  document.getElementById('disc-edit-modal').style.display='none';
+}
+
+async function saveDiscEdit(){
+  const id=document.getElementById('disc-edit-id').value;
+  const desc=document.getElementById('disc-edit-desc').value.trim();
+  if(!desc){alert('יש למלא תיאור');return;}
+  const fileInput=document.getElementById('disc-edit-file');
+  const updates={
+    event_date:document.getElementById('disc-edit-date').value,
+    category:document.getElementById('disc-edit-cat').value,
+    severity:document.getElementById('disc-edit-severity').value,
+    description:desc,
+    manager_note:document.getElementById('disc-edit-note').value.trim()||null
+  };
+  // Add file if new one selected
+  if(fileInput._fileData){
+    updates.file_data=fileInput._fileData;
+    updates.file_name=fileInput._fileName;
+  }
+  const {error}=await _sb.from('discipline').update(updates).eq('id',id);
+  if(error){alert('שגיאה: '+error.message);return;}
+  const idx=S_discipline.findIndex(i=>String(i.id)===String(id));
+  if(idx>=0) S_discipline[idx]={...S_discipline[idx],...updates};
+  closeDisciplineEdit();
+  renderDisciplineList();
+}
+
+function viewWarningTemplate(itemId){
+  // Just open the PDF view
+  exportWarningFromText(itemId);
+}
+
+function editWarningTemplate(itemId){
+  const item = S_discipline.find(i=>String(i.id)===String(itemId));
+  if(!item) return;
+  const rawText = item.description||'';
+
+  // Parse fields
+  function getVal(label){
+    const parts = rawText.split(label+':');
+    if(parts.length<2) return '';
+    return parts[1].split('\n')[0].trim();
+  }
+  function getBlock(label, nextLabel){
+    const parts = rawText.split(label+':');
+    if(parts.length<2) return '';
+    const after = parts[1];
+    const stopIdx = nextLabel ? after.indexOf(nextLabel+':') : -1;
+    return (stopIdx>=0 ? after.slice(0,stopIdx) : after).trim();
+  }
+
+  // Fill the warning template form
+  document.getElementById('wt-name').value = getVal('שם העובד');
+  document.getElementById('wt-role').value = getVal('תפקיד');
+  document.getElementById('wt-date').value = getVal('תאריך');
+  const types = getVal('סוג השיחה');
+  document.getElementById('wt-type-open').checked = types.includes('פתיחה');
+  document.getElementById('wt-type-periodic').checked = types.includes('תקופתית');
+  document.getElementById('wt-type-followup').checked = types.includes('מעקב');
+  document.getElementById('wt-type-warning').checked = types.includes('אזהרה');
+  document.getElementById('wt-type-summary').checked = types.includes('סיכום');
+  document.getElementById('wt-type-other').checked = types.includes('אחר');
+  document.getElementById('wt-topic').value = getBlock('נושא לשיחה','פירוט');
+  document.getElementById('wt-details').value = getBlock('פירוט','דברי העובד');
+  document.getElementById('wt-employee-words').value = getBlock('דברי העובד','סיכום השיחה');
+  document.getElementById('wt-conclusion').value = getBlock('סיכום השיחה','');
+
+  // Override save to update existing item
+  document.getElementById('warning-template-modal')._editId = itemId;
+  document.getElementById('warning-template-modal').style.display = 'flex';
 }
 
 function resetDisciplineFilters(){
@@ -9245,25 +9638,90 @@ function renderDisciplineSummary(){
   const catCount={};items.forEach(i=>{catCount[i.category]=(catCount[i.category]||0)+1;});
   const sevHigh=items.filter(i=>i.severity==='high').length;
 
+  const sevMid=items.filter(i=>i.severity==='medium').length;
+  const sevLow=items.filter(i=>i.severity==='low').length;
+
   el.innerHTML=`<div id="disc-report-body">
-    <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div><div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ice)">${agent?.name||''}</div><div style="font-size:12px;color:var(--ice3)">${(agent?.depts||[]).join(', ')||'—'}</div></div>
-        <div style="text-align:center;background:var(--danger-bg);border:2px solid var(--danger-line);border-radius:14px;padding:10px 18px"><div style="font-size:28px;font-weight:800;color:var(--danger)">${items.length}</div><div style="font-size:10px;color:var(--ice3)">אירועים</div></div>
+
+    <!-- HERO CARD -->
+    <div style="background:linear-gradient(135deg,#1A1814,#2A2420);border-radius:20px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-20px;left:-20px;font-size:100px;opacity:0.05">⚖️</div>
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:rgba(201,168,76,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">דוח משמעת</div>
+          <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#F0EDE6">${agent?.name||''}</div>
+          <div style="font-size:12px;color:rgba(240,237,230,0.5);margin-top:4px">${(agent?.depts||[]).join(', ')||'—'}</div>
+          ${from||to?`<div style="font-size:11px;color:rgba(201,168,76,0.6);margin-top:6px;font-family:'DM Mono',monospace">${from||'תחילה'} ← ${to||'היום'}</div>`:''}
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="text-align:center;background:rgba(240,101,101,0.15);border:1.5px solid rgba(240,101,101,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
+            <div style="font-size:28px;font-weight:800;color:#F06565">${sevHigh}</div>
+            <div style="font-size:10px;color:rgba(240,101,101,0.7);font-family:'DM Mono',monospace">חמורים</div>
+          </div>
+          <div style="text-align:center;background:rgba(240,160,75,0.15);border:1.5px solid rgba(240,160,75,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
+            <div style="font-size:28px;font-weight:800;color:#F0A04B">${sevMid}</div>
+            <div style="font-size:10px;color:rgba(240,160,75,0.7);font-family:'DM Mono',monospace">בינוניים</div>
+          </div>
+          <div style="text-align:center;background:rgba(45,212,164,0.12);border:1.5px solid rgba(45,212,164,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
+            <div style="font-size:28px;font-weight:800;color:#2DD4A4">${sevLow}</div>
+            <div style="font-size:10px;color:rgba(45,212,164,0.6);font-family:'DM Mono',monospace">קלים</div>
+          </div>
+          <div style="text-align:center;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
+            <div style="font-size:28px;font-weight:800;color:var(--gold)">${items.length}</div>
+            <div style="font-size:10px;color:rgba(201,168,76,0.6);font-family:'DM Mono',monospace">סה"כ</div>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${Object.entries(catCount).map(([c,n])=>`<span style="background:var(--ink3);border:1px solid var(--line2);border-radius:20px;padding:4px 12px;font-size:12px"><b>${n}</b> ${c}</span>`).join('')}
-        ${sevHigh?`<span style="background:var(--danger-bg);border:1px solid var(--danger-line);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--danger)"><b>${sevHigh}</b> חמורים</span>`:''}
+      <!-- Category pills -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:16px">
+        ${Object.entries(catCount).map(([c,n])=>`<span style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:4px 12px;font-size:12px;color:rgba(240,237,230,0.7)">${DISC_CAT[c]||'📌'} <b>${n}</b> ${c}</span>`).join('')}
       </div>
     </div>
 
     <!-- CHART -->
     <div class="card" style="margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px">📈 גרף חומרה לאורך זמן</div>
-      <div style="position:relative;height:180px"><canvas id="disc-chart"></canvas></div>
+      <div style="position:relative;height:200px"><canvas id="disc-chart"></canvas></div>
     </div>
 
-    ${items.map(i=>{const sev=DISC_SEV[i.severity]||DISC_SEV.medium;return`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start"><div style="min-width:90px;font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${i.event_date}</div><div style="min-width:70px;font-size:12px;font-weight:700;color:${sev.color}">${sev.label}</div><div style="flex:1"><div style="font-size:12px;color:var(--gold);margin-bottom:2px">${DISC_CAT[i.category]||''} ${i.category}</div><div style="font-size:14px;color:var(--ice)">${i.description}</div>${i.manager_note?`<div style="font-size:12px;color:var(--ice3);margin-top:4px">📎 ${i.manager_note}</div>`:''}</div></div>`;}).join('')}
+    <!-- EVENTS LIST -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);background:var(--ink3)">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">פירוט אירועים</div>
+      </div>
+      ${items.map((i,idx)=>{
+        const sev=DISC_SEV[i.severity]||DISC_SEV.medium;
+        const isWarning = i.category==='שיחת אזהרה';
+        const descEsc = (i.description||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        return`<div style="display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:flex-start;background:${isWarning?'rgba(240,160,75,0.04)':idx%2===0?'transparent':'var(--ink3)'}${isWarning?';border-right:3px solid rgba(240,160,75,0.5)':''}">
+          <div style="min-width:32px;height:32px;border-radius:50%;background:${isWarning?'rgba(240,160,75,0.15)':sev.color.includes('ok')?'rgba(45,212,164,0.15)':sev.color.includes('warn')?'rgba(240,160,75,0.15)':'rgba(240,101,101,0.15)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">${isWarning?'⚠️':DISC_CAT[i.category]||'📌'}</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${i.event_date}</span>
+              <span style="font-size:11px;font-weight:700;color:${sev.color};background:${sev.color.includes('ok')?'rgba(45,212,164,0.1)':sev.color.includes('warn')?'rgba(240,160,75,0.1)':'rgba(240,101,101,0.1)'};border-radius:20px;padding:2px 8px">${sev.label}</span>
+              <span style="font-size:12px;font-weight:${isWarning?'700':'400'};color:${isWarning?'var(--warn)':'var(--ice3)'}${isWarning?';background:rgba(240,160,75,0.1);border-radius:20px;padding:2px 10px':''}">${isWarning?'⚠️ ':''  }${i.category}</span>
+            </div>
+            ${isWarning
+              ? `<div style="background:rgba(240,160,75,0.06);border-radius:10px;padding:12px;margin-bottom:8px">
+                  ${(()=>{
+                    const raw=i.description||'';
+                    const lines=raw.split('\n').filter(l=>l.trim());
+                    return lines.map(l=>`<div style="font-size:13px;color:var(--ice2);line-height:1.7">${l.includes(':')?`<span style="font-weight:700;color:var(--ice)">${l.split(':')[0]}:</span> ${l.split(':').slice(1).join(':').trim()}`:l}</div>`).join('');
+                  })()}
+                </div>`
+              : `<div style="font-size:14px;color:var(--ice);line-height:1.6">${i.description}</div>`
+            }
+            ${i.manager_note?`<div style="font-size:12px;color:var(--gold);margin-top:6px;border-right:2px solid var(--gold);padding-right:8px;font-style:italic">📎 ${i.manager_note}</div>`:''}
+            ${i.file_name?`<a href="${i.file_data||'#'}" download="${i.file_name}" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--gold);text-decoration:none;background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:20px;padding:3px 10px">📎 ${i.file_name}</a>`:''}
+            ${isWarning?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <button onclick="viewWarningTemplate('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(91,160,230,0.1);border:1.5px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">👁 צפייה</button>
+              <button onclick="editWarningTemplate('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:var(--ink3);border:1.5px solid var(--line2);color:var(--ice2);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">✏ עריכה</button>
+              <button onclick="exportWarningFromText('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(240,160,75,0.1);border:1.5px solid rgba(240,160,75,0.35);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📄 PDF</button>
+            </div>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
   </div>`;
 
   // Draw chart after DOM update
@@ -9972,5 +10430,149 @@ function renderManagersDiscipline(){
     </div>
   </div>
 </div>
+
+<!-- DISCIPLINE EDIT MODAL -->
+<div id="disc-edit-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:600px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <div style="padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:16px;font-weight:700;color:var(--ice)">✏ עריכת אירוע</div>
+      <button onclick="closeDisciplineEdit()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:22px">
+      <input type="hidden" id="disc-edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div><label class="field-label">עובד</label><div id="disc-edit-agent-name" style="padding:10px 14px;background:var(--ink3);border-radius:10px;font-size:14px;color:var(--ice3)"></div></div>
+        <div><label class="field-label">תאריך</label><input type="date" id="disc-edit-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div><label class="field-label">קטגוריה</label>
+          <select id="disc-edit-cat" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+            <option value="איחור">⏰ איחור</option>
+            <option value="עבירה על נוהל">📜 עבירה על נוהל</option>
+            <option value="התנהגות">😤 התנהגות</option>
+            <option value="ביצועים">📉 ביצועים</option>
+            <option value="אחר">📌 אחר</option>
+          </select>
+        </div>
+        <div><label class="field-label">חומרה</label>
+          <select id="disc-edit-severity" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice)">
+            <option value="low">🟡 קל</option>
+            <option value="medium">🟠 בינוני</option>
+            <option value="high">🔴 חמור</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label class="field-label">תיאור האירוע</label>
+        <textarea id="disc-edit-desc" style="min-height:100px;width:100%"></textarea>
+      </div>
+      <div class="field"><label class="field-label">הערת מנהל (אופציונלי)</label>
+        <textarea id="disc-edit-note" style="min-height:70px;width:100%"></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">📎 קובץ מצורף</label>
+        <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:12px;padding:14px;text-align:center">
+          <div id="disc-edit-current-file" style="font-size:12px;color:var(--ice3);margin-bottom:8px;display:none"></div>
+          <label style="cursor:pointer">
+            <input type="file" id="disc-edit-file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png" style="display:none" onchange="handleDisciplineFile(this,'disc-edit-file-status')">
+            <span class="btn btn-outline btn-sm">📂 החלף קובץ</span>
+          </label>
+          <div id="disc-edit-file-status" style="margin-top:8px;font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;display:none"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-gold" style="flex:1" onclick="saveDiscEdit()">💾 שמור שינויים</button>
+        <button class="btn btn-outline" onclick="closeDisciplineEdit()">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- WARNING CALL TEMPLATE MODAL -->
+<div id="warning-template-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:680px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.1),transparent);border-bottom:1px solid var(--line);padding:20px 24px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">⚠️ טמפלט</div>
+        <div style="font-size:18px;font-weight:700;color:var(--ice)">סיכום שיחת אזהרה</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="exportWarningPDF()" class="btn btn-outline btn-sm" style="color:var(--gold);border-color:var(--gold-line)">📄 ייצא PDF</button>
+        <button onclick="closeWarningTemplate()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div style="padding:24px" id="warning-form-body">
+
+      <!-- Employee Info -->
+      <div style="background:var(--ink3);border-radius:14px;padding:18px;margin-bottom:18px">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px">פרטי עובד</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="field-label">שם העובד</label>
+            <input type="text" id="wt-name" style="width:100%;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice)" placeholder="שם מלא">
+          </div>
+          <div>
+            <label class="field-label">תפקיד</label>
+            <input type="text" id="wt-role" style="width:100%;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice)" placeholder="תפקיד העובד">
+          </div>
+          <div>
+            <label class="field-label">תאריך השיחה</label>
+            <input type="date" id="wt-date" style="width:100%;background:var(--ink2);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice)">
+          </div>
+          <div>
+            <label class="field-label">סוג השיחה</label>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--ice2)"><input type="checkbox" id="wt-type-open" style="accent-color:var(--gold)"> פתיחה</label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--ice2)"><input type="checkbox" id="wt-type-periodic" style="accent-color:var(--gold)"> תקופתית</label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--ice2)"><input type="checkbox" id="wt-type-followup" style="accent-color:var(--gold)"> מעקב</label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--gold);font-weight:600"><input type="checkbox" id="wt-type-warning" checked style="accent-color:var(--gold)"> אזהרה</label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--ice2)"><input type="checkbox" id="wt-type-summary" style="accent-color:var(--gold)"> סיכום</label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:13px;color:var(--ice2)"><input type="checkbox" id="wt-type-other" style="accent-color:var(--gold)"> אחר</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Fields -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="field-label">נושא לשיחה</label>
+          <textarea id="wt-topic" style="width:100%;min-height:70px;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice);font-family:'Sora',sans-serif;resize:vertical" placeholder="מה הנושא המרכזי של השיחה?"></textarea>
+        </div>
+        <div>
+          <label class="field-label">פירוט</label>
+          <textarea id="wt-details" style="width:100%;min-height:100px;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice);font-family:'Sora',sans-serif;resize:vertical" placeholder="פירוט מלא של האירוע / הבעיה..."></textarea>
+        </div>
+        <div>
+          <label class="field-label">דברי העובד</label>
+          <textarea id="wt-employee-words" style="width:100%;min-height:80px;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice);font-family:'Sora',sans-serif;resize:vertical" placeholder="מה אמר העובד בתגובה..."></textarea>
+        </div>
+        <div>
+          <label class="field-label">סיכום השיחה</label>
+          <textarea id="wt-conclusion" style="width:100%;min-height:100px;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice);font-family:'Sora',sans-serif;resize:vertical" placeholder="מה הוסכם? מה הצעדים הבאים?"></textarea>
+        </div>
+      </div>
+
+      <!-- Signature -->
+      <div style="background:var(--ink3);border-radius:12px;padding:14px;margin-top:14px;font-size:13px;color:var(--ice3);line-height:1.8">
+        <div>בברכה,</div>
+        <div style="font-weight:700;color:var(--ice)">אדיר לוי</div>
+        <div>מנהל תחום מובמנט</div>
+        <div style="margin-top:8px;font-size:12px">העתקים: העובד · משאבי אנוש</div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button onclick="saveWarningTemplate()" class="btn btn-gold" style="flex:1">💾 שמור ואסוף לאירוע</button>
+        <button onclick="exportWarningPDF()" class="btn btn-outline">📄 PDF</button>
+        <button onclick="closeWarningTemplate()" class="btn btn-outline">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
