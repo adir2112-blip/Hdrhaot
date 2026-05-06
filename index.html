@@ -2566,8 +2566,9 @@ const AV_COLORS=[
 ];
 const LETTERS=['א','ב','ג','ד'];
 // Admin passwords removed — auth via Supabase only
-const ADMIN_PW='Q1w2e3r4!';
-const SUPER_ADMIN_PW='Adirgal123!';
+// Passwords removed — authentication via Supabase Auth only
+const ADMIN_PW='__DISABLED__';
+const SUPER_ADMIN_PW='__DISABLED__';
 const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
 const GROUPS=[
   {key:'מובמנט', label:'מובמנט', depts:['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT']},
@@ -2933,9 +2934,11 @@ function closeConfigAdminModal(){
   showSettingsPanel('main');
 }
 
-function checkConfigAdminPw(){
+async function checkConfigAdminPw(){
   const val = document.getElementById('config-admin-pw').value;
-  if(val === SUPER_ADMIN_PW){
+  const { data: { session: _cas } } = await _sb.auth.getSession();
+  const _cae = _cas?.user?.email||'';
+  if(isSuperAdmin(_cae)){
     document.getElementById('admin-config-modal').style.display='none';
     // Now actually show the config panel content
     const panels = ['main','agents','import','delete','stats','config'];
@@ -3178,16 +3181,7 @@ async function loadKnowledge(force=false){
 }
 
 function checkKnowledgePw(){
-  const val = document.getElementById('knowledge-pw-input').value;
-  if(val === ADMIN_PW){
-    document.getElementById('knowledge-lock').style.display='none';
-    document.getElementById('knowledge-content').style.display='block';
-    Promise.all([loadKnowledge(),loadFolders()]).then(()=>{renderKnowledgeArticles();});
-    showKnowledgePanel('articles');
-  } else {
-    document.getElementById('knowledge-pw-error').style.display='block';
-    document.getElementById('knowledge-pw-input').value='';
-  }
+  checkAdminInput('knowledge-pw-input','knowledge-pw-error');
 }
 
 function showKnowledgePanel(key){
@@ -3479,10 +3473,9 @@ function previewArticle(id){
 }
 
 async function deleteKnowledgeArticle(id){
-  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
-  if (pw === null) return;
-  if (pw !== ADMIN_PW && pw !== SUPER_ADMIN_PW) { alert('✗ סיסמה שגויה — המחיקה בוטלה'); return; }
   if (!confirm('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?')) return;
+  const { data: { session } } = await _sb.auth.getSession();
+  if(!session){ alert('נדרש להיות מחובר כמנהל'); return; }
   await _sb.from('knowledge_base').delete().eq('id',id);
   S_knowledge=S_knowledge.filter(a=>String(a.id)!==String(id));
   renderKnowledgeArticles();
@@ -3558,10 +3551,9 @@ async function createFolder(parentId){
 }
 
 async function deleteFolder(id){
-  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
-  if (pw === null) return;
-  if (pw !== ADMIN_PW && pw !== SUPER_ADMIN_PW) { alert('✗ סיסמה שגויה — המחיקה בוטלה'); return; }
   if (!confirm('האם אתה בטוח שברצונך למחוק תיקיה זו וכל תכניה לצמיתות?')) return;
+  const { data: { session: _dfs } } = await _sb.auth.getSession();
+  if(!_dfs){ alert('נדרש להיות מחובר כמנהל'); return; }
   // Delete all articles in this folder and sub-folders recursively
   const allIds = getFolderAndChildren(id);
   for(const fid of allIds){
@@ -8182,16 +8174,9 @@ async function checkControlsPw(){
     loadControls();
     return;
   }
-  const val = document.getElementById('controls-pw-input').value;
-  if(val === ADMIN_PW || val === SUPER_ADMIN_PW){
-    document.getElementById('controls-lock').style.display='none';
-    document.getElementById('controls-content').style.display='block';
-    document.getElementById('controls-pw-input').value='';
-    loadControls();
-  } else {
-    document.getElementById('controls-pw-error').style.display='block';
-    document.getElementById('controls-pw-input').value='';
-  }
+  // No session — redirect to main login
+  document.getElementById('controls-pw-error').style.display='block';
+  showAuthModal();
 }
 
 async function loadControls(){
@@ -8809,10 +8794,9 @@ function closeControlModal(){
 }
 
 async function deleteAgentControls(agentId, month){
-  const pw = prompt('לאישור מחיקה — הכנס סיסמת מנהל:');
-  if(pw===null) return;
-  if(pw!==ADMIN_PW && pw!==SUPER_ADMIN_PW){ alert('✗ סיסמה שגויה'); return; }
   if(!confirm('האם אתה בטוח שברצונך למחוק את כל הבקרות של נציג זה בחודש זה?')) return;
+  const { data: { session: _dcs } } = await _sb.auth.getSession();
+  if(!_dcs){ alert('נדרש להיות מחובר כמנהל'); return; }
   const toDelete = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
   for(const c of toDelete){
     await _sb.from('controls').delete().eq('id',c.id);
@@ -9112,16 +9096,10 @@ async function checkDisciplinePw(){
     loadDiscipline().then(()=>showDisciplinePanel('list'));
     return;
   }
-  const val = document.getElementById('discipline-pw-input').value;
-  if(val===ADMIN_PW||val===SUPER_ADMIN_PW){
-    document.getElementById('discipline-lock').style.display='none';
-    document.getElementById('discipline-content').style.display='block';
-    document.getElementById('discipline-pw-input').value='';
-    loadDiscipline().then(()=>showDisciplinePanel('list'));
-  } else {
-    document.getElementById('discipline-pw-error').style.display='block';
-    document.getElementById('discipline-pw-input').value='';
-  }
+  // No session — redirect to main login
+  document.getElementById('discipline-pw-error').style.display='block';
+  document.getElementById('discipline-pw-input').value='';
+  showAuthModal();
 }
 
 async function loadDiscipline(force=false){
@@ -9387,9 +9365,13 @@ function showManagersSubPanel(key){
   if(key==='add') document.getElementById('mgr-add-date').value=new Date().toISOString().slice(0,10);
 }
 
-function checkManagersLock(){
+async function checkManagersLock(){
   const val=document.getElementById('managers-pw-input').value;
-  if(val===SUPER_ADMIN_PW){
+  // Check via Supabase session + super admin email
+  const { data: { session } } = await _sb.auth.getSession();
+  const email = session?.user?.email||'';
+  if(isSuperAdmin(email)){
+    // Super admin can enter with any value (just pressing enter)
     _managersUnlocked=true;
     document.getElementById('managers-pw-input').value='';
     document.getElementById('managers-lock-box').style.display='none';
