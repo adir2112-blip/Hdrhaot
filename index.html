@@ -3241,23 +3241,34 @@ function renderKnowledgeArticles(){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין פריטי ידע. לחץ "הוסף תוכן" כדי להתחיל.</div>';
     return;
   }
-  el.innerHTML=items.map(a=>`<div class="track-row" style="margin-bottom:12px">
+  const weekAgo=new Date(Date.now()-7*24*60*60*1000).toISOString();
+  el.innerHTML=items.map(a=>{
+    const stars=a.avg_rating?'★'.repeat(Math.round(a.avg_rating))+'☆'.repeat(5-Math.round(a.avg_rating)):'☆☆☆☆☆';
+    const starColor=a.avg_rating>=4?'var(--ok)':a.avg_rating>=2.5?'var(--warn)':'var(--ice3)';
+    return`<div class="track-row" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
       <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
           <span class="chip chip-gold" style="font-size:11px">${a.dept||'כללי'}</span>
           <div style="font-size:15px;font-weight:700;color:var(--ice)">${a.title}</div>
         </div>
-        <div style="font-size:13px;color:var(--ice3);line-height:1.6;max-height:60px;overflow:hidden;text-overflow:ellipsis">${(a.content||'').slice(0,150)}${(a.content||'').length>150?'…':''}</div>
-        <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:6px">${a.created_at?new Date(a.created_at).toLocaleDateString('he-IL'):''}</div>
+        <div style="font-size:13px;color:var(--ice3);line-height:1.6;max-height:60px;overflow:hidden">${(a.content||'').slice(0,150)}${(a.content||'').length>150?'…':''}</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+          <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${a.created_at?new Date(a.created_at).toLocaleDateString('he-IL'):''}</span>
+          <span style="font-size:12px;color:var(--ice3)">👁 ${a.view_count||0} צפיות</span>
+          <span style="font-size:12px;color:var(--ice3)">📅 ${a.week_views||0} השבוע</span>
+          ${a.avg_rating?`<span style="font-size:12px;color:${starColor}" title="${(+a.avg_rating).toFixed(1)}/5">${stars} (${a.rating_count||0})</span>`:''}
+          ${a.comment_count?`<span style="font-size:12px;color:var(--ice3)">💬 ${a.comment_count}</span>`:''}
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+        <button onclick="openArticleComments('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px;color:var(--ice3)">💬 ${a.comment_count||0}</button>
         <button onclick="previewArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px;color:var(--gold);border-color:var(--gold-line)">👁 תצוגה</button>
         <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px">✏ ערוך</button>
         <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:5px 10px;font-size:11px">🗑</button>
       </div>
     </div>
-  </div>`).join('');
+  </div>`;}).join('');
 }
 
 async function extractKnowledgeFile(input){
@@ -7458,14 +7469,119 @@ async function renderAgentKnowledgePanel(){
   }
 }
 
-function showAgentArticle(article){
+async function showAgentArticle(article){
   var el=document.getElementById('abp-kb-article');
   if(!el) return;
-  el.innerHTML='<div style="background:#fff;border:1px solid var(--line2);border-radius:16px;padding:20px 22px">'+
-    '<div style="font-size:18px;font-weight:800;color:var(--ice);margin-bottom:8px">'+article.title+'</div>'+
-    '<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 10px;font-family:DM Mono,monospace">'+( article.dept||'כללי')+'</span>'+
-    '<div style="margin-top:16px">'+formatContent(article.content||'')+'</div>'+
-  '</div>';
+
+  await trackArticleView(article.id);
+
+  const {data:comms} = await _sb.from('kb_comments').select('*').eq('article_id',article.id).order('created_at',{ascending:false});
+  const articleComments = comms||[];
+  const agentComment = S.agent ? articleComments.find(function(c){return String(c.agent_id)===String(S.agent.id);}) : null;
+  const existingRating = agentComment ? (agentComment.rating||0) : 0;
+  _agentArticleRating = existingRating;
+  _agentArticleId = article.id;
+
+  const avgRating = article.avg_rating ? (+(article.avg_rating)).toFixed(1) : null;
+
+  // Build stars HTML
+  var starsHtml = '';
+  for(var si=1;si<=5;si++){
+    starsHtml += '<button onclick="setAgentArticleRating('+si+')" id="aas-'+si+'" style="font-size:26px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:'+(si<=existingRating?'1':'0.3')+';transition:opacity 0.15s">★</button>';
+  }
+
+  // Build comments HTML
+  var commentsHtml = '';
+  if(!articleComments.length){
+    commentsHtml = '<div style="font-size:12px;color:var(--ice3);text-align:center;padding:12px">אין תגובות עדיין</div>';
+  } else {
+    articleComments.forEach(function(c){
+      var cs = c.rating ? ('★'.repeat(c.rating)+'☆'.repeat(5-c.rating)) : '';
+      var cc = c.rating>=4?'var(--ok)':c.rating>=3?'var(--gold)':'var(--warn)';
+      var initial = (c.agent_name||'?').charAt(0);
+      var dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString('he-IL') : '';
+      commentsHtml +=
+        '<div style="padding:10px 0;border-bottom:1px solid var(--line)">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+            '<div style="width:26px;height:26px;border-radius:50%;background:var(--gold-bg);border:1px solid var(--gold-line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold)">'+initial+'</div>' +
+            '<span style="font-size:12px;font-weight:600;color:var(--ice)">'+(c.agent_name||'נציג')+'</span>' +
+            (cs ? '<span style="font-size:12px;color:'+cc+'">'+cs+'</span>' : '') +
+            '<span style="font-size:10px;color:var(--ice3);margin-right:auto">'+dateStr+'</span>' +
+          '</div>' +
+          (c.comment ? '<div style="font-size:12px;color:var(--ice2);line-height:1.6;padding-right:34px">'+c.comment+'</div>' : '') +
+        '</div>';
+    });
+  }
+
+  el.innerHTML =
+    '<div style="background:var(--ink3);border:1px solid var(--line2);border-radius:16px;padding:20px 22px">' +
+      '<div style="font-size:18px;font-weight:800;color:var(--ice);margin-bottom:6px">'+article.title+'</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">' +
+        '<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 10px">'+( article.dept||'כללי')+'</span>' +
+        '<span style="font-size:12px;color:var(--ice3)">👁 '+(article.view_count||0)+' צפיות</span>' +
+        (avgRating ? '<span style="font-size:12px;color:var(--gold)">★ '+avgRating+' ('+article.rating_count+')</span>' : '') +
+        '<span style="font-size:12px;color:var(--ice3)">💬 '+articleComments.length+'</span>' +
+      '</div>' +
+      '<div style="margin-bottom:20px">'+formatContent(article.content||'')+'</div>' +
+      '<div style="border-top:1px solid var(--line);padding-top:18px">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--ice2);margin-bottom:10px">💬 הערות ודירוג</div>' +
+        '<div style="margin-bottom:12px">' +
+          '<div style="font-size:12px;color:var(--ice3);margin-bottom:6px">הדירוג שלך:</div>' +
+          '<div style="display:flex;gap:4px">'+starsHtml+'</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:16px">' +
+          '<textarea id="agent-article-comment" placeholder="הוסף הערה..." style="flex:1;background:var(--ink2);border:1.5px solid var(--line2);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ice);font-family:Sora,sans-serif;resize:none;height:70px"></textarea>' +
+          '<button onclick="submitAgentArticleComment()" class="btn btn-gold" style="padding:0 14px;align-self:flex-end;height:40px">שלח</button>' +
+        '</div>' +
+        '<div id="agent-article-comments">'+commentsHtml+'</div>' +
+      '</div>' +
+    '</div>';
+}
+
+let _agentArticleRating = 0;
+let _agentArticleId = null;
+
+function setAgentArticleRating(n){
+  _agentArticleRating = n;
+  for(var i=1;i<=5;i++){
+    var btn=document.getElementById('aas-'+i);
+    if(btn) btn.style.opacity = i<=n ? '1' : '0.3';
+  }
+}
+
+async function submitAgentArticleComment(){
+  if(!S.agent){ alert('נדרש להיות מחובר'); return; }
+  var commentEl = document.getElementById('agent-article-comment');
+  var comment = commentEl ? commentEl.value.trim() : '';
+  if(!_agentArticleRating && !comment){ alert('יש לדרג או להוסיף הערה'); return; }
+
+  var agentNumId = S.agent ? (parseInt(S.agent.id)||null) : null;
+  console.log('[Comment] agent.id =', S.agent?.id, '| parsed =', agentNumId);
+  var row = {
+    article_id: String(_agentArticleId),
+    agent_id: agentNumId,
+    agent_name: S.agent.name,
+    rating: _agentArticleRating||null,
+    comment: comment||null
+  };
+  console.log('[Comment] row =', JSON.stringify(row));
+  var res = await _sb.from('kb_comments').insert(row).select().single();
+  if(res.error){ alert('שגיאה: '+res.error.message); return; }
+
+  if(_agentArticleRating){
+    var article = S_knowledge.find(function(a){return String(a.id)===String(_agentArticleId);});
+    if(article){
+      var rRes = await _sb.from('kb_comments').select('rating').eq('article_id',_agentArticleId).not('rating','is',null);
+      var ratings = (rRes.data||[]).map(function(r){return r.rating;});
+      var avg = ratings.reduce(function(s,r){return s+r;},0)/ratings.length;
+      await _sb.from('knowledge_base').update({avg_rating:avg, rating_count:ratings.length}).eq('id',_agentArticleId);
+      article.avg_rating = avg;
+      article.rating_count = ratings.length;
+    }
+  }
+
+  var article = S_knowledge.find(function(a){return String(a.id)===String(_agentArticleId);});
+  if(article) showAgentArticle(article);
 }
 
 function renderAgentAchievementsPanel(){
@@ -9256,6 +9372,171 @@ async function deleteDisciplineEvent(id){
   renderManagersDiscipline();
 }
 
+/* ══ KNOWLEDGE COMMENTS & RATINGS ══════════════════════════════ */
+let _kbCommentsArticleId = null;
+let _kbSelectedRating = 0;
+let S_kb_comments = [];
+
+async function openArticleComments(articleId){
+  _kbCommentsArticleId = articleId;
+  _kbSelectedRating = 0;
+  const article = S_knowledge.find(a=>String(a.id)===String(articleId));
+  if(!article) return;
+
+  document.getElementById('kb-comments-title').textContent = article.title;
+  document.getElementById('kb-comments-modal').style.display = 'flex';
+
+  // Track view
+  await trackArticleView(articleId);
+
+  // Load comments
+  const {data} = await _sb.from('kb_comments').select('*').eq('article_id',articleId).order('created_at',{ascending:false});
+  S_kb_comments = data||[];
+
+  renderKbComments();
+  renderKbStats(article);
+
+  // Show comment form for agents
+  const form = document.getElementById('kb-comment-form');
+  if(form) form.style.display = S.agent ? 'block' : 'none';
+  resetKbStars();
+}
+
+async function trackArticleView(articleId){
+  const article = S_knowledge.find(a=>String(a.id)===String(articleId));
+  if(!article) return;
+  const newCount = (article.view_count||0)+1;
+  const weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString();
+  const newWeek = new Date(article.last_view||0) >= new Date(weekAgo)
+    ? (article.week_views||0)+1 : 1;
+  await _sb.from('knowledge_base').update({
+    view_count: newCount,
+    week_views: newWeek,
+    last_view: new Date().toISOString()
+  }).eq('id',articleId);
+  article.view_count = newCount;
+  article.week_views = newWeek;
+}
+
+function renderKbStats(article){
+  const el = document.getElementById('kb-comments-stats');
+  if(!el) return;
+  const stars = article.avg_rating
+    ? '★'.repeat(Math.round(article.avg_rating))+'☆'.repeat(5-Math.round(article.avg_rating))
+    : '☆☆☆☆☆';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:18px;color:var(--gold)">${stars}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--ice)">${article.avg_rating?(+article.avg_rating).toFixed(1):'-'}</span>
+      <span style="font-size:11px;color:var(--ice3)">(${article.rating_count||0} דירוגים)</span>
+    </div>
+    <div style="width:1px;height:24px;background:var(--line)"></div>
+    <span style="font-size:13px;color:var(--ice3)">👁 ${article.view_count||0} צפיות</span>
+    <span style="font-size:13px;color:var(--ice3)">📅 ${article.week_views||0} השבוע</span>
+    <span style="font-size:13px;color:var(--ice3)">💬 ${S_kb_comments.length} תגובות</span>`;
+}
+
+function renderKbComments(){
+  const el = document.getElementById('kb-comments-list');
+  if(!el) return;
+  if(!S_kb_comments.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3);font-size:13px">אין תגובות עדיין. היה הראשון!</div>';
+    return;
+  }
+  el.innerHTML = S_kb_comments.map(c=>{
+    const stars = c.rating ? '★'.repeat(c.rating)+'☆'.repeat(5-c.rating) : '';
+    const starColor = c.rating>=4?'var(--ok)':c.rating>=3?'var(--gold)':'var(--warn)';
+    return`<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--gold-bg);border:1px solid var(--gold-line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold)">${(c.agent_name||'?')[0]}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ice)">${c.agent_name||'נציג'}</div>
+          ${stars?`<span style="font-size:13px;color:${starColor}">${stars}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">${c.created_at?new Date(c.created_at).toLocaleDateString('he-IL'):''}</span>
+          ${_adminUnlocked?`<button onclick="deleteKbComment('${c.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:0">🗑</button>`:''}
+        </div>
+      </div>
+      ${c.comment?`<div style="font-size:13px;color:var(--ice2);line-height:1.6;padding-right:36px">${c.comment}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function setKbRating(n){
+  _kbSelectedRating = n;
+  [1,2,3,4,5].forEach(i=>{
+    const btn = document.getElementById('kb-star-'+i);
+    if(btn) btn.style.opacity = i<=n ? '1' : '0.3';
+  });
+}
+
+function resetKbStars(){
+  _kbSelectedRating = 0;
+  [1,2,3,4,5].forEach(i=>{
+    const btn = document.getElementById('kb-star-'+i);
+    if(btn) btn.style.opacity = '0.4';
+  });
+  const inp = document.getElementById('kb-comment-input');
+  if(inp) inp.value = '';
+}
+
+async function submitKbComment(){
+  if(!S.agent){ alert('נדרש להיות מחובר כנציג'); return; }
+  if(!_kbSelectedRating && !document.getElementById('kb-comment-input').value.trim()){
+    alert('יש לדרג או להוסיף הערה'); return;
+  }
+  const comment = document.getElementById('kb-comment-input').value.trim();
+  const row = {
+    article_id: String(_kbCommentsArticleId),
+    agent_id: S.agent.id,
+    agent_name: S.agent.name,
+    rating: _kbSelectedRating||null,
+    comment: comment||null
+  };
+  const {data,error} = await _sb.from('kb_comments').insert(row).select().single();
+  if(error){ alert('שגיאה: '+error.message); return; }
+  S_kb_comments.unshift(data);
+
+  // Update article avg_rating
+  if(_kbSelectedRating){
+    const article = S_knowledge.find(a=>String(a.id)===String(_kbCommentsArticleId));
+    if(article){
+      const ratedComments = S_kb_comments.filter(c=>c.rating);
+      const avg = ratedComments.reduce((s,c)=>s+c.rating,0)/ratedComments.length;
+      article.avg_rating = avg;
+      article.rating_count = ratedComments.length;
+      await _sb.from('knowledge_base').update({
+        avg_rating: avg,
+        rating_count: ratedComments.length
+      }).eq('id',_kbCommentsArticleId);
+      renderKbStats(article);
+      if(document.getElementById('knowledge-articles-list')) renderKnowledgeArticles();
+    }
+  }
+  article_count_update: {
+    const article = S_knowledge.find(a=>String(a.id)===String(_kbCommentsArticleId));
+    if(article) article.comment_count = (article.comment_count||0)+1;
+  }
+
+  renderKbComments();
+  resetKbStars();
+}
+
+async function deleteKbComment(commentId){
+  if(!confirm('למחוק תגובה זו?')) return;
+  await _sb.from('kb_comments').delete().eq('id',commentId);
+  S_kb_comments = S_kb_comments.filter(c=>String(c.id)!==String(commentId));
+  renderKbComments();
+}
+
+function closeArticleComments(){
+  document.getElementById('kb-comments-modal').style.display='none';
+  _kbCommentsArticleId=null;
+  // Refresh article list to update counts
+  if(document.getElementById('knowledge-articles-list')) renderKnowledgeArticles();
+}
+
 function onDiscCatChange(){
   const cat = document.getElementById('disc-add-cat').value;
   const wrap = document.getElementById('warning-template-btn-wrap');
@@ -10487,6 +10768,40 @@ function renderManagersDiscipline(){
   </div>
 </div>
 
+
+<!-- ARTICLE COMMENTS MODAL -->
+<div id="kb-comments-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:580px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px">💬 תגובות נציגים</div>
+        <div id="kb-comments-title" style="font-size:16px;font-weight:700;color:var(--ice)"></div>
+      </div>
+      <button onclick="closeArticleComments()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Stats bar -->
+    <div id="kb-comments-stats" style="padding:14px 22px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;background:var(--ink3)"></div>
+    <!-- Comments list -->
+    <div id="kb-comments-list" style="padding:16px 22px;max-height:340px;overflow-y:auto"></div>
+    <!-- Rating + Comment form (agent only) -->
+    <div id="kb-comment-form" style="padding:16px 22px;border-top:1px solid var(--line);display:none">
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--ice2);margin-bottom:8px">הדירוג שלך:</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="setKbRating(1)" id="kb-star-1" style="font-size:24px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:0.4;transition:opacity 0.15s" title="1 כוכב">★</button>
+          <button onclick="setKbRating(2)" id="kb-star-2" style="font-size:24px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:0.4;transition:opacity 0.15s" title="2 כוכבים">★</button>
+          <button onclick="setKbRating(3)" id="kb-star-3" style="font-size:24px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:0.4;transition:opacity 0.15s" title="3 כוכבים">★</button>
+          <button onclick="setKbRating(4)" id="kb-star-4" style="font-size:24px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:0.4;transition:opacity 0.15s" title="4 כוכבים">★</button>
+          <button onclick="setKbRating(5)" id="kb-star-5" style="font-size:24px;background:none;border:none;cursor:pointer;padding:0;line-height:1;opacity:0.4;transition:opacity 0.15s" title="5 כוכבים">★</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <textarea id="kb-comment-input" placeholder="הוסף הערה... (אופציונלי)" style="flex:1;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ice);font-family:'Sora',sans-serif;resize:none;height:70px"></textarea>
+        <button onclick="submitKbComment()" class="btn btn-gold" style="padding:0 16px;align-self:flex-end;height:40px">שלח</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- WARNING CALL TEMPLATE MODAL -->
 <div id="warning-template-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
