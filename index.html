@@ -2173,6 +2173,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <option value="mid">⭐⭐⭐ בינוני (3)</option>
                 <option value="high">⭐⭐⭐⭐⭐ גבוה (4-5)</option>
               </select>
+              <select id="ai-fb-filter-handled" onchange="renderAIFeedback()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">הכל</option>
+                <option value="pending">🔴 לטיפול</option>
+                <option value="handled">✅ טופל</option>
+              </select>
               <button class="btn btn-outline btn-sm" onclick="loadAIFeedback()">↺ רענן</button>
             </div>
             <div id="ai-feedback-list"></div>
@@ -3836,6 +3841,7 @@ async function sendKnowledgeChat(mode){
     ? 'אתה עוזר AI של מוקד '+dept+'.'+
       ' ענה בעברית, בצורה ברורה וישירה.'+
       ' אם התשובה מופיעה בבסיס הידע — ענה ישירות. אל תגיד "פנה למנהל" אם המידע קיים.'+
+      ' בסוף תשובתך הוסף בשורה חדשה: SOURCE:כותרת_המאמר (כותרת המאמר בדיוק כפי שמופיעה בבסיס הידע). אם השתמשת בכמה מאמרים: SOURCE:כותרת1|כותרת2'+
       '\n\n=== בסיס הידע של '+dept+' ===\n'+ctx+'\n=== סוף בסיס הידע ==='
     : 'אתה עוזר AI של מוקד שירות. ענה בעברית.';
 
@@ -3875,9 +3881,17 @@ async function sendKnowledgeChat(mode){
       }
       throw new Error(msg);
     }
-    const ans=data.choices[0].message.content.trim();
-    // Store context for rating
-    _aiAnswerContext[thinkingId]={question:q, answer:ans};
+    const rawAns=data.choices[0].message.content.trim();
+    // Extract SOURCE: marker from answer
+    const sourceMatch = rawAns.match(/\nSOURCE:(.+)$/m);
+    const sourceTitles = sourceMatch ? sourceMatch[1].split('|').map(s=>s.trim()) : [];
+    const ans = rawAns.replace(/\nSOURCE:.+$/m,'').trim();
+    // Find matching article IDs by title
+    const ctxArticles = S_knowledge ? sourceTitles.map(function(title){
+      const a = S_knowledge.find(function(x){ return x.title && x.title.trim()===title; });
+      return a ? String(a.id) : null;
+    }).filter(Boolean) : [];
+    _aiAnswerContext[thinkingId]={question:q, answer:ans, articleIds:ctxArticles};
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
@@ -3950,22 +3964,69 @@ async function rateAIAnswer(msgId, rating, boxId){
   var rateDiv=document.getElementById('rate-'+msgId);
   if(rateDiv) rateDiv.querySelectorAll('button').forEach(function(b){b.onclick=null;b.style.cursor='default';});
 
-  // Save to Supabase
   var ctx = _aiAnswerContext[msgId]||{};
+
+  // If rating < 5, show feedback popup
+  if(rating < 5){
+    _pendingRating = {msgId:msgId, rating:rating, ctx:ctx};
+    openRatingFeedbackPopup(rating);
+    return;
+  }
+
+  // Rating 5 — save directly
+  await saveAIFeedbackRow(msgId, rating, ctx, '', '');
+}
+
+var _pendingRating = null;
+
+function openRatingFeedbackPopup(rating){
+  var modal = document.getElementById('rating-feedback-modal');
+  if(!modal) return;
+  document.getElementById('rfm-reason').value='';
+  document.getElementById('rfm-correct').value='';
+  var stars='★'.repeat(rating)+'☆'.repeat(5-rating);
+  document.getElementById('rfm-stars').textContent=stars;
+  modal.style.display='flex';
+  setTimeout(function(){document.getElementById('rfm-reason').focus();},100);
+}
+
+function closeRatingFeedback(){
+  document.getElementById('rating-feedback-modal').style.display='none';
+  _pendingRating=null;
+}
+
+async function submitRatingFeedback(){
+  if(!_pendingRating) return;
+  var reason=document.getElementById('rfm-reason').value.trim();
+  var correct=document.getElementById('rfm-correct').value.trim();
+  await saveAIFeedbackRow(_pendingRating.msgId, _pendingRating.rating, _pendingRating.ctx, reason, correct);
+  closeRatingFeedback();
+}
+
+async function saveAIFeedbackRow(msgId, rating, ctx, reason, agentAnswer){
   var row = {
     msg_id: String(msgId),
     agent_id: S.agent ? parseInt(S.agent.id)||null : null,
     agent_name: S.agent ? S.agent.name : 'לא ידוע',
     rating: parseInt(rating),
     question: ctx.question||'',
-    answer: ctx.answer||''
+    answer: ctx.answer||'',
+    reason: reason||null,
+    agent_answer: agentAnswer||null,
+    article_ids: ctx.articleIds ? ctx.articleIds.join(',') : null
   };
-  console.log('[Rate] saving:', JSON.stringify(row));
   try{
     var res = await _sb.from('ai_feedback').insert(row).select().single();
     if(res.error){ console.error('[Rate] error:', res.error.message); }
-    else { console.log('[Rate] saved OK:', res.data); }
   }catch(e){ console.error('[Rate] exception:', e.message); }
+}
+
+async function markAIFeedbackHandled(id){
+  var res = await _sb.from('ai_feedback').update({handled:true}).eq('id', String(id));
+  if(res.error){ alert('שגיאה: '+res.error.message); return; }
+  var item = (window._aiFeedbackData||[]).find(function(i){ return String(i.id)===String(id); });
+  if(item) item.handled = true;
+  renderAIFeedback();
 }
 
 async function deleteAIFeedback(id){
@@ -4015,6 +4076,9 @@ function renderAIFeedback(){
   if(filter==='low') items=items.filter(function(i){return i.rating<=2;});
   else if(filter==='mid') items=items.filter(function(i){return i.rating===3;});
   else if(filter==='high') items=items.filter(function(i){return i.rating>=4;});
+  var handledFilter=document.getElementById('ai-fb-filter-handled')?.value||'all';
+  if(handledFilter==='pending') items=items.filter(function(i){return !i.handled;});
+  else if(handledFilter==='handled') items=items.filter(function(i){return !!i.handled;});
 
   if(!items.length){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין משובים עדיין</div>';
@@ -4027,14 +4091,16 @@ function renderAIFeedback(){
     var borderColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
     var starColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
     var dateStr=item.created_at?new Date(item.created_at).toLocaleDateString('he-IL'):'';
-    // Try to find source article by question keywords
-    var matchArticle=null;
-    if(item.question && S_knowledge){
-      var qLower=(item.question||'').slice(0,30).toLowerCase();
-      matchArticle=S_knowledge.find(function(a){ return a.content && a.content.toLowerCase().includes(qLower); });
-    }
-    var srcArtId = matchArticle ? String(matchArticle.id) : '';
-    var srcBtnHtml = srcArtId ? '<button onclick="openArticleFromFeedback(\'' + srcArtId + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(91,160,230,0.15);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:11px;cursor:pointer;font-family:Sora,sans-serif">🔗 מקור</button>' : '';
+    // Use saved article_ids from when AI answered
+    var savedIds = item.article_ids ? item.article_ids.split(',').filter(Boolean) : [];
+    var srcArticles = savedIds.map(function(id){
+      return S_knowledge ? S_knowledge.find(function(a){return String(a.id)===String(id);}) : null;
+    }).filter(Boolean);
+    var srcBtnHtml = srcArticles.length > 0
+      ? srcArticles.map(function(a){
+          return '<button onclick="openArticleFromFeedback(\'' + a.id + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(91,160,230,0.12);border:1.5px solid rgba(91,160,230,0.4);color:#5BA0E6;border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Sora,sans-serif;font-weight:600">🔗 ' + (a.title||'מאמר').slice(0,25) + '</button>';
+        }).join(' ')
+      : '';
     return '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:16px;padding:16px 18px;margin-bottom:12px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">' +
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
@@ -4046,6 +4112,10 @@ function renderAIFeedback(){
         '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
           '<span style="font-size:11px;color:#555;font-family:monospace">'+dateStr+'</span>' +
           srcBtnHtml +
+          (item.handled
+            ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(45,212,164,0.15);border:1px solid rgba(45,212,164,0.4);color:#2dd4a4;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ טופל</span>'
+            : '<button onclick="markAIFeedbackHandled(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,101,101,0.12);border:1.5px solid rgba(240,101,101,0.5);color:#F06565;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">🔴 לטיפול מנהל</button>'
+          ) +
           '<button onclick="deleteAIFeedback(\'' + item.id + '\')" style="background:rgba(240,101,101,0.15);border:1px solid rgba(240,101,101,0.3);color:#F06565;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">🗑</button>' +
         '</div>' +
       '</div>' +
@@ -4053,10 +4123,18 @@ function renderAIFeedback(){
         '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">❓ שאלת הנציג</div>' +
         '<div style="font-size:14px;color:#1A1814;line-height:1.6">'+(item.question||'—')+'</div>' +
       '</div>' +
-      '<div style="background:'+(item.rating<=2?'rgba(240,101,101,0.06)':'rgba(255,255,255,0.4)')+';border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06)">' +
+      '<div style="background:'+(item.rating<=2?'rgba(240,101,101,0.06)':'rgba(255,255,255,0.4)')+';border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06);margin-bottom:'+(item.reason||item.agent_answer?'8px':'0')+'">' +
         '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">🤖 תשובת AI</div>' +
         '<div style="font-size:13px;color:#2A2520;line-height:1.7">'+(item.answer||'—').slice(0,400)+(item.answer&&item.answer.length>400?'…':'')+'</div>' +
       '</div>' +
+      (item.reason ? '<div style="background:rgba(240,160,75,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(240,160,75,0.3);margin-bottom:8px">' +
+        '<div style="font-size:10px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">⚠️ סיבת הדירוג</div>' +
+        '<div style="font-size:13px;color:#2A2520;line-height:1.7">'+item.reason+'</div>' +
+      '</div>' : '') +
+      (item.agent_answer ? '<div style="background:rgba(45,212,164,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(45,212,164,0.3)">' +
+        '<div style="font-size:10px;font-weight:700;color:#2dd4a4;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">✅ תשובת הנציג</div>' +
+        '<div style="font-size:13px;color:#2A2520;line-height:1.7;font-weight:600">'+item.agent_answer+'</div>' +
+      '</div>' : '') +
     '</div>';
   }).join('');
   console.log('[renderAIFeedback] html length=', html.length, 'preview=', html.slice(0,100));
@@ -10969,6 +11047,33 @@ function renderManagersDiscipline(){
       <div style="display:flex;gap:8px">
         <textarea id="kb-comment-input" placeholder="הוסף הערה... (אופציונלי)" style="flex:1;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--ice);font-family:'Sora',sans-serif;resize:none;height:70px"></textarea>
         <button onclick="submitKbComment()" class="btn btn-gold" style="padding:0 16px;align-self:flex-end;height:40px">שלח</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RATING FEEDBACK MODAL -->
+<div id="rating-feedback-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:#F5F4F0;border-radius:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:20px 24px">
+      <div style="font-size:10px;font-weight:700;color:rgba(201,168,76,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
+      <div style="font-size:22px;color:#F0EDE6;font-family:Playfair Display,serif;font-weight:700">מה הייתה הבעיה?</div>
+      <div id="rfm-stars" style="font-size:20px;color:#C9A84C;margin-top:6px">★★★★☆</div>
+    </div>
+    <!-- Body -->
+    <div style="padding:24px">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">❓ מה הסיבה לדירוג?</label>
+        <textarea id="rfm-reason" placeholder="לדוגמא: התשובה לא מדויקת, חסר מידע, לא רלוונטי..." style="width:100%;min-height:80px;background:white;border:1.5px solid #E8E4DE;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">✅ מה התשובה הנכונה לדעתך?</label>
+        <textarea id="rfm-correct" placeholder="רשום את התשובה הנכונה..." style="width:100%;min-height:90px;background:white;border:1.5px solid #E8E4DE;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="submitRatingFeedback()" style="flex:1;background:#C9A84C;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;color:#1A1814;cursor:pointer;font-family:Sora,sans-serif">💾 שלח משוב</button>
+        <button onclick="closeRatingFeedback()" style="background:transparent;border:1.5px solid #E8E4DE;border-radius:14px;padding:12px 18px;font-size:13px;color:#888;cursor:pointer;font-family:Sora,sans-serif">דלג</button>
       </div>
     </div>
   </div>
