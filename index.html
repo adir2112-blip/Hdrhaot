@@ -975,6 +975,68 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── SAFE AREA iOS ── */
   .page { padding-bottom:max(110px, calc(80px + env(safe-area-inset-bottom)))!important; }
   .bottom-nav { padding-bottom:max(14px, env(safe-area-inset-bottom))!important; }
+
+
+  /* ── AI FEEDBACK PANEL ── */
+  #kp-ai-feedback { padding:0 !important; }
+  #ai-feedback-list { padding:0 !important; }
+  #ai-feedback-list > div {
+    border-radius:16px !important;
+    padding:14px 14px !important;
+    margin-bottom:10px !important;
+  }
+  #ai-feedback-list .flex-wrap { flex-wrap:wrap !important; gap:6px !important; }
+
+  /* ── DISCIPLINE PANEL ── */
+  #tab-discipline .sec > div:first-child { flex-direction:column !important; }
+  #tab-discipline [style*="width:180px"] { width:100% !important; position:static !important; }
+  #tab-discipline [style*="flex:1"] { min-width:0 !important; }
+
+  /* ── MODALS — full screen on mobile ── */
+  #disc-edit-modal > div,
+  #warning-template-modal > div,
+  #ai-fb-edit-modal > div,
+  #kb-comments-modal > div,
+  #rating-feedback-modal > div {
+    max-width:100% !important;
+    border-radius:20px 20px 0 0 !important;
+    margin-bottom:0 !important;
+    position:fixed !important;
+    bottom:0 !important;
+    left:0 !important;
+    right:0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+  }
+  #disc-edit-modal,
+  #warning-template-modal,
+  #ai-fb-edit-modal,
+  #kb-comments-modal,
+  #rating-feedback-modal {
+    align-items:flex-end !important;
+    padding:0 !important;
+  }
+
+  /* ── GRIDS → single column ── */
+  [style*="grid-template-columns:1fr 1fr 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns:1fr !important;
+  }
+
+  /* ── DISCIPLINE SIDEBAR ── */
+  #dp-list,#dp-add,#dp-summary,#dp-managers { padding:0 !important; }
+  .dsb-btn { padding:10px 10px !important; font-size:12px !important; }
+
+  /* ── KNOWLEDGE SIDEBAR ── */
+  .ksb-btn { padding:10px 10px !important; font-size:12px !important; }
+
+  /* ── TRACKING ROW ── */
+  .track-row { padding:12px 12px !important; }
+
+  /* ── BUTTONS WRAP ── */
+  [style*="display:flex"][style*="gap:6px"] { flex-wrap:wrap !important; }
+  [style*="display:flex"][style*="gap:8px"] { flex-wrap:wrap !important; }
 }
 
 /* ══ RICH EDITOR TOOLBAR ══════════════════════════════ */
