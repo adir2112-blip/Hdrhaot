@@ -2009,8 +2009,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <button onclick="showKnowledgePanel('chat')" id="ksb-chat" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
               <span style="font-size:18px">💬</span><span>בדוק AI</span>
             </button>
-            <button onclick="showKnowledgePanel('briefings')" id="ksb-briefings" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+            <button onclick="showKnowledgePanel('briefings')" id="ksb-briefings" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
               <span style="font-size:18px">📋</span><span>תדריכים</span>
+            </button>
+            <button onclick="showKnowledgePanel('ai-feedback')" id="ksb-ai-feedback" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <span style="font-size:18px">⭐</span><span>הערות AI</span>
             </button>
           </div>
         </div>
@@ -2157,6 +2160,22 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <input type="text" id="kb-briefings-search" placeholder="🔍 חפש תדריך..." oninput="renderKBBriefings()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
             </div>
             <div id="kb-briefings-list"></div>
+          </div>
+
+          <!-- AI FEEDBACK PANEL -->
+          <div id="kp-ai-feedback" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">הערות AI</div>
+            <div class="sec-title" style="margin-bottom:16px">דירוגי <em>נציגים</em> על תשובות AI</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="ai-fb-filter-rating" onchange="renderAIFeedback()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">כל הדירוגים</option>
+                <option value="low">⭐⭐ נמוך (1-2)</option>
+                <option value="mid">⭐⭐⭐ בינוני (3)</option>
+                <option value="high">⭐⭐⭐⭐⭐ גבוה (4-5)</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="loadAIFeedback()">↺ רענן</button>
+            </div>
+            <div id="ai-feedback-list"></div>
           </div>
 
         </div>
@@ -3208,11 +3227,13 @@ function checkKnowledgePw(){
 }
 
 function showKnowledgePanel(key){
-  ['library','articles','add','chat','briefings'].forEach(p=>{
+  console.log('[Panel] key=',key, 'kp-ai-feedback el=', document.getElementById('kp-ai-feedback'));
+  ['library','articles','add','chat','briefings','ai-feedback'].forEach(p=>{
     const el=document.getElementById('kp-'+p);
     if(el) el.style.display=p===key?'block':'none';
   });
   if(key==='add') setTimeout(()=>{ initRichDragDrop('k-content'); }, 100);
+  if(key==='ai-feedback') loadAIFeedback();
   document.querySelectorAll('.ksb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
   const ab=document.getElementById('ksb-'+key);
   if(ab){ab.style.background='var(--gold-bg)';ab.style.border='1px solid var(--gold-line)';ab.style.color='var(--gold)';ab.style.fontWeight='700';}
@@ -3855,6 +3876,8 @@ async function sendKnowledgeChat(mode){
       throw new Error(msg);
     }
     const ans=data.choices[0].message.content.trim();
+    // Store context for rating
+    _aiAnswerContext[thinkingId]={question:q, answer:ans};
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
@@ -3887,12 +3910,160 @@ function appendKbMessage(boxId,role,text,id){
 
 function updateKbMessage(boxId,id,text){
   const el=document.getElementById(id);
-  if(el){const bubble=el.querySelector('div');if(bubble)bubble.textContent=text;}
+  if(el){
+    const bubble=el.querySelector('div');
+    if(bubble){
+      var rateDiv=document.createElement('div');
+      rateDiv.id='rate-'+id;
+      rateDiv.style.cssText='display:flex;gap:4px;margin-top:8px;justify-content:flex-end';
+      for(var si=1;si<=5;si++){
+        var btn=document.createElement('button');
+        btn.id='rs-'+id+'-'+si;
+        btn.textContent='★';
+        btn.style.cssText='font-size:16px;background:none;border:none;cursor:pointer;padding:0;opacity:0.4;transition:all 0.15s';
+        btn.dataset.msgId=id;
+        btn.dataset.rating=si;
+        btn.dataset.boxId=boxId;
+        btn.addEventListener('click',function(){
+          rateAIAnswer(this.dataset.msgId,parseInt(this.dataset.rating),this.dataset.boxId);
+        });
+        rateDiv.appendChild(btn);
+      }
+      bubble.innerHTML=text;
+      bubble.appendChild(rateDiv);
+    }
+  }
   const box=document.getElementById(boxId);
   if(box) box.scrollTop=box.scrollHeight;
 }
 
 let _agentKbDept='כללי';
+let _aiAnswerContext = {}; // stores question+answer per message id
+
+async function rateAIAnswer(msgId, rating, boxId){
+  // Highlight stars
+  for(var i=1;i<=5;i++){
+    var btn=document.getElementById('rs-'+msgId+'-'+i);
+    if(btn) btn.style.opacity = i<=rating ? '1' : '0.25';
+  }
+  // Remove clickability after rating
+  var rateDiv=document.getElementById('rate-'+msgId);
+  if(rateDiv) rateDiv.querySelectorAll('button').forEach(function(b){b.onclick=null;b.style.cursor='default';});
+
+  // Save to Supabase
+  var ctx = _aiAnswerContext[msgId]||{};
+  var row = {
+    msg_id: String(msgId),
+    agent_id: S.agent ? parseInt(S.agent.id)||null : null,
+    agent_name: S.agent ? S.agent.name : 'לא ידוע',
+    rating: parseInt(rating),
+    question: ctx.question||'',
+    answer: ctx.answer||''
+  };
+  console.log('[Rate] saving:', JSON.stringify(row));
+  try{
+    var res = await _sb.from('ai_feedback').insert(row).select().single();
+    if(res.error){ console.error('[Rate] error:', res.error.message); }
+    else { console.log('[Rate] saved OK:', res.data); }
+  }catch(e){ console.error('[Rate] exception:', e.message); }
+}
+
+async function deleteAIFeedback(id){
+  if(!confirm('למחוק משוב זה?')) return;
+  var res=await _sb.from('ai_feedback').delete().eq('id',id);
+  if(res.error){alert('שגיאה: '+res.error.message);return;}
+  window._aiFeedbackData=(window._aiFeedbackData||[]).filter(function(i){return String(i.id)!==String(id);});
+  renderAIFeedback();
+}
+
+function openArticleFromFeedback(articleId){
+  // Switch to knowledge tab and open article
+  switchTab('knowledge');
+  showKnowledgePanel('articles');
+  setTimeout(function(){
+    var article=S_knowledge.find(function(a){return String(a.id)===String(articleId);});
+    if(article) editKnowledgeArticle(article.id);
+  },300);
+}
+
+async function loadAIFeedback(){
+  console.log('[loadAIFeedback] starting, _sb=', !!window._sb);
+  var el=document.getElementById('ai-feedback-list');
+  if(el) el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:1rem">טוען...</div>';
+  try {
+    const {data,error}=await _sb.from('ai_feedback').select('*').order('created_at',{ascending:false}).limit(100);
+    console.log('[loadAIFeedback] data:', data, 'error:', error);
+    if(error){ 
+      if(el) el.innerHTML='<div style="color:var(--danger)">שגיאה: '+error.message+'</div>';
+      return;
+    }
+    window._aiFeedbackData = data||[];
+    console.log('[loadAIFeedback] stored', window._aiFeedbackData.length, 'items, el=', !!el);
+    renderAIFeedback();
+  } catch(e) {
+    console.error('[loadAIFeedback] exception:', e.message);
+    if(el) el.innerHTML='<div style="color:var(--danger)">שגיאה: '+e.message+'</div>';
+  }
+}
+
+function renderAIFeedback(){
+  const el=document.getElementById('ai-feedback-list');
+  console.log('[renderAIFeedback] el=', !!el, 'items=', (window._aiFeedbackData||[]).length);
+  if(!el){ console.warn('[Render] ai-feedback-list not found'); return; }
+  var filter=document.getElementById('ai-fb-filter-rating')?.value||'all';
+  var items=(window._aiFeedbackData||[]).slice();
+  if(filter==='low') items=items.filter(function(i){return i.rating<=2;});
+  else if(filter==='mid') items=items.filter(function(i){return i.rating===3;});
+  else if(filter==='high') items=items.filter(function(i){return i.rating>=4;});
+
+  if(!items.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין משובים עדיין</div>';
+    return;
+  }
+
+  var html=items.map(function(item){
+    var stars='★'.repeat(item.rating||0)+'☆'.repeat(5-(item.rating||0));
+    var bgColor=item.rating<=2?'rgba(240,101,101,0.12)':item.rating<=3?'rgba(201,168,76,0.08)':'rgba(45,212,164,0.08)';
+    var borderColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
+    var starColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
+    var dateStr=item.created_at?new Date(item.created_at).toLocaleDateString('he-IL'):'';
+    // Try to find source article by question keywords
+    var matchArticle=null;
+    if(item.question && S_knowledge){
+      var qLower=(item.question||'').slice(0,30).toLowerCase();
+      matchArticle=S_knowledge.find(function(a){ return a.content && a.content.toLowerCase().includes(qLower); });
+    }
+    var srcArtId = matchArticle ? String(matchArticle.id) : '';
+    var srcBtnHtml = srcArtId ? '<button onclick="openArticleFromFeedback(\'' + srcArtId + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(91,160,230,0.15);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:11px;cursor:pointer;font-family:Sora,sans-serif">🔗 מקור</button>' : '';
+    return '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:16px;padding:16px 18px;margin-bottom:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.2);border:1.5px solid rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#C9A84C">'+(item.agent_name||'?').charAt(0)+'</div>' +
+          '<span style="font-size:14px;font-weight:700;color:#1A1814">'+(item.agent_name||'נציג')+'</span>' +
+          '<span style="font-size:16px;color:'+starColor+'">'+stars+'</span>' +
+          '<span style="font-size:12px;font-weight:700;color:'+starColor+'">'+(item.rating||0)+'/5</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+          '<span style="font-size:11px;color:#555;font-family:monospace">'+dateStr+'</span>' +
+          srcBtnHtml +
+          '<button onclick="deleteAIFeedback(\'' + item.id + '\')" style="background:rgba(240,101,101,0.15);border:1px solid rgba(240,101,101,0.3);color:#F06565;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">🗑</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.6);border-radius:10px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(0,0,0,0.06)">' +
+        '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">❓ שאלת הנציג</div>' +
+        '<div style="font-size:14px;color:#1A1814;line-height:1.6">'+(item.question||'—')+'</div>' +
+      '</div>' +
+      '<div style="background:'+(item.rating<=2?'rgba(240,101,101,0.06)':'rgba(255,255,255,0.4)')+';border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06)">' +
+        '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">🤖 תשובת AI</div>' +
+        '<div style="font-size:13px;color:#2A2520;line-height:1.7">'+(item.answer||'—').slice(0,400)+(item.answer&&item.answer.length>400?'…':'')+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  console.log('[renderAIFeedback] html length=', html.length, 'preview=', html.slice(0,100));
+  el.innerHTML=html;
+  console.log('[renderAIFeedback] el.innerHTML length=', el.innerHTML.length);
+}
+
 let _agentKbHistory=[];
 
 function openAgentKnowledgeChat(){
