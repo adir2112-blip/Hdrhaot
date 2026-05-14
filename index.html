@@ -4037,7 +4037,7 @@ function updateKbMessage(boxId,id,text){
         });
         rateDiv.appendChild(btn);
       }
-      bubble.innerHTML=text;
+      bubble.innerHTML=formatContent(text);
       bubble.appendChild(rateDiv);
     }
   }
@@ -8039,10 +8039,9 @@ function formatContent(raw){
       .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
       })
-      // Auto URLs: http(s)://... (only bare URLs not already inside markdown links)
+      // Auto URLs: http(s)://... — show "לפתיחת הקישור לחץ כאן"
       .replace(/(?<!\]\()(?<!href=")(https?:\/\/[^\s<>"\)]+)/g, function(m,url){
-        var short=url.length>50?url.slice(0,50)+'…':url;
-        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+short+' ↗</a>';
+        return 'לפתיחת הקישור <a href="'+url+'" target="_blank" rel="noopener" style="color:#1A1814;text-decoration:underline;font-weight:800;text-underline-offset:2px">לחץ כאן</a>';
       })
       // Bold: **text**
       .replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>')
