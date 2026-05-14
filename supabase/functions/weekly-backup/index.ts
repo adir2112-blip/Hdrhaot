@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const RESEND_API_KEY = 're_JqPa9R3P_MtuZHmfM5cYYjuEAjz1A4yQZ'
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const TO_EMAIL = 'adir2112@gmail.com'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
