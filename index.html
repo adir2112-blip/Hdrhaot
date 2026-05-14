@@ -1623,7 +1623,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   </div>
 
   <!-- REPORTS -->
-  <div class="sec" id="tab-reports" style="display:none">
+  <div class="sec" id="tab-reports">
     <div class="sec-eyebrow">דוחות</div>
     <div class="sec-title" style="margin-bottom:20px">דוחות <em>שימוש ופעילות</em></div>
 
@@ -2996,9 +2996,7 @@ function switchTab(name){
     if(!_adminUnlocked){
       switchTab('agent'); return;
     }
-    document.getElementById('tab-reports').style.display='block';
     loadReports();
-    return;
   }
   if(name==='discipline'){
     if(!_adminUnlocked){
@@ -4002,8 +4000,7 @@ async function sendKnowledgeChat(mode){
   // Build system message with knowledge - injected as first message every time
   const sysMsg = ctx
     ? 'אתה עוזר AI של מוקד '+dept+'.'+
-      ' ענה בעברית, בצורה ברורה וישירה.'+
-' כאשר יש קישור בבסיס הידע — העתק אותו בדיוק כפי שהוא, ללא שום שינוי.'+
+      ' ענה בעברית, בצורה ברורה וישירה. כאשר קיים קישור בבסיס הידע — העתק אותו בדיוק מילה במילה ללא שינוי של אף תו.'+
       ' אם התשובה מופיעה בבסיס הידע — ענה ישירות. אל תגיד "פנה למנהל" אם המידע קיים.'+
       ' בסוף תשובתך הוסף בשורה חדשה: SOURCE:כותרת_המאמר (כותרת המאמר בדיוק כפי שמופיעה בבסיס הידע). אם השתמשת בכמה מאמרים: SOURCE:כותרת1|כותרת2'+
       '\n\n=== בסיס הידע של '+dept+' ===\n'+ctx+'\n=== סוף בסיס הידע ==='
@@ -8124,9 +8121,9 @@ function formatContent(raw){
       .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
       })
-      // Auto URLs: http(s)://... — show "לפתיחת הקישור לחץ כאן"
+      // Auto URLs: http(s)://... — show clickable link
       .replace(/(?<!\]\()(?<!href=")(https?:\/\/[^\s<>"\)]+)/g, function(m,url){
-        return 'לפתיחת הקישור <a href="'+url+'" target="_blank" rel="noopener" style="color:#1A1814;text-decoration:underline;font-weight:800;text-underline-offset:2px">לחץ כאן</a>';
+        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:700">לפתיחת הקישור לחץ כאן ↗</a>';
       })
       // Bold: **text**
       .replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>')
