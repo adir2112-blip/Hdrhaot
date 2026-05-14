@@ -2157,9 +2157,24 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               </div>
               <div class="field">
                 <label class="field-label">מחלקה</label>
-                <select id="k-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
-                  <option value="כללי">כללי (לכולם)</option><option value="מובמנט">מובמנט</option>
-                  <option value="פריפיט">פריפיט</option><option value="סחר">סחר</option><option value="מאוחדת">מאוחדת</option>
+                <select id="k-dept" onchange="window._lastKbDept=this.value" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
+                  <option value="כללי">כללי (לכולם)</option>
+                  <optgroup label="── קבוצות (כל המחלקות בקבוצה) ──">
+                    <option value="מובמנט">מובמנט (כל מחלקות מובמנט)</option>
+                    <option value="פריפיט">פריפיט (כל מחלקות פריפיט)</option>
+                    <option value="סחר">סחר</option>
+                    <option value="מאוחדת">מאוחדת</option>
+                  </optgroup>
+                  <optgroup label="── מחלקות ספציפיות ──">
+                    <option value="כללית אקטיב">כללית אקטיב</option>
+                    <option value="עובדים בריא">עובדים בריא</option>
+                    <option value="מעוף לעמית">מעוף לעמית</option>
+                    <option value="מעוף לעמית מכירות">מעוף לעמית מכירות</option>
+                    <option value="לאומית FIT">לאומית FIT</option>
+                    <option value="פריפיט שירות">פריפיט שירות</option>
+                    <option value="פריפיט מכירות">פריפיט מכירות</option>
+                    <option value="מחלקת סחר">מחלקת סחר</option>
+                  </optgroup>
                 </select>
               </div>
               <div class="field">
@@ -3299,7 +3314,14 @@ function showKnowledgePanel(key){
     const el=document.getElementById('kp-'+p);
     if(el) el.style.display=p===key?'block':'none';
   });
-  if(key==='add') setTimeout(()=>{ initRichDragDrop('k-content'); }, 100);
+  if(key==='add'){
+    setTimeout(()=>{ initRichDragDrop('k-content'); }, 100);
+    // Restore last selected dept
+    if(window._lastKbDept){
+      const sel=document.getElementById('k-dept');
+      if(sel) sel.value=window._lastKbDept;
+    }
+  }
   if(key==='ai-feedback') loadAIFeedback();
   document.querySelectorAll('.ksb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
   const ab=document.getElementById('ksb-'+key);
@@ -3849,12 +3871,22 @@ function buildKnowledgeContext(dept){
   const agentGrp = S.agent ? agentGroup(S.agent) : null;
   // dept = specific dept chosen by agent (e.g. 'עובדים בריא')
   // Show: articles for that exact dept + 'כללי' + group key articles
+  // Find agent's group
+  const agentGrpDepts = agentGrp ? (GROUPS.find(g=>g.key===agentGrp)?.depts||[]) : [];
+
   const articles=S_knowledge.filter(a=>{
     if(a.dept==='כללי'||!a.dept) return true;
     const ad=a.dept.trim().toLowerCase();
     const deptLower=(dept||'').trim().toLowerCase();
-    if(ad===deptLower) return true; // exact match
-    if(agentGrp && ad===agentGrp.toLowerCase() && (dept===agentGrp||!dept)) return true; // group key only when no specific dept
+    if(ad===deptLower) return true; // exact dept match
+
+    // If article dept is a GROUP key (e.g. 'מובמנט') — show to all agents in that group
+    const articleGrp = GROUPS.find(g=>g.key.trim().toLowerCase()===ad);
+    if(articleGrp && agentGrp && articleGrp.key===agentGrp) return true;
+
+    // Also: if article dept matches group key AND agent is in that group
+    if(agentGrp && ad===agentGrp.trim().toLowerCase()) return true;
+
     return false;
   });
   // Articles are the primary knowledge source - include more content
@@ -10569,22 +10601,21 @@ function renderManagersDiscipline(){
       <label class="field-label">מחלקה</label>
       <select id="k-edit-dept" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
         <option value="כללי">כללי (לכולם)</option>
-        <optgroup label="── מובמנט ──">
+        <optgroup label="── קבוצות (כל המחלקות בקבוצה) ──">
+          <option value="מובמנט">מובמנט (כל מחלקות מובמנט)</option>
+          <option value="פריפיט">פריפיט (כל מחלקות פריפיט)</option>
+          <option value="סחר">סחר</option>
+          <option value="מאוחדת">מאוחדת</option>
+        </optgroup>
+        <optgroup label="── מחלקות ספציפיות ──">
           <option value="כללית אקטיב">כללית אקטיב</option>
           <option value="עובדים בריא">עובדים בריא</option>
           <option value="מעוף לעמית">מעוף לעמית</option>
           <option value="מעוף לעמית מכירות">מעוף לעמית מכירות</option>
           <option value="לאומית FIT">לאומית FIT</option>
-        </optgroup>
-        <optgroup label="── פריפיט ──">
           <option value="פריפיט שירות">פריפיט שירות</option>
           <option value="פריפיט מכירות">פריפיט מכירות</option>
-        </optgroup>
-        <optgroup label="── סחר ──">
           <option value="מחלקת סחר">מחלקת סחר</option>
-        </optgroup>
-        <optgroup label="── מאוחדת ──">
-          <option value="מאוחדת">מאוחדת</option>
         </optgroup>
       </select>
     </div>
