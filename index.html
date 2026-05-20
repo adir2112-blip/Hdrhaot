@@ -5462,13 +5462,11 @@ async function signBriefing(){
   const _agId=String(S.agent.id);
   const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
   const prevComp=b.completions[_agId];
-  // Collect history from previous rounds (stored as _hist_ key after refresh)
   const histKey='_hist_'+_agId;
   const prevHist=b.completions[histKey]?.history||[];
   const history=[...prevHist];
   if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
   b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
-  // Remove the history-only key now that agent completed
   delete b.completions[histKey];
   b._needsRefresh=false;
   await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
