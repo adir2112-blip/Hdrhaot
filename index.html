@@ -1077,7 +1077,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
     <div class="field">
       <label class="field-label">מפתח API</label>
-      <input type="text" id="api-modal-key" placeholder="gsk_..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px" onkeydown="if(event.key==='Enter')saveApiKey()">
+      <input type="text" id="api-modal-key" placeholder="sk-..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px" onkeydown="if(event.key==='Enter')saveApiKey()">
     </div>
     <div id="api-modal-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace"></div>
     <div style="display:flex;gap:10px;margin-top:18px">
@@ -1199,7 +1199,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2)">
             <span style="font-size:16px">✦</span>
             <span>שפר ונסח עם AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">GROQ</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">AI</span>
           </button>
           <div id="polish-loading" style="display:none;font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;align-items:center;gap:6px">
             <div class="dot-row"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
@@ -2016,7 +2016,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2),0 0 0 0 rgba(184,134,42,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(184,134,42,0.35),0 0 0 4px rgba(184,134,42,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(184,134,42,0.2)';this.style.transform=''">
             <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span>
             <span>סיכום AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">GROQ</span>
+            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">AI</span>
           </button>
         </div>
       </div>
@@ -2696,7 +2696,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div class="field">
                 <label class="field-label">מפתח Groq API</label>
                 <div style="display:flex;gap:10px">
-                  <input type="text" id="config-api-key" placeholder="gsk_..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
+                  <input type="text" id="config-api-key" placeholder="sk-..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
                   <button class="btn btn-gold btn-sm" onclick="saveConfigApiKey()">שמור</button>
                 </div>
                 <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">נדרש ליצירת שאלות AI וניסוח תוכן</div>
@@ -2767,6 +2767,20 @@ function agentGroup(a){
 const _sb = supabase.createClient('https://hbjtpjdthvjikfxsufdo.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc');
 
 /* ── AUTH ── */
+async function forgotPassword(){
+  const email = document.getElementById('auth-email')?.value?.trim() || '';
+  if(!email){ alert('הכנס כתובת מייל קודם'); return; }
+  try {
+    const { error } = await _sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
+    });
+    if(error) throw error;
+    alert('✅ נשלח אליך מייל לאיפוס סיסמא!\nבדוק את תיבת הדואר שלך.');
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+  }
+}
+
 async function signIn(){
   const email    = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
@@ -3338,7 +3352,7 @@ async function loadConfigValues(){
 async function saveConfigApiKey(){
   const k = document.getElementById('config-api-key')?.value?.trim();
   if(!k||k==='••••••••••••••••') return;
-  if(!k.startsWith('gsk_')&&!k.startsWith('AIza')){ alert('מפתח לא תקין — חייב להתחיל ב-gsk_'); return; }
+  if(!k.startsWith('sk-')&&!k.startsWith('AIza')){ alert('מפתח לא תקין — חייב להתחיל ב-sk-'); return; }
   await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
   localStorage.setItem('bs_api_key',k);
   document.getElementById('config-api-key').value='••••••••••••••••';
@@ -4024,7 +4038,7 @@ async function sendKnowledgeChat(mode){
   ];
 
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
@@ -4718,7 +4732,7 @@ important = מה הכי חשוב לדעת
 forbidden = מה אסור להגיד/לעשות  
 todo = מה צריך לעשות`;
 
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
@@ -4751,7 +4765,7 @@ todo = מה צריך לעשות`;
     contentEl.innerHTML=`<div style="color:var(--danger);font-size:13px">שגיאה: ${e.message}</div>`;
   } finally{
     loading.style.display='none';
-    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">GROQ</span>';
+    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">AI</span>';
   }
 }
 
@@ -4773,7 +4787,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
 כותרת: ${title}
 תוכן: ${content}
 צור בדיוק ${numQ} שאלות.`;
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
@@ -5615,7 +5629,7 @@ ${content.slice(0,3000)}
   "summary": "משפט אחד קצר על ההבנה הכללית"
 }`;
 
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
@@ -7518,6 +7532,7 @@ function downloadPDF(){
     </div>
     <div id="auth-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace;text-align:center">✗ אימייל או סיסמה שגויים</div>
     <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center" onclick="signIn()" id="auth-btn">כניסה למערכת</button>
+    <button onclick="forgotPassword()" style="width:100%;margin-top:8px;background:none;border:none;color:var(--ice3);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;text-decoration:underline">שכחתי סיסמא</button>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
@@ -8296,7 +8311,7 @@ async function polishContent(){
 
   const originalText=contentEl.value.trim();
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({
@@ -11177,6 +11192,7 @@ function renderManagersDiscipline(){
     </div>
     <div id="auth-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace;text-align:center">✗ אימייל או סיסמה שגויים</div>
     <button class="btn btn-gold" style="width:100%;margin-top:8px;justify-content:center" onclick="signIn()" id="auth-btn">כניסה למערכת</button>
+    <button onclick="forgotPassword()" style="width:100%;margin-top:8px;background:none;border:none;color:var(--ice3);font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;text-decoration:underline">שכחתי סיסמא</button>
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
