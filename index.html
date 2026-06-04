@@ -4058,18 +4058,25 @@ async function sendKnowledgeChat(mode){
     }
     const rawAns=data.choices[0].message.content.trim();
     // Track AI usage
+    // Extract SOURCE: marker from answer first
+    const sourceMatch = rawAns.match(/\nSOURCE:(.+)$/m);
+    const sourceTitles = sourceMatch ? sourceMatch[1].split('|').map(s=>s.trim()) : [];
+    const ans = rawAns.replace(/\nSOURCE:.+$/m,'').trim();
+    // Track AI usage — include answer
     if(S.agent){
       _sb.from('ai_usage').insert({
         agent_id: S.agent.id,
         agent_name: S.agent.name,
         dept: (S.agent.depts||[])[0]||'כללי',
-        question: q ? q.slice(0,200) : ''
-      }).then(()=>{});
+        question: q ? q.slice(0,300) : '',
+        answer: ans ? ans.slice(0,1000) : ''
+      }).select('id').single().then(function(res){
+        // Store usage ID in context for V/X update
+        if(res.data && _aiAnswerContext[thinkingId]){
+          _aiAnswerContext[thinkingId].usageId = res.data.id;
+        }
+      });
     }
-    // Extract SOURCE: marker from answer
-    const sourceMatch = rawAns.match(/\nSOURCE:(.+)$/m);
-    const sourceTitles = sourceMatch ? sourceMatch[1].split('|').map(s=>s.trim()) : [];
-    const ans = rawAns.replace(/\nSOURCE:.+$/m,'').trim();
     // Find matching article IDs by title
     const ctxArticles = S_knowledge ? sourceTitles.map(function(title){
       const a = S_knowledge.find(function(x){ return x.title && x.title.trim()===title; });
@@ -4111,6 +4118,31 @@ function updateKbMessage(boxId,id,text){
   if(el){
     const bubble=el.querySelector('div');
     if(bubble){
+      // Answer text with expand button
+      var ansDiv=document.createElement('div');
+      ansDiv.innerHTML=formatContent(text);
+
+      // V/X correct answer buttons
+      var vxDiv=document.createElement('div');
+      vxDiv.id='vx-'+id;
+      vxDiv.style.cssText='display:flex;gap:8px;margin-top:12px;justify-content:center';
+
+      var btnV=document.createElement('button');
+      btnV.innerHTML='✅ התשובה נכונה';
+      btnV.style.cssText='flex:1;padding:8px 12px;background:rgba(5,150,105,0.15);border:1.5px solid rgba(5,150,105,0.4);color:#2dd4a4;border-radius:12px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:600';
+      btnV.dataset.msgId=id; btnV.dataset.correct='1';
+      btnV.addEventListener('click',function(){ markAnswerCorrect(this.dataset.msgId,true); });
+
+      var btnX=document.createElement('button');
+      btnX.innerHTML='❌ התשובה לא נכונה';
+      btnX.style.cssText='flex:1;padding:8px 12px;background:rgba(240,101,101,0.1);border:1.5px solid rgba(240,101,101,0.3);color:#F06565;border-radius:12px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:600';
+      btnX.dataset.msgId=id; btnX.dataset.correct='0';
+      btnX.addEventListener('click',function(){ markAnswerCorrect(this.dataset.msgId,false); });
+
+      vxDiv.appendChild(btnV);
+      vxDiv.appendChild(btnX);
+
+      // Stars rating (smaller, below)
       var rateDiv=document.createElement('div');
       rateDiv.id='rate-'+id;
       rateDiv.style.cssText='display:flex;gap:4px;margin-top:8px;justify-content:flex-end';
@@ -4118,7 +4150,7 @@ function updateKbMessage(boxId,id,text){
         var btn=document.createElement('button');
         btn.id='rs-'+id+'-'+si;
         btn.textContent='★';
-        btn.style.cssText='font-size:16px;background:none;border:none;cursor:pointer;padding:0;opacity:0.4;transition:all 0.15s';
+        btn.style.cssText='font-size:14px;background:none;border:none;cursor:pointer;padding:0;opacity:0.3;transition:all 0.15s';
         btn.dataset.msgId=id;
         btn.dataset.rating=si;
         btn.dataset.boxId=boxId;
@@ -4127,12 +4159,83 @@ function updateKbMessage(boxId,id,text){
         });
         rateDiv.appendChild(btn);
       }
-      bubble.innerHTML=formatContent(text);
+
+      bubble.innerHTML='';
+      bubble.appendChild(ansDiv);
+      bubble.appendChild(vxDiv);
       bubble.appendChild(rateDiv);
     }
   }
   const box=document.getElementById(boxId);
   if(box) box.scrollTop=box.scrollHeight;
+}
+
+// Store usage data for full answer view
+window._agentUsageData = [];
+
+function showFullAnswer(el){
+  var usageId = el && el.dataset ? parseInt(el.dataset.id) : el;
+  var allUsage = window._repUsageFull||[];
+  var r = allUsage.find(function(x){ return x.id===usageId; });
+  if(!r||!r.answer) return;
+
+  var existing=document.getElementById('full-answer-modal');
+  if(existing) existing.remove();
+
+  var modal=document.createElement('div');
+  modal.id='full-answer-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
+
+  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(201,168,76,0.3);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+    '<div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+      '<div style="font-size:16px;font-weight:700;color:#F0EDE6">🤖 תשובת AI מלאה</div>'+
+      '<button onclick="document.getElementById(\'full-answer-modal\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);width:30px;height:30px;border-radius:50%;cursor:pointer;color:#F0EDE6;font-size:15px">✕</button>'+
+    '</div>'+
+    '<div style="padding:6px 20px 4px;background:rgba(0,0,0,0.2);flex-shrink:0">'+
+      '<div style="font-size:10px;color:#888;margin-bottom:3px">❓ שאלה:</div>'+
+      '<div style="font-size:13px;color:#C8C4BC;direction:rtl">'+(r.question||'—')+'</div>'+
+    '</div>'+
+    '<div style="overflow-y:auto;padding:16px 20px">'+
+      '<div style="font-size:10px;color:#888;margin-bottom:6px">🤖 תשובה:</div>'+
+      '<div style="font-size:14px;color:#E0DCD4;line-height:1.8;direction:rtl;white-space:pre-wrap">'+(r.answer||'')+'</div>'+
+    '</div>'+
+    '<div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0">'+
+      '<button onclick="document.getElementById(\'agent-questions-modal\') ? null : null; document.getElementById(\'full-answer-modal\').remove();" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;border-radius:12px;padding:8px 20px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif">← חזרה לרשימה</button>'+
+    '</div>'+
+  '</div>';
+
+  document.body.appendChild(modal);
+}
+
+function markAnswerCorrect(msgId, correct){
+  var vxDiv=document.getElementById('vx-'+msgId);
+  if(!vxDiv) return;
+  vxDiv.innerHTML='<div style="text-align:center;font-size:13px;padding:6px;color:'+(correct?'#2dd4a4':'#F06565')+';">'+(correct?'✅ סומן כנכון':'❌ סומן כלא נכון')+'</div>';
+
+  var ctx=_aiAnswerContext[msgId]||{};
+
+  // Update ai_usage via msg_id (async — will complete eventually)
+  _sb.from('ai_usage').update({is_correct:correct}).eq('agent_id', S.agent ? S.agent.id : -1)
+    .order('created_at',{ascending:false}).limit(1).then(function(){});
+
+  // Update is_correct in existing ai_feedback row by msg_id
+  _sb.from('ai_feedback').update({is_correct:correct}).eq('msg_id',String(msgId)).then(function(res){
+    // If no row exists yet, insert one
+    if(!res.data || !res.data.length){
+      _sb.from('ai_feedback').insert({
+        msg_id: String(msgId),
+        agent_id: S.agent ? parseInt(S.agent.id)||null : null,
+        agent_name: S.agent ? S.agent.name : 'לא ידוע',
+        rating: correct ? 5 : 1,
+        question: ctx.question||'',
+        answer: ctx.answer||'',
+        is_correct: correct
+      }).then(function(){});
+    }
+  });
+
+  ctx.correct_marked=correct;
+  _aiAnswerContext[msgId]=ctx;
 }
 
 let _agentKbDept='כללי';
@@ -9975,6 +10078,150 @@ function closeArticleComments(){
 }
 
 /* ══ REPORTS MODULE ═══════════════════════════════════════════ */
+// Sort state for reports tables
+var _repLoginSort = {col:'count', dir:-1};
+var _repUsageSort = {col:'count', dir:-1};
+
+function sortRepLogins(col){
+  if(_repLoginSort.col===col) _repLoginSort.dir*=-1;
+  else { _repLoginSort.col=col; _repLoginSort.dir=-1; }
+  renderRepLoginsTable();
+}
+function sortRepUsage(col){
+  if(_repUsageSort.col===col) _repUsageSort.dir*=-1;
+  else { _repUsageSort.col=col; _repUsageSort.dir=-1; }
+  renderRepUsageTable();
+}
+
+function sortArrow(col, sortState){
+  if(sortState.col!==col) return ' ↕';
+  return sortState.dir===-1 ? ' ↓' : ' ↑';
+}
+
+function renderRepLoginsTable(){
+  var rows=(window._repLogins||[]).slice();
+  var col=_repLoginSort.col, dir=_repLoginSort.dir;
+  rows.sort(function(a,b){
+    if(col==='last') return dir*(new Date(a.last||0)-new Date(b.last||0));
+    if(col==='name') return dir*a.name.localeCompare(b.name,'he');
+    return dir*(a[col]-b[col]);
+  });
+  var el=document.getElementById('rep-logins-table');
+  if(!el) return;
+  if(!rows.length){ el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים</div>'; return; }
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--ink3)">';
+  var sa_n=sortArrow('name',_repLoginSort), sa_c=sortArrow('count',_repLoginSort), sa_l=sortArrow('last',_repLoginSort);
+  html+='<th onclick="sortRepLogins(\'name\')" style="padding:6px 8px;text-align:right;color:var(--ice3);cursor:pointer">נציג'+sa_n+'</th>';
+  html+='<th onclick="sortRepLogins(\'count\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">כניסות'+sa_c+'</th>';
+  html+='<th onclick="sortRepLogins(\'last\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">כניסה אחרונה'+sa_l+'</th>';
+  html+='</tr>';
+  rows.forEach(function(r,i){
+    html+='<tr style="border-bottom:1px solid var(--line);background:'+(i%2===0?'transparent':'var(--ink3)')+'">'+
+      '<td style="padding:6px 8px;color:var(--ice)">'+r.name+'</td>'+
+      '<td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--gold)">'+r.count+'</td>'+
+      '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">'+(r.last?new Date(r.last).toLocaleDateString('he-IL'):'-')+'</td>'+
+    '</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
+}
+function renderRepUsageTable(){
+  var rows=(window._repUsage||[]).slice();
+  var col=_repUsageSort.col, dir=_repUsageSort.dir;
+  rows.sort(function(a,b){
+    if(col==='last') return dir*(new Date(a.last||0)-new Date(b.last||0));
+    if(col==='name') return dir*a.name.localeCompare(b.name,'he');
+    return dir*(a[col]-b[col]);
+  });
+  var el=document.getElementById('rep-usage-table');
+  if(!el) return;
+  if(!rows.length){ el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים עדיין</div>'; return; }
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--ink3)">';
+  var su_n=sortArrow('name',_repUsageSort), su_c=sortArrow('count',_repUsageSort), su_l=sortArrow('last',_repUsageSort);
+  html+='<th onclick="sortRepUsage(\'name\')" style="padding:6px 8px;text-align:right;color:var(--ice3);cursor:pointer">נציג'+su_n+'</th>';
+  html+='<th onclick="sortRepUsage(\'count\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">שיחות AI'+su_c+'</th>';
+  html+='<th onclick="sortRepUsage(\'last\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">אחרון'+su_l+'</th>';
+  html+='<th style="padding:6px 8px;text-align:center;color:var(--ice3)">שאלות</th>';
+  html+='</tr>';
+  rows.forEach(function(r,i){
+    html+='<tr style="border-bottom:1px solid var(--line);background:'+(i%2===0?'transparent':'var(--ink3)')+'">'+
+      '<td style="padding:6px 8px;color:var(--ice)">'+r.name+'</td>'+
+      '<td style="padding:6px 8px;text-align:center;font-weight:700;color:#5BA0E6">'+r.count+'</td>'+
+      '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">'+(r.last?new Date(r.last).toLocaleDateString('he-IL'):'-')+'</td>'+
+      '<td style="padding:6px 8px;text-align:center"><button onclick="showAgentQuestions('+r.agentId+')" style="background:rgba(91,160,230,0.15);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:3px 10px;font-size:10px;cursor:pointer">👁 צפה</button></td>'+
+    '</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
+}
+
+// Show agent questions modal
+async function showAgentQuestions(agentId){
+  var allUsage = window._repUsageFull||[];
+  var agentUsage = allUsage.filter(function(r){ return String(r.agent_id)===String(agentId); });
+
+  // Enrich with is_correct from ai_feedback
+  var fbRes = await _sb.from('ai_feedback').select('msg_id,is_correct,rating').eq('agent_id', agentId);
+  var fbMap = {};
+  (fbRes.data||[]).forEach(function(f){
+    if(f.msg_id) fbMap[f.msg_id] = f.is_correct !== undefined ? f.is_correct : (f.rating >= 4);
+  });
+  agentUsage = agentUsage.map(function(r){
+    // Try to match by msg_id stored in context — fallback to is_correct field
+    var fc = fbMap[r.id] !== undefined ? fbMap[r.id] : r.is_correct;
+    return Object.assign({}, r, {is_correct: fc});
+  });
+  var agentName = agentUsage[0]?.agent_name||'נציג';
+
+  // Build modal
+  var existing = document.getElementById('agent-questions-modal');
+  if(existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id='agent-questions-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.onclick=function(e){ if(e.target===modal) modal.remove(); };
+
+  var rows = agentUsage.map(function(r){
+    var dateStr=r.created_at?new Date(r.created_at).toLocaleString('he-IL'):'-';
+    var correct = r.is_correct===true ? '✅' : r.is_correct===false ? '❌' : '—';
+    var correctColor = r.is_correct===true ? '#2dd4a4' : r.is_correct===false ? '#F06565' : '#555';
+    var ansPreview = r.answer ? r.answer.slice(0,150)+(r.answer.length>150?'…':'') : '';
+    return '<tr style="border-bottom:1px solid rgba(255,255,255,0.06)">'+
+      '<td style="padding:8px 12px;font-size:12px;direction:rtl;cursor:'+(r.answer?'pointer':'default')+'" '+(r.answer?'onclick="showFullAnswer(this)" data-id="'+r.id+'"':'')+' title="'+(r.answer?'לחץ לתשובה המלאה':'')+'">'+
+        '<div style="color:#C8C4BC;margin-bottom:4px">'+( r.question||'—')+'</div>'+
+        (r.answer ? '<div style="color:#888;font-size:11px;background:rgba(255,255,255,0.04);border-radius:6px;padding:5px 8px;margin-top:3px">🤖 '+ansPreview+'</div>' : '')+
+      '</td>'+
+      '<td style="padding:8px 12px;text-align:center;font-size:16px;color:'+correctColor+';vertical-align:middle">'+correct+'</td>'+
+      '<td style="padding:8px 12px;color:#888;font-size:11px;white-space:nowrap;vertical-align:top">'+dateStr+'</td>'+
+    '</tr>';
+  }).join('');
+
+  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(201,168,76,0.3);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+    '<div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+      '<div>'+
+        '<div style="font-size:11px;color:rgba(201,168,76,0.7);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
+        '<div style="font-size:18px;font-weight:800;color:#F0EDE6;font-family:Playfair Display,serif">'+agentName+'</div>'+
+        '<div style="font-size:12px;color:#888;margin-top:2px">'+agentUsage.length+' שאלות בתקופה</div>'+
+      '</div>'+
+      '<button onclick="document.getElementById(\'agent-questions-modal\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);width:32px;height:32px;border-radius:50%;cursor:pointer;color:#F0EDE6;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>'+
+    '</div>'+
+    '<div style="overflow-y:auto;padding:0">'+
+      '<table style="width:100%;border-collapse:collapse">'+
+        '<tr style="background:rgba(255,255,255,0.04);position:sticky;top:0">'+
+          '<th style="padding:8px 12px;text-align:right;color:#888;font-size:11px;font-weight:600">שאלה ותשובת AI</th>'+
+          '<th style="padding:8px 12px;text-align:center;color:#888;font-size:11px;font-weight:600">נכון?</th>'+
+          '<th style="padding:8px 12px;text-align:center;color:#888;font-size:11px;font-weight:600;white-space:nowrap">תאריך ושעה</th>'+
+        '</tr>'+
+        rows+
+      '</table>'+
+      (agentUsage.length===0?'<div style="text-align:center;padding:2rem;color:#555">אין שאלות בתקופה זו</div>':'')+
+    '</div>'+
+  '</div>';
+
+  document.body.appendChild(modal);
+}
+
 async function loadReports(){
   const months = parseInt(document.getElementById('rep-period')?.value||'1');
   const dept = document.getElementById('rep-dept')?.value||'all';
@@ -9982,7 +10229,6 @@ async function loadReports(){
   since.setMonth(since.getMonth() - months);
   const sinceIso = since.toISOString();
 
-  // Load login history
   let lq = _sb.from('login_history').select('*').gte('login_at', sinceIso).order('login_at',{ascending:false});
   if(dept!=='all'){
     const grp = GROUPS.find(g=>g.key===dept);
@@ -9991,7 +10237,6 @@ async function loadReports(){
   }
   const {data:logins} = await lq;
 
-  // Load AI usage
   let uq = _sb.from('ai_usage').select('*').gte('created_at', sinceIso).order('created_at',{ascending:false});
   if(dept!=='all'){
     const grp = GROUPS.find(g=>g.key===dept);
@@ -10003,7 +10248,6 @@ async function loadReports(){
   const loginArr = logins||[];
   const usageArr = usage||[];
 
-  // KPIs
   const uniqueAgentsLogin = new Set(loginArr.map(r=>r.agent_id)).size;
   const uniqueAgentsAI = new Set(usageArr.map(r=>r.agent_id)).size;
   document.getElementById('rep-kpis').innerHTML = [
@@ -10011,64 +10255,32 @@ async function loadReports(){
     {v:uniqueAgentsLogin, l:'נציגים שנכנסו', c:'var(--ok)'},
     {v:usageArr.length, l:'שיחות AI', c:'#5BA0E6'},
     {v:uniqueAgentsAI, l:'משתמשי AI', c:'var(--warn)'},
-  ].map(k=>`<div class="card" style="text-align:center;padding:16px">
-    <div style="font-size:28px;font-weight:800;color:${k.c}">${k.v}</div>
-    <div style="font-size:11px;color:var(--ice3);margin-top:4px">${k.l}</div>
-  </div>`).join('');
+  ].map(k=>'<div class="card" style="text-align:center;padding:16px">'+
+    '<div style="font-size:28px;font-weight:800;color:'+k.c+'">'+k.v+'</div>'+
+    '<div style="font-size:11px;color:var(--ice3);margin-top:4px">'+k.l+'</div>'+
+  '</div>').join('');
 
-  // Login table — group by agent
   const loginByAgent = {};
-  loginArr.forEach(r=>{
-    if(!loginByAgent[r.agent_id]) loginByAgent[r.agent_id]={name:r.agent_name,dept:r.dept,count:0,last:r.login_at};
+  loginArr.forEach(function(r){
+    if(!loginByAgent[r.agent_id]) loginByAgent[r.agent_id]={agentId:r.agent_id,name:r.agent_name,dept:r.dept,count:0,last:r.login_at};
     loginByAgent[r.agent_id].count++;
     if(r.login_at > loginByAgent[r.agent_id].last) loginByAgent[r.agent_id].last=r.login_at;
   });
-  const loginRows = Object.values(loginByAgent).sort((a,b)=>b.count-a.count);
+  window._repLogins = Object.values(loginByAgent);
 
-  document.getElementById('rep-logins-table').innerHTML = loginRows.length === 0
-    ? '<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים</div>'
-    : `<table style="width:100%;border-collapse:collapse;font-size:12px">
-      <tr style="background:var(--ink3)">
-        <th style="padding:6px 8px;text-align:right;color:var(--ice3)">נציג</th>
-        <th style="padding:6px 8px;text-align:center;color:var(--ice3)">כניסות</th>
-        <th style="padding:6px 8px;text-align:center;color:var(--ice3)">כניסה אחרונה</th>
-      </tr>
-      ${loginRows.map((r,i)=>`<tr style="border-bottom:1px solid var(--line);background:${i%2===0?'transparent':'var(--ink3)'}">
-        <td style="padding:6px 8px;color:var(--ice)">${r.name}</td>
-        <td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--gold)">${r.count}</td>
-        <td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">${r.last?new Date(r.last).toLocaleDateString('he-IL'):'-'}</td>
-      </tr>`).join('')}
-    </table>`;
-
-  // AI usage table — group by agent
   const usageByAgent = {};
-  usageArr.forEach(r=>{
-    if(!usageByAgent[r.agent_id]) usageByAgent[r.agent_id]={name:r.agent_name,dept:r.dept,count:0,last:r.created_at};
+  usageArr.forEach(function(r){
+    if(!usageByAgent[r.agent_id]) usageByAgent[r.agent_id]={agentId:r.agent_id,name:r.agent_name,dept:r.dept,count:0,last:r.created_at};
     usageByAgent[r.agent_id].count++;
     if(r.created_at > usageByAgent[r.agent_id].last) usageByAgent[r.agent_id].last=r.created_at;
   });
-  const usageRows = Object.values(usageByAgent).sort((a,b)=>b.count-a.count);
+  window._repUsage = Object.values(usageByAgent);
 
-  document.getElementById('rep-usage-table').innerHTML = usageRows.length === 0
-    ? '<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים עדיין</div>'
-    : `<table style="width:100%;border-collapse:collapse;font-size:12px">
-      <tr style="background:var(--ink3)">
-        <th style="padding:6px 8px;text-align:right;color:var(--ice3)">נציג</th>
-        <th style="padding:6px 8px;text-align:center;color:var(--ice3)">שיחות AI</th>
-        <th style="padding:6px 8px;text-align:center;color:var(--ice3)">אחרון</th>
-      </tr>
-      ${usageRows.map((r,i)=>`<tr style="border-bottom:1px solid var(--line);background:${i%2===0?'transparent':'var(--ink3)'}">
-        <td style="padding:6px 8px;color:var(--ice)">${r.name}</td>
-        <td style="padding:6px 8px;text-align:center;font-weight:700;color:#5BA0E6">${r.count}</td>
-        <td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">${r.last?new Date(r.last).toLocaleDateString('he-IL'):'-'}</td>
-      </tr>`).join('')}
-    </table>`;
-
-  // Store for export
-  window._repLogins = loginRows;
-  window._repUsage = usageRows;
   window._repLoginsFull = loginArr;
   window._repUsageFull = usageArr;
+
+  renderRepLoginsTable();
+  renderRepUsageTable();
 }
 
 function exportReportExcel(type){
