@@ -2694,7 +2694,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div class="card">
               <div class="card-label">⚙️ הגדרות מערכת</div>
               <div class="field">
-                <label class="field-label">מפתח Groq API</label>
+                <label class="field-label">מפתח OpenAI API</label>
                 <div style="display:flex;gap:10px">
                   <input type="text" id="config-api-key" placeholder="sk-..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
                   <button class="btn btn-gold btn-sm" onclick="saveConfigApiKey()">שמור</button>
@@ -2945,9 +2945,9 @@ function closeApiModal(){document.getElementById('api-modal').classList.add('hid
 async function saveApiKey(){
   const k=document.getElementById('api-modal-key').value.trim();
   if(k==='••••••••••••••••'){closeApiModal();return;}
-  if(!k.startsWith('gsk_')&&!k.startsWith('AIza')){
+  if(!k.startsWith('sk-')&&!k.startsWith('gsk_')&&!k.startsWith('AIza')){
     document.getElementById('api-modal-err').style.display='block';
-    document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-gsk_';
+    document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-sk-';
     return;
   }
   await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
