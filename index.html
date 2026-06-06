@@ -1037,6 +1037,52 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── BUTTONS WRAP ── */
   [style*="display:flex"][style*="gap:6px"] { flex-wrap:wrap !important; }
   [style*="display:flex"][style*="gap:8px"] { flex-wrap:wrap !important; }
+
+
+  /* ── PIN KEYBOARD ── */
+  .pin-key { padding:18px 10px!important; font-size:22px!important; border-radius:14px!important; min-height:56px!important; }
+  
+  /* ── AGENT LOGIN SCREEN ── */
+  #agent-login { padding:0!important; }
+  #agent-login > div { padding:24px 16px!important; min-height:100vh!important; width:100%!important; max-width:100%!important; border-radius:0!important; }
+
+  /* ── AGENT BRIEFINGS LAYOUT ── */
+  #agent-briefings { flex-direction:column!important; }
+  #agent-briefings > div:first-child { width:100%!important; max-width:100%!important; min-width:0!important; min-height:auto!important; }
+  
+  /* ── MANAGER LAYOUT ── */
+  #tab-tracking, #tab-manager, #tab-settings { padding:12px!important; }
+  
+  /* ── CARDS FULL WIDTH ── */
+  .card { border-radius:14px!important; padding:14px!important; }
+  
+  /* ── REPORTS TABLES ── */
+  #rep-logins-table table, #rep-usage-table table { font-size:11px!important; }
+  #rep-logins-table td, #rep-usage-table td { padding:4px 5px!important; }
+  
+  /* ── DISCIPLINE SIDEBAR ── */
+  #tab-discipline > div { flex-direction:column!important; }
+  #tab-discipline > div > div:first-child { width:100%!important; border-left:none!important; border-bottom:1px solid var(--line)!important; }
+
+  /* ── KNOWLEDGE LAYOUT ── */  
+  #tab-knowledge > div { flex-direction:column!important; }
+  #knowledge-sidebar { width:100%!important; min-height:auto!important; border-left:none!important; border-bottom:1px solid var(--line)!important; }
+  
+  /* ── CONTROLS ── */
+  #tab-controls > div { flex-direction:column!important; }
+
+  /* ── MODALS FULL SCREEN ── */
+  [id$="-modal"] > div, [id$="Modal"] > div {
+    max-width:100%!important;
+    border-radius:20px 20px 0 0!important;
+    position:fixed!important;
+    bottom:0!important;
+    left:0!important;
+    right:0!important;
+    max-height:92vh!important;
+    overflow-y:auto!important;
+  }
+  [id$="-modal"], [id$="Modal"] { align-items:flex-end!important; padding:0!important; }
 }
 
 /* ══ RICH EDITOR TOOLBAR ══════════════════════════════ */
@@ -4567,7 +4613,21 @@ function closePinModal(){
   document.removeEventListener('keydown', _pinKeyHandler);
   _pinVal='';_pinAgentId=null;
 }
-function pinPress(d){if(_pinVal.length>=4)return;_pinVal+=d;updatePinDots();if(_pinVal.length===4)setTimeout(pinConfirm,150);}
+var _pinTouched=false;
+function pinPressTouch(d){
+  _pinTouched=true;
+  setTimeout(function(){ _pinTouched=false; }, 500);
+  pinPressExec(d);
+}
+function pinPress(d){
+  if(_pinTouched) return; // skip click if touch already handled
+  pinPressExec(d);
+}
+function pinPressExec(d){
+  if(_pinVal.length>=4)return;
+  _pinVal+=d;updatePinDots();
+  if(_pinVal.length===4)setTimeout(pinConfirm,150);
+}
 function pinClear(){_pinVal=_pinVal.slice(0,-1);updatePinDots();}
 function updatePinDots(){
   for(let i=0;i<4;i++){
@@ -11081,17 +11141,17 @@ function renderManagersDiscipline(){
       <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--line2)" id="pd3"></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px" id="pin-pad">
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('1')" onclick="pinPress('1')">1</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('2')" onclick="pinPress('2')">2</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('3')" onclick="pinPress('3')">3</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('4')" onclick="pinPress('4')">4</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('5')" onclick="pinPress('5')">5</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('6')" onclick="pinPress('6')">6</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('7')" onclick="pinPress('7')">7</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('8')" onclick="pinPress('8')">8</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('9')" onclick="pinPress('9')">9</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('1')" onclick="pinPress('1')">1</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('2')" onclick="pinPress('2')">2</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('3')" onclick="pinPress('3')">3</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('4')" onclick="pinPress('4')">4</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('5')" onclick="pinPress('5')">5</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('6')" onclick="pinPress('6')">6</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('7')" onclick="pinPress('7')">7</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('8')" onclick="pinPress('8')">8</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('9')" onclick="pinPress('9')">9</button>
       <button class="pin-key" onclick="pinClear()" style="font-size:11px">מחק</button>
-      <button class="pin-key" ontouchstart="event.preventDefault();pinPress('0')" onclick="pinPress('0')">0</button>
+      <button class="pin-key" ontouchstart="event.preventDefault();pinPressTouch('0')" onclick="pinPress('0')">0</button>
       <button class="pin-key btn-gold" onclick="pinConfirm()" style="background:var(--gold);color:#0B0C10">✓</button>
     </div>
     <div id="pin-error" style="display:none;font-size:12px;color:var(--danger);font-family:'DM Mono',monospace;margin-bottom:10px">✗ קוד שגוי — נסה שוב</div>
