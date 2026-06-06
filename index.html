@@ -90,7 +90,7 @@ body::after {
   box-shadow: 0 1px 20px rgba(0,0,0,0.06);
 }
 .topbar-inner {
-  max-width: 980px; margin: 0 auto;
+  max-width: 100%;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 2rem; height: 58px;
 }
@@ -136,7 +136,7 @@ body::after {
 }
 
 /* PAGE */
-.page { max-width: 980px; margin: 0 auto; padding: 2.5rem 2rem; position: relative; z-index: 1; }
+.page { max-width: 100%; margin: 0; padding: 2rem 1.5rem; position: relative; z-index: 1; }
 .sec { display: none; }
 .sec.active { display: block; animation: rise 0.3s cubic-bezier(0.22,1,0.36,1); }
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -1799,12 +1799,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
 
-    <div id="agent-briefings" style="display:none;gap:20px;align-items:flex-start;width:100%">
+    <div id="agent-briefings" style="display:none;gap:0;align-items:flex-start;width:100%;min-height:100vh">
 
 
 
   <!-- AGENT SIDEBAR -->
-    <div style="width:190px;min-width:190px;max-width:190px;flex-shrink:0;flex-grow:0;align-self:flex-start">
+    <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;align-self:stretch;min-height:100vh;background:var(--ink2);border-left:1px solid var(--line)">
       <div style="background:#fff;border:1.5px solid rgba(184,134,42,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(184,134,42,0.08)">
         <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(184,134,42,0.1);margin-bottom:10px;text-align:center"></div>
         <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
@@ -2720,7 +2720,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
 <!-- ADMIN CONFIG PASSWORD MODAL -->
 <div id="admin-config-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);align-items:center;justify-content:center">
-  <div style="background:linear-gradient(145deg,#1A1814,#2A2420);border:1px solid rgba(201,168,76,0.3);border-radius:24px;padding:2.5rem 2rem;width:360px;max-width:90vw;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
+  <div style="background:linear-gradient(145deg,#1A1814,#2A2420);border:1px solid rgba(201,168,76,0.3);border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
     <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:24px 24px 0 0"></div>
     <div style="font-size:40px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,168,76,0.5))">🔑</div>
     <div style="font-family:'Playfair Display',serif;font-size:20px;color:#F0EDE6;margin-bottom:6px">גישת SUPER ADMIN</div>
@@ -10160,16 +10160,15 @@ async function showAgentQuestions(agentId){
   var allUsage = window._repUsageFull||[];
   var agentUsage = allUsage.filter(function(r){ return String(r.agent_id)===String(agentId); });
 
-  // Enrich with is_correct from ai_feedback
-  var fbRes = await _sb.from('ai_feedback').select('msg_id,is_correct,rating').eq('agent_id', agentId);
-  var fbMap = {};
-  (fbRes.data||[]).forEach(function(f){
-    if(f.msg_id) fbMap[f.msg_id] = f.is_correct !== undefined ? f.is_correct : (f.rating >= 4);
-  });
+  // Load is_correct from ai_feedback by agent_id + match by question text
+  var fbRes = await _sb.from('ai_feedback').select('question,is_correct,created_at').eq('agent_id', agentId).not('is_correct','is',null);
+  var fbList = fbRes.data||[];
   agentUsage = agentUsage.map(function(r){
-    // Try to match by msg_id stored in context — fallback to is_correct field
-    var fc = fbMap[r.id] !== undefined ? fbMap[r.id] : r.is_correct;
-    return Object.assign({}, r, {is_correct: fc});
+    // Match by question similarity
+    var match = fbList.find(function(f){
+      return f.question && r.question && f.question.trim()===r.question.trim();
+    });
+    return Object.assign({}, r, {is_correct: match ? match.is_correct : r.is_correct});
   });
   var agentName = agentUsage[0]?.agent_name||'נציג';
 
