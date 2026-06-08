@@ -6699,17 +6699,29 @@ async function renderLivePanel(){
   if(!el) return;
   el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">טוען...</div>';
 
-  // Get all agents with last_login
-  const {data:agents} = await _sb.from('agents').select('id,name,depts,last_login,is_active').eq('is_active',true).order('last_login',{ascending:false});
+  // Get all active agents
+  const {data:agents} = await _sb.from('agents').select('id,name,depts,is_active').eq('is_active',true);
   if(!agents){ el.innerHTML='<div style="color:var(--danger)">שגיאה בטעינה</div>'; return; }
 
+  // Get last login per agent from login_history
+  const since = new Date(); since.setDate(since.getDate()-30);
+  const {data:logins} = await _sb.from('login_history').select('agent_id,login_at').gte('login_at',since.toISOString()).order('login_at',{ascending:false});
+
+  // Build map: agentId → last login time
+  const lastLoginMap = {};
+  (logins||[]).forEach(function(r){
+    if(!lastLoginMap[r.agent_id]) lastLoginMap[r.agent_id] = r.login_at;
+  });
+
   const now = new Date();
-  const ONLINE_THRESHOLD = 15 * 60 * 1000; // 15 min = online
+  const ONLINE_THRESHOLD = 15 * 60 * 1000; // 15 min
 
   const online = [], recent = [], offline = [];
   agents.forEach(function(a){
-    if(!a.last_login){ offline.push(a); return; }
-    const diff = now - new Date(a.last_login);
+    var lastLogin = lastLoginMap[a.id] || null;
+    a.last_login = lastLogin;
+    if(!lastLogin){ offline.push(a); return; }
+    const diff = now - new Date(lastLogin);
     if(diff < ONLINE_THRESHOLD) online.push(a);
     else if(diff < 24*60*60*1000) recent.push(a);
     else offline.push(a);
