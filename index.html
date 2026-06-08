@@ -2405,6 +2405,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <span style="font-size:18px">🏠</span><span>דשבורד ראשי</span>
           </button>
 
+          <button onclick="showDashPanel('live')" id="sb-live" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">🟢</span><span>סטטוס חי</span>
+          </button>
           <button onclick="showDashPanel('briefings-history')" id="sb-briefings-history" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:2px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">📋</span>
             <span>תדריכים</span>
@@ -6651,6 +6654,7 @@ function toggleBriefingDetails(id){
 /* ── DASHBOARD SIDE PANELS ───────────────────── */
 /* ══ INLINE DASHBOARD PANELS ══════════════════════ */
 const DASH_PANEL_META = {
+  live:        {eyebrow:'סטטוס חי',      title:'נציגים <em>מחוברים עכשיו</em>', render:renderLivePanel},
   verbal:      {eyebrow:'מבחן מילולי',   title:'תשובות <em>מילוליות</em>',  render:renderVerbalPanel},
   scores:      {eyebrow:'ציונים',        title:'ציונים <em>רגילים</em>',     render:renderScoresPanel},
   leaderboard: {eyebrow:'תחרות',         title:'לוח <em>תחרות</em>',          render:renderLeaderboardPanel},
@@ -6679,6 +6683,7 @@ const PANEL_FILTERS = {
              <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);min-width:110px;text-align:center;display:inline-block"></span>
              <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
 
+  live: '',
   'briefings-history': `<select id="bh-dept-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
     <select id="bh-status-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer">
       <option value="all">הכל</option>
@@ -6688,6 +6693,84 @@ const PANEL_FILTERS = {
 };
 
 let _currentDashPanel = null;
+
+async function renderLivePanel(){
+  const el = document.getElementById('inline-panel-content');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">טוען...</div>';
+
+  // Get all agents with last_login
+  const {data:agents} = await _sb.from('agents').select('id,name,depts,last_login,is_active').eq('is_active',true).order('last_login',{ascending:false});
+  if(!agents){ el.innerHTML='<div style="color:var(--danger)">שגיאה בטעינה</div>'; return; }
+
+  const now = new Date();
+  const ONLINE_THRESHOLD = 15 * 60 * 1000; // 15 min = online
+
+  const online = [], recent = [], offline = [];
+  agents.forEach(function(a){
+    if(!a.last_login){ offline.push(a); return; }
+    const diff = now - new Date(a.last_login);
+    if(diff < ONLINE_THRESHOLD) online.push(a);
+    else if(diff < 24*60*60*1000) recent.push(a);
+    else offline.push(a);
+  });
+
+  function agentRow(a, status){
+    var lastStr = a.last_login ? new Date(a.last_login).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : 'מעולם לא';
+    var dot = status==='online'?'🟢':status==='recent'?'🟡':'⚫';
+    var timeColor = status==='online'?'var(--ok)':status==='recent'?'var(--warn)':'var(--ice3)';
+    var dept = (a.depts||[])[0]||'';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:'+(status==='online'?'rgba(5,150,105,0.05)':'transparent')+'">' +
+      '<span style="font-size:14px">'+dot+'</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:600;color:var(--ice)">'+a.name+'</div>' +
+        '<div style="font-size:11px;color:var(--ice3)">'+dept+'</div>' +
+      '</div>' +
+      '<div style="text-align:left;font-size:11px;color:'+timeColor+';font-family:DM Mono,monospace">' +
+        (status==='online'?'<strong>מחובר עכשיו</strong>':lastStr) +
+      '</div>' +
+    '</div>';
+  }
+
+  var html = '';
+
+  // KPI bar
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:26px;font-weight:800;color:var(--ok)">'+online.length+'</div><div style="font-size:11px;color:var(--ice3)">🟢 מחובר עכשיו</div></div>' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:26px;font-weight:800;color:var(--warn)">'+recent.length+'</div><div style="font-size:11px;color:var(--ice3)">🟡 היום</div></div>' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:26px;font-weight:800;color:var(--ice3)">'+offline.length+'</div><div style="font-size:11px;color:var(--ice3)">⚫ לא מחובר</div></div>' +
+  '</div>';
+
+  // Online section
+  if(online.length){
+    html += '<div style="font-size:11px;font-weight:700;color:var(--ok);text-transform:uppercase;letter-spacing:0.08em;padding:8px 14px;background:rgba(5,150,105,0.08);border-radius:8px;margin-bottom:8px">🟢 מחוברים עכשיו ('+online.length+')</div>';
+    html += '<div class="card" style="padding:0;margin-bottom:12px;overflow:hidden">';
+    html += online.map(function(a){ return agentRow(a,'online'); }).join('');
+    html += '</div>';
+  }
+
+  // Recent section
+  if(recent.length){
+    html += '<div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:0.08em;padding:8px 14px;background:rgba(245,158,11,0.08);border-radius:8px;margin-bottom:8px">🟡 היום ('+recent.length+')</div>';
+    html += '<div class="card" style="padding:0;margin-bottom:12px;overflow:hidden">';
+    html += recent.map(function(a){ return agentRow(a,'recent'); }).join('');
+    html += '</div>';
+  }
+
+  // Offline section
+  if(offline.length){
+    html += '<div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;padding:8px 14px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:8px">⚫ לא מחוברים ('+offline.length+')</div>';
+    html += '<div class="card" style="padding:0;overflow:hidden">';
+    html += offline.map(function(a){ return agentRow(a,'offline'); }).join('');
+    html += '</div>';
+  }
+
+  // Auto-refresh every 60s
+  clearInterval(window._liveRefreshTimer);
+  window._liveRefreshTimer = setInterval(function(){ if(_currentDashPanel==='live') renderLivePanel(); }, 60000);
+
+  el.innerHTML = html;
+}
 
 function showDashPanel(panelKey){
   const mainEl=document.getElementById('dashboard-main');
