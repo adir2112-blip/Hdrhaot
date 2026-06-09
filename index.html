@@ -3511,6 +3511,14 @@ function renderKnowledgeArticles(){
           <span style="font-size:12px;color:var(--ice3)">📅 ${a.week_views||0} השבוע</span>
           ${a.avg_rating?`<span style="font-size:12px;color:${starColor}" title="${(+a.avg_rating).toFixed(1)}/5">${stars} (${a.rating_count||0})</span>`:''}
           ${a.comment_count?`<span style="font-size:12px;color:var(--ice3)">💬 ${a.comment_count}</span>`:''}
+          ${(()=>{
+            const today=new Date().toISOString().slice(0,10);
+            if(a.expiry_date){
+              const isExpired=a.expiry_date<today;
+              return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${isExpired?'rgba(240,101,101,0.15)':'rgba(201,168,76,0.12)'};color:${isExpired?'#F06565':'#C9A84C'};border:1px solid ${isExpired?'rgba(240,101,101,0.3)':'rgba(201,168,76,0.3)'}">${isExpired?'⚠️ פג תוקף':'📅 תוקף עד'}: ${new Date(a.expiry_date).toLocaleDateString('he-IL')}</span>`;
+            }
+            return '<span style="font-size:11px;color:var(--ice3);opacity:0.6">ללא תוקף</span>';
+          })()}
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
