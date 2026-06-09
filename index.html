@@ -2287,6 +2287,18 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 </select>
               </div>
               <div style="display:flex;gap:10px;margin-top:6px">
+                <div class="field" style="margin-top:16px">
+                  <label style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+                    <input type="checkbox" id="k-has-expiry" onchange="document.getElementById('k-expiry-wrap').style.display=this.checked?'block':'none'" style="width:20px;height:20px;cursor:pointer;accent-color:#C9A84C">
+                    <div>
+                      <div style="font-size:14px;font-weight:700;color:var(--gold)">📅 תאריך תפוגה</div>
+                      <div style="font-size:11px;color:var(--ice3);margin-top:2px">הנציג יקבל אזהרה אחרי תאריך זה</div>
+                    </div>
+                  </label>
+                  <div id="k-expiry-wrap" style="display:none;margin-top:10px">
+                    <input type="date" id="k-expiry-date" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--gold-line);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;width:100%;box-sizing:border-box">
+                  </div>
+                </div>
                 <button class="btn btn-gold" onclick="saveKnowledgeArticle()">💾 שמור</button>
                 <div id="k-save-msg" style="display:none;font-size:13px;font-family:'DM Mono',monospace;align-items:center"></div>
               </div>
@@ -3681,6 +3693,9 @@ async function saveKnowledgeArticle(){
   const folderId=document.getElementById('k-folder-select')?.value||null;
   const insertData={title,content,dept};
   if(folderId) insertData.folder_id=folderId;
+  const hasExpiry=document.getElementById('k-has-expiry')?.checked;
+  const expiryDate=document.getElementById('k-expiry-date')?.value;
+  if(hasExpiry && expiryDate) insertData.expiry_date=expiryDate;
   const {data,error}=await _sb.from('knowledge_base').insert(insertData).select().single();
   if(error){msg.textContent='שגיאה: '+error.message;msg.style.color='var(--danger)';return;}
   S_knowledge.unshift(data);
@@ -3702,6 +3717,14 @@ function editKnowledgeArticle(id){
   if(titleEl) titleEl.value=item.title||'';
   if(contentEl) contentEl.value=item.content||'';
   if(deptEl) deptEl.value=item.dept||'כללי';
+  // Load expiry
+  var hasExp=!!(item.expiry_date);
+  var exChk=document.getElementById('k-edit-has-expiry');
+  var exWrap=document.getElementById('k-edit-expiry-wrap');
+  var exDate=document.getElementById('k-edit-expiry-date');
+  if(exChk) exChk.checked=hasExp;
+  if(exWrap) exWrap.style.display=hasExp?'block':'none';
+  if(exDate) exDate.value=item.expiry_date||'';
   const modal=document.getElementById('knowledge-edit-modal');
   setTimeout(()=>{ initRichDragDrop('k-edit-content'); }, 100);
   if(modal){ modal.style.display='flex'; }
@@ -3716,7 +3739,8 @@ async function saveKnowledgeEdit(){
   const content = document.getElementById('k-edit-content').value.trim();
   const dept = document.getElementById('k-edit-dept').value;
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
-  const {error} = await _sb.from('knowledge_base').update({title,content,dept}).eq('id',_editingKbId);
+  var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null};
+  const {error} = await _sb.from('knowledge_base').update(updateData).eq('id',_editingKbId);
   if(error){alert('שגיאה: '+error.message);return;}
   const idx = S_knowledge.findIndex(a=>String(a.id)===String(_editingKbId));
   if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept};
@@ -4020,7 +4044,12 @@ function buildKnowledgeContext(dept){
     return false;
   });
   // Articles are the primary knowledge source - include more content
-  const articleCtx=articles.map(a=>'📌 '+a.title+':\n'+(a.content||'').slice(0,4000)).join('\n\n---\n\n');
+  const today=new Date().toISOString().slice(0,10);
+  const articleCtx=articles.map(a=>{
+    var isExpired = a.expiry_date && a.expiry_date < today;
+    var prefix = isExpired ? '⚠️ [פג תוקף - '+a.expiry_date+'] '+a.title : '📌 '+a.title;
+    return prefix+':\n'+(a.content||'').slice(0,4000);
+  }).join('\n\n---\n\n');
 
   // Briefings: only for selected dept (or all depts briefings)
   const relBriefs=S.briefings.filter(b=>{
@@ -4131,7 +4160,12 @@ async function sendKnowledgeChat(mode){
       const a = S_knowledge.find(function(x){ return x.title && x.title.trim()===title; });
       return a ? String(a.id) : null;
     }).filter(Boolean) : [];
-    _aiAnswerContext[thinkingId]={question:q, answer:ans, articleIds:ctxArticles};
+    // Detect expired articles in context
+    const today2=new Date().toISOString().slice(0,10);
+    const expiredTitles = S_knowledge ? S_knowledge.filter(function(a){
+      return a.expiry_date && a.expiry_date < today2 && ctxArticles.includes(String(a.id));
+    }).map(function(a){ return a.title; }) : [];
+    _aiAnswerContext[thinkingId]={question:q, answer:ans, articleIds:ctxArticles, expiredTitles:expiredTitles};
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
@@ -4210,6 +4244,14 @@ function updateKbMessage(boxId,id,text){
       }
 
       bubble.innerHTML='';
+      // Show expired warning if exists
+      var ctx2=_aiAnswerContext[id]||{};
+      if(ctx2.expiredTitles && ctx2.expiredTitles.length){
+        var warnDiv=document.createElement('div');
+        warnDiv.style.cssText='background:rgba(240,101,101,0.08);border:1.5px solid rgba(240,101,101,0.3);border-radius:10px;padding:8px 12px;margin-bottom:8px';
+        warnDiv.innerHTML='<span style="color:#F06565;font-weight:700;font-size:12px">⚠️ שים לב:</span> <span style="color:#888;font-size:12px">מידע זה מגיע ממאמר שפג תוקפו ועשוי לא להיות רלוונטי</span>';
+        bubble.appendChild(warnDiv);
+      }
       bubble.appendChild(ansDiv);
       bubble.appendChild(vxDiv);
       bubble.appendChild(rateDiv);
@@ -4567,7 +4609,30 @@ function setAgentKbDept(dept){
   );
 }
 
+var _kbChatFullscreen = false;
+function toggleKbChatFullscreen(){
+  _kbChatFullscreen = !_kbChatFullscreen;
+  var modal = document.getElementById('agent-knowledge-modal');
+  var inner = modal.querySelector('div');
+  var messages = document.getElementById('agent-kb-messages');
+  var btn = document.getElementById('kb-expand-btn');
+  if(_kbChatFullscreen){
+    modal.style.cssText = 'display:block;position:fixed;inset:0;z-index:500;width:100%;max-width:100%;bottom:0;left:0;direction:rtl;animation:none';
+    inner.style.cssText = 'background:#fff;border:none;border-radius:0;box-shadow:none;overflow:hidden;display:flex;flex-direction:column;height:100vh;max-height:100vh';
+    messages.style.maxHeight = 'calc(100vh - 160px)';
+    btn.textContent = '⊡';
+    btn.title = 'צמצם';
+  } else {
+    modal.style.cssText = 'display:block;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:none';
+    inner.style.cssText = 'background:#fff;border:1.5px solid rgba(184,134,42,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;display:flex;flex-direction:column;max-height:520px';
+    messages.style.maxHeight = '320px';
+    btn.textContent = '⛶';
+    btn.title = 'מסך מלא';
+  }
+}
+
 function closeAgentKnowledgeChat(){
+  _kbChatFullscreen = false;
   document.getElementById('agent-knowledge-modal').style.display='none';
 }
 
@@ -11147,7 +11212,10 @@ function renderManagersDiscipline(){
 
         </div>
       </div>
-      <button onclick="closeAgentKnowledgeChat()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button onclick="toggleKbChatFullscreen()" id="kb-expand-btn" title="מסך מלא" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">⛶</button>
+        <button onclick="closeAgentKnowledgeChat()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      </div>
     </div>
     <!-- Messages -->
     <div id="agent-kb-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:320px;background:#FAFAF8"></div>
@@ -11214,6 +11282,18 @@ function renderManagersDiscipline(){
           <option value="מחלקת סחר">מחלקת סחר</option>
         </optgroup>
       </select>
+      <div class="field" style="margin-top:16px">
+        <label style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+          <input type="checkbox" id="k-edit-has-expiry" onchange="document.getElementById('k-edit-expiry-wrap').style.display=this.checked?'block':'none'" style="width:20px;height:20px;cursor:pointer;accent-color:#C9A84C">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--gold)">📅 תאריך תפוגה</div>
+            <div style="font-size:11px;color:var(--ice3);margin-top:2px">הנציג יקבל אזהרה אחרי תאריך זה</div>
+          </div>
+        </label>
+        <div id="k-edit-expiry-wrap" style="display:none;margin-top:10px">
+          <input type="date" id="k-edit-expiry-date" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--gold-line);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;width:100%;box-sizing:border-box">
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn btn-gold" onclick="saveKnowledgeEdit()" style="flex:1">💾 שמור שינויים</button>
