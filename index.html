@@ -3747,11 +3747,13 @@ async function saveKnowledgeEdit(){
   const content = document.getElementById('k-edit-content').value.trim();
   const dept = document.getElementById('k-edit-dept').value;
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
+  var hasEditExpiry=document.getElementById('k-edit-has-expiry')?.checked||false;
+  var editExpiryDate=document.getElementById('k-edit-expiry-date')?.value||'';
   var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null};
   const {error} = await _sb.from('knowledge_base').update(updateData).eq('id',_editingKbId);
   if(error){alert('שגיאה: '+error.message);return;}
   const idx = S_knowledge.findIndex(a=>String(a.id)===String(_editingKbId));
-  if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept};
+  if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept,expiry_date:updateData.expiry_date};
   closeKnowledgeEdit();
   renderKnowledgeArticles();
 }
