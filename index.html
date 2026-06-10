@@ -8153,18 +8153,18 @@ async function renderAgentKnowledgePanel(){
   var grpDepts = grpObj ? grpObj.depts.map(function(d){return d.trim().toLowerCase();}) : [];
 
   function isRelevant(article){
-    if(!article.dept||article.dept==='כללי') return true;
+    if(!article.dept||article.dept==='כללי') return true; // כללי = for everyone
     var ad = article.dept.trim().toLowerCase();
-    if(ad === (grp||'').toLowerCase()) return true; // group key (e.g. 'מובמנט')
-    if(agentActualDepts.includes(ad)) return true;  // specific dept
-    // Also match if article dept is ANY dept within agent's group
-    var groupDepts = grpDepts || [];
-    if(groupDepts.includes(ad)) return true;
-    return false;
+    if(ad === (grp||'').toLowerCase()) return true; // group key match (e.g. article dept='מובמנט', agent is מובמנט)
+    if(agentActualDepts.includes(ad)) return true;  // exact dept match
+    // Any dept that belongs to agent's group
+    if(grpDepts.includes(ad)) return true;
+    return false; // different group — hide
   }
 
   // Build tree - show all folders (filter articles inside)
-  var topFolders=S_folders.filter(function(f){return !f.parent_id;});
+  // Only show top folders that have relevant content for this agent
+  var topFolders=S_folders.filter(function(f){return !f.parent_id && folderHasRelevantContent(f.id);});
 
   treeEl.innerHTML='<div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">📁 תיקיות</div>';
 
