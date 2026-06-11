@@ -2249,6 +2249,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <button onclick="richLink('k-content')" title="קישור">🔗</button>
   <button onclick="richImage('k-content')" title="תמונה">🖼</button>
   <button onclick="richImageUpload('k-content')" title="העלה תמונה">📤</button>
+  <div class="sep"></div>
+  <button onclick="richEmbedSlides('k-content')" title="הטמע Google Slides" style="font-size:11px;padding:0 6px">📊 Slides</button>
+  <button onclick="richEmbedSheets('k-content')" title="הטמע Google Sheets" style="font-size:11px;padding:0 6px">📋 Sheets</button>
+  <button onclick="richEmbedIframe('k-content')" title="הטמע iframe" style="font-size:11px;padding:0 6px">⊞ Embed</button>
 </div>
 <textarea id="k-content" class="rich-editor" placeholder="הכנס כאן את תוכן הידע..." style="min-height:160px"></textarea></div>
               <div class="field">
@@ -8457,6 +8461,11 @@ function renderAgentBriefingsPanel(){
 }
 
 function formatContent(raw){
+  // Handle [EMBED]...[/EMBED] blocks — render iframes directly
+  raw = (raw||'').replace(/\[EMBED\]([\s\S]*?)\[\/EMBED\]/g, function(m, html){
+    return html;
+  });
+
   if(!raw) return '';
   // Helper to process inline formatting (bold, italic, links, images)
   function processInline(text){
@@ -8539,6 +8548,36 @@ function richBullet(areaId) {
   ta.value = before + '• ' + after;
   ta.selectionStart = ta.selectionEnd = lineStart + 2;
   ta.focus();
+}
+
+function richEmbedSlides(id){
+  var url=prompt('הדבק קישור Google Slides (URL מלא):');
+  if(!url) return;
+  url=url.replace('/edit','').replace('/pub','').replace('?usp=sharing','').replace(/\/+$/,'');
+  var embedUrl=url+'/embed?start=false&loop=false&delayms=3000';
+  var html='\n[EMBED]<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:12px 0"><iframe src="'+embedUrl+'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:8px" allowfullscreen></iframe></div>[/EMBED]\n';
+  var el=document.getElementById(id);
+  if(el){el.value=(el.value||'')+html; el.focus();}
+}
+
+function richEmbedSheets(id){
+  var url=prompt('הדבק קישור Google Sheets (URL מלא):');
+  if(!url) return;
+  url=url.replace('/edit','').replace('?usp=sharing','').replace(/\/+$/,'');
+  var embedUrl=url+'/htmlview?widget=true&headers=false';
+  var html='\n[EMBED]<div style="overflow:auto;margin:12px 0;border-radius:8px;border:1px solid #ddd"><iframe src="'+embedUrl+'" style="width:100%;min-height:420px;border:none" allowfullscreen></iframe></div>[/EMBED]\n';
+  var el=document.getElementById(id);
+  if(el){el.value=(el.value||'')+html; el.focus();}
+}
+
+function richEmbedIframe(id){
+  var url=prompt('הדבק קישור להטמעה (URL):');
+  if(!url) return;
+  var heightStr=prompt('גובה (px):','400');
+  var height=parseInt(heightStr)||400;
+  var html='\n[EMBED]<div style="overflow:auto;margin:12px 0"><iframe src="'+url+'" style="width:100%;height:'+height+'px;border:none;border-radius:8px" allowfullscreen></iframe></div>[/EMBED]\n';
+  var el=document.getElementById(id);
+  if(el){el.value=(el.value||'')+html; el.focus();}
 }
 
 function richLink(areaId) {
@@ -11269,6 +11308,10 @@ function renderManagersDiscipline(){
   <button onclick="richLink('k-edit-content')" title="קישור">🔗</button>
   <button onclick="richImage('k-edit-content')" title="תמונה">🖼</button>
   <button onclick="richImageUpload('k-edit-content')" title="העלה תמונה">📤</button>
+  <div class="sep"></div>
+  <button onclick="richEmbedSlides('k-edit-content')" title="הטמע Google Slides" style="font-size:11px;padding:0 6px">📊 Slides</button>
+  <button onclick="richEmbedSheets('k-edit-content')" title="הטמע Google Sheets" style="font-size:11px;padding:0 6px">📋 Sheets</button>
+  <button onclick="richEmbedIframe('k-edit-content')" title="הטמע iframe" style="font-size:11px;padding:0 6px">⊞ Embed</button>
 </div>
 <textarea id="k-edit-content" class="rich-editor" style="min-height:200px;width:100%"></textarea></div>
     <div class="field">
