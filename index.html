@@ -5079,6 +5079,21 @@ function renderEQ(){
 function setC(qi,oi){S.eq[qi].correct=oi;renderEQ();}
 
 async function publishBriefing(){
+  // בדיקת שם כפול — מונע יצירת תדריך עם שם שכבר קיים
+  const proposedTitle=(S.cur.title||'').trim();
+  const duplicate=S.briefings.find(b=>(b.title||'').trim()===proposedTitle);
+  if(duplicate){
+    const newTitle=prompt(`כבר קיים תדריך בשם "${proposedTitle}" (מזהה ${duplicate.id}${duplicate.is_active===false?', מושבת':''}).\nבחר שם אחר לתדריך החדש:`, proposedTitle+' (2)');
+    if(!newTitle||!newTitle.trim()){ alert('הפרסום בוטל — נדרש שם ייחודי.'); return; }
+    const trimmedNew=newTitle.trim();
+    // ודא שגם השם החדש לא כפול
+    if(S.briefings.some(b=>(b.title||'').trim()===trimmedNew)){
+      alert('השם שבחרת גם הוא כפול. הפרסום בוטל — נסה שם אחר.');
+      return;
+    }
+    S.cur.title=trimmedNew;
+  }
+
   const targetDepts=DEPTS.filter((_,i)=>{const btn=document.getElementById('bdl-'+i);return btn&&btn.dataset.checked==='1';});
   const targetAgents=targetDepts.length
     ? S.agents.filter(a=>a.active!==false&&(a.depts||[]).some(d=>targetDepts.includes(d)))
