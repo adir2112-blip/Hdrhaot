@@ -6062,6 +6062,8 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
   </div>`;
 }
 
+if(!window._openBriefingDetails) window._openBriefingDetails = new Set();
+
 async function renderTracking(){
   // Always refresh briefings from DB to get latest completions
   try {
@@ -6131,7 +6133,7 @@ async function renderTracking(){
         ${b.targetDepts&&b.targetDepts.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${b.targetDepts.map(d=>`<span class="dept-chip">${d}</span>`).join('')}</div>`:''}
 
         <!-- Completed list (hidden by default) -->
-        <div id="bd-done-${bid}" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+        <div id="bd-done-${bid}" style="display:${window._openBriefingDetails&&window._openBriefingDetails.has('bd-done-'+bid)?'block':'none'};margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
           <div style="font-size:11px;font-weight:700;color:var(--ok);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">✓ הושלם — לפי ציון</div>
           ${completedList.length?completedList.map((c,i)=>`
             <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--ok-bg);margin-bottom:6px">
@@ -6144,7 +6146,7 @@ async function renderTracking(){
         </div>
 
         <!-- Pending list (hidden by default) -->
-        <div id="bd-pend-${bid}" style="display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
+        <div id="bd-pend-${bid}" style="display:${window._openBriefingDetails&&window._openBriefingDetails.has('bd-pend-'+bid)?'block':'none'};margin-top:8px;border-top:1px solid var(--line);padding-top:10px">
           <div style="font-size:11px;font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">⏳ טרם השלימו</div>
           ${pendingList.length?pendingList.map(a=>`
             <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--warn-bg);margin-bottom:6px">
@@ -6727,7 +6729,11 @@ function wqToggle(i){
 function toggleBriefingDetails(id){
   const el=document.getElementById(id);
   if(!el) return;
-  el.style.display=el.style.display==='block'?'none':'block';
+  const willOpen = el.style.display !== 'block';
+  el.style.display = willOpen ? 'block' : 'none';
+  if(!window._openBriefingDetails) window._openBriefingDetails = new Set();
+  if(willOpen) window._openBriefingDetails.add(id);
+  else window._openBriefingDetails.delete(id);
 }
 
 /* ── DASHBOARD SIDE PANELS ───────────────────── */
