@@ -5704,37 +5704,71 @@ async function submitQuiz(){
   big.className='score-num '+(S.score>=80?'s-great':S.score>=60?'s-mid':'s-low');
   document.getElementById('score-label').textContent=`${c} מתוך ${qs.length} תשובות נכונות`;
   goStep('sign');
-  // שמירה אוטומטית — גם לפני לחיצה על חתום
+  // שמירה אוטומטית — עם הגנה מפני race condition (קריאה טרייה מה-DB לפני כתיבה)
   try{
     const ts=now();
-    const b=S.briefings.find(b=>b.id===S.active.id);
+    const briefingId=S.active.id;
     const _agId=String(S.agent.id);
+
+    // קריטי: קרא את completions העדכני ביותר מה-DB, לא מהזיכרון המקומי
+    // כי נציג אחר יכול לכתוב בין הטעינה הראשונית לרגע הזה
+    const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+    if(fetchErr) throw fetchErr;
+    let freshCompletions={};
+    try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+    catch(e){ freshCompletions={}; }
+
     const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
-    const prevComp=b.completions[_agId];
+    const prevComp=freshCompletions[_agId];
     const histKey='_hist_'+_agId;
-    const prevHist=b.completions[histKey]?.history||[];
+    const prevHist=freshCompletions[histKey]?.history||[];
     const history=[...prevHist];
     if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
-    b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
-    delete b.completions[histKey];
-    await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
-    console.log('[Quiz] Auto-saved score:', S.score);
+
+    // מזג את הרשומה החדשה לתוך הנתונים הטריים — לא לתוך snapshot ישן
+    freshCompletions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
+    delete freshCompletions[histKey];
+
+    await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+
+    // עדכן גם את העותק המקומי כדי שתצוגות מקומיות יהיו עקביות
+    const localB=S.briefings.find(b=>b.id===briefingId);
+    if(localB) localB.completions=freshCompletions;
+
+    console.log('[Quiz] Auto-saved score (race-safe):', S.score);
   }catch(e){ console.warn('[Quiz] Auto-save failed:', e.message); }
 }
 async function signBriefing(){
   const ts=now();
-  const b=S.briefings.find(b=>b.id===S.active.id);
+  const briefingId=S.active.id;
   const _agId=String(S.agent.id);
-  const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
-  const prevComp=b.completions[_agId];
-  const histKey='_hist_'+_agId;
-  const prevHist=b.completions[histKey]?.history||[];
-  const history=[...prevHist];
-  if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
-  b.completions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
-  delete b.completions[histKey];
-  b._needsRefresh=false;
-  await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+  const localB=S.briefings.find(b=>b.id===briefingId);
+
+  try{
+    // קריטי: קרא completions טרי מה-DB ממש לפני הכתיבה — בדיוק כמו ב-submitQuiz
+    // כי בין submitQuiz ל-signBriefing יכולות לעבור כמה שניות, ונציג אחר יכול לכתוב בינתיים
+    const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+    if(fetchErr) throw fetchErr;
+    let freshCompletions={};
+    try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+    catch(e){ freshCompletions={}; }
+
+    const _answerRecord=S.active.questions.map((q,i)=>({q:q.q,options:q.options,correct:q.correct,hint:q.hint,chosen:S.answers[i]}));
+    const prevComp=freshCompletions[_agId];
+    const histKey='_hist_'+_agId;
+    const prevHist=freshCompletions[histKey]?.history||[];
+    const history=[...prevHist];
+    if(prevComp&&prevComp.score!==undefined) history.push({score:prevComp.score,ts:prevComp.ts});
+
+    freshCompletions[_agId]={score:S.score,ts,name:S.agent.name,answers:_answerRecord,history};
+    delete freshCompletions[histKey];
+
+    await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+
+    if(localB){ localB.completions=freshCompletions; localB._needsRefresh=false; }
+    console.log('[Sign] Saved (race-safe):', S.score);
+  }catch(e){ console.warn('[Sign] Save failed:', e.message); }
+
   document.getElementById('sign-btn').style.display='none';
   document.getElementById('sign-done').style.display='block';
   showCelebration();
@@ -5907,20 +5941,30 @@ ${content.slice(0,3000)}
         ${parsed.missing.map(m=>`<div style="font-size:14px;color:var(--ice);margin-bottom:5px;line-height:1.5">◆ ${m}</div>`).join('')}
       </div>`:''}`;
 
-    // Save reverse score to Supabase
+    // Save reverse score to Supabase — race-safe: fetch fresh, merge, write
     if(S.active&&S.agent){
-      const b=S.briefings.find(x=>x.id===S.active.id);
+      const briefingId=S.active.id;
       const agId=String(S.agent.id);
-      if(b){
-        if(!b.completions[agId]) b.completions[agId]={name:S.agent.name,score:0,ts:''};
-        b.completions[agId].reverse_score=score;
-        b.completions[agId].reverse_summary=parsed.summary||'';
-        b.completions[agId].reverse_correct=parsed.correct||[];
-        b.completions[agId].reverse_missing=parsed.missing||[];
-        b.completions[agId].reverse_text=explanation;
-        await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
-        console.log('✓ reverse data saved for agent',agId,'score',score);
-      }
+      try{
+        const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+        if(fetchErr) throw fetchErr;
+        let freshCompletions={};
+        try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+        catch(e){ freshCompletions={}; }
+
+        if(!freshCompletions[agId]) freshCompletions[agId]={name:S.agent.name,score:0,ts:''};
+        freshCompletions[agId].reverse_score=score;
+        freshCompletions[agId].reverse_summary=parsed.summary||'';
+        freshCompletions[agId].reverse_correct=parsed.correct||[];
+        freshCompletions[agId].reverse_missing=parsed.missing||[];
+        freshCompletions[agId].reverse_text=explanation;
+
+        await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+
+        const localB=S.briefings.find(x=>x.id===briefingId);
+        if(localB) localB.completions=freshCompletions;
+        console.log('✓ reverse data saved (race-safe) for agent',agId,'score',score);
+      }catch(e){ console.warn('[Reverse] Save failed:', e.message); }
     }
 
   } catch(e){
@@ -5935,14 +5979,25 @@ ${content.slice(0,3000)}
 }
 
 async function backToBriefingsWithFeedback(){
-  // Save feedback if entered
+  // Save feedback if entered — race-safe: fetch fresh, merge, write
   const fb=document.getElementById('agent-feedback')?.value?.trim();
   if(fb&&S.active&&S.agent){
-    const b=S.briefings.find(x=>x.id===S.active.id);
-    if(b&&b.completions[String(S.agent.id)]){
-      b.completions[String(S.agent.id)].feedback=fb;
-      await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
-    }
+    const briefingId=S.active.id;
+    const agId=String(S.agent.id);
+    try{
+      const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+      if(fetchErr) throw fetchErr;
+      let freshCompletions={};
+      try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+      catch(e){ freshCompletions={}; }
+
+      if(freshCompletions[agId]){
+        freshCompletions[agId].feedback=fb;
+        await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+        const localB=S.briefings.find(x=>x.id===briefingId);
+        if(localB) localB.completions=freshCompletions;
+      }
+    }catch(e){ console.warn('[Feedback] Save failed:', e.message); }
   }
   document.getElementById('agent-feedback').value='';
   backToBriefings();
@@ -6484,11 +6539,17 @@ function toggleHistory(id){
 async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
   if(!confirm(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
 הציון הנוכחי יימחק.`)) return;
-  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
-  if(!b) return;
-  const sid=String(agentId);
-  delete b.completions[sid];
-  await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+  try{
+    const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+    if(fetchErr) throw fetchErr;
+    let freshCompletions={};
+    try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+    catch(e){ freshCompletions={}; }
+    delete freshCompletions[String(agentId)];
+    await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+    const localB=S.briefings.find(x=>String(x.id)===String(briefingId));
+    if(localB) localB.completions=freshCompletions;
+  }catch(e){ alert('שגיאה: '+e.message); return; }
   renderTracking();
 }
 
@@ -6685,40 +6746,46 @@ function openWeakQuestionsPage(){
 
 /* ── REFRESH BRIEFING ───────────────────────── */
 async function sendRefreshBriefing(briefingId){
-  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
-  if(!b) return;
-  const doneCount=Object.keys(b.completions).length;
-  if(!confirm(`לאפס את תדריך "${b.title}" לרענון חוזר לכל הנציגים?
-${doneCount} נציגים שהשלימו יחזרו לממתינים.
+  const localB=S.briefings.find(x=>String(x.id)===String(briefingId));
+  if(!localB) return;
+  const doneCountEstimate=Object.keys(localB.completions).length;
+  if(!confirm(`לאפס את תדריך "${localB.title}" לרענון חוזר לכל הנציגים?
+${doneCountEstimate} נציגים שהשלימו יחזרו לממתינים.
 הציונים הקודמים יישמרו בהיסטוריה.`)) return;
 
-  // Archive all completions into history, then clear current completions
-  const newCompletions={};
-  Object.entries(b.completions).forEach(([agentId,comp])=>{
-    const history=comp.history||[];
-    history.push({score:comp.score,ts:comp.ts,answers:comp.answers});
-    // Keep agent entry but mark as archived (pending = no current completion)
-    // Store history separately in a "rounds" object
-    newCompletions[agentId+'_history']=history; // archive
-    // Don't copy the current completion → agent is now pending
-  });
-  // Only keep history entries, not current completions
-  const archiveOnly={};
-  Object.entries(b.completions).forEach(([agentId,comp])=>{
-    archiveOnly['_hist_'+agentId]={history:[...(comp.history||[]),{score:comp.score,ts:comp.ts}]};
-  });
+  try{
+    // קריטי: קרא completions טרי מה-DB ממש לפני הארכוב — לא להסתמך על snapshot ישן
+    // כי נציג יכול להשלים בין טעינת הדשבורד לרגע הלחיצה על "רענון חוזר"
+    const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+    if(fetchErr) throw fetchErr;
+    let freshCompletions={};
+    try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+    catch(e){ freshCompletions={}; }
 
-  const refreshTs=new Date().toISOString();
-  const {error}=await _sb.from('briefings').update({
-    completions:JSON.stringify(archiveOnly),
-    refresh_requested:refreshTs
-  }).eq('id',briefingId);
-  if(error){alert('שגיאה: '+error.message);return;}
+    const doneCount=Object.keys(freshCompletions).filter(k=>!k.startsWith('_hist_')).length;
 
-  b.completions=archiveOnly;
-  b.refresh_requested=refreshTs;
-  renderTracking();
-  alert(`✓ רענון חוזר נשלח! ${doneCount} נציגים חזרו לממתינים. הציונים הקודמים נשמרו בהיסטוריה.`);
+    // Archive all current completions into history, keep existing _hist_ entries too
+    const archiveOnly={};
+    Object.entries(freshCompletions).forEach(([agentId,comp])=>{
+      if(agentId.startsWith('_hist_')){
+        archiveOnly[agentId]=comp; // preserve existing archived history untouched
+        return;
+      }
+      archiveOnly['_hist_'+agentId]={history:[...(comp.history||[]),{score:comp.score,ts:comp.ts}]};
+    });
+
+    const refreshTs=new Date().toISOString();
+    const {error}=await _sb.from('briefings').update({
+      completions:JSON.stringify(archiveOnly),
+      refresh_requested:refreshTs
+    }).eq('id',briefingId);
+    if(error){alert('שגיאה: '+error.message);return;}
+
+    localB.completions=archiveOnly;
+    localB.refresh_requested=refreshTs;
+    renderTracking();
+    alert(`✓ רענון חוזר נשלח! ${doneCount} נציגים חזרו לממתינים. הציונים הקודמים נשמרו בהיסטוריה.`);
+  }catch(e){ alert('שגיאה: '+e.message); }
 }
 
 function wqToggle(i){
@@ -7412,11 +7479,19 @@ async function resetAgentBriefings(){
   if(!id){alert('בחר נציג');return;}
   const agent=S.agents.find(a=>a.id===id);
   if(!confirm(`למחוק את כל סימוני ההשלמה של ${agent.name}?`))return;
-  for(const b of S.briefings){
-    if(b.completions[id]){
-      delete b.completions[id];
-      await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
-    }
+  for(const localB of S.briefings){
+    try{
+      const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',localB.id).single();
+      if(fetchErr) throw fetchErr;
+      let freshCompletions={};
+      try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+      catch(e){ freshCompletions={}; }
+      if(freshCompletions[id]){
+        delete freshCompletions[id];
+        await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',localB.id);
+        localB.completions=freshCompletions;
+      }
+    }catch(e){ console.warn('[Reset Agent] failed for briefing',localB.id,e.message); }
   }
   alert('בוצע — נמחקו סימוני ההשלמה של '+agent.name);
 }
@@ -7432,10 +7507,20 @@ async function resetGroupBriefings(){
   }
   if(!agentIds.length){alert('לא נמצאו נציגים בקבוצה זו');return;}
   if(!confirm(`למחוק סימוני השלמה ל-${agentIds.length} נציגים בקבוצה "${grpKey}"?`))return;
-  for(const b of S.briefings){
-    let changed=false;
-    agentIds.forEach(id=>{if(b.completions[id]){delete b.completions[id];changed=true;}});
-    if(changed) await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',b.id);
+  for(const localB of S.briefings){
+    try{
+      const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',localB.id).single();
+      if(fetchErr) throw fetchErr;
+      let freshCompletions={};
+      try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+      catch(e){ freshCompletions={}; }
+      let changed=false;
+      agentIds.forEach(id=>{if(freshCompletions[id]){delete freshCompletions[id];changed=true;}});
+      if(changed){
+        await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',localB.id);
+        localB.completions=freshCompletions;
+      }
+    }catch(e){ console.warn('[Reset Group] failed for briefing',localB.id,e.message); }
   }
   alert('בוצע — נמחקו סימוני ההשלמה לקבוצה '+grpKey);
 }
@@ -7460,13 +7545,21 @@ async function deleteBriefingFromDashboard(id){
   populateResetSelects();
 }
 async function resetSingleCompletion(briefingId,agentId){
-  const b=S.briefings.find(x=>x.id===briefingId);
-  if(!b)return;
+  const localB=S.briefings.find(x=>x.id===briefingId);
+  if(!localB)return;
   const agent=S.agents.find(a=>a.id===agentId);
   const name=agent?agent.name:agentId;
   if(!confirm(`לבטל את חתימת ${name} על תדריך זה?`))return;
-  delete b.completions[agentId];
-  await _sb.from('briefings').update({completions:JSON.stringify(b.completions)}).eq('id',briefingId);
+  try{
+    const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
+    if(fetchErr) throw fetchErr;
+    let freshCompletions={};
+    try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }
+    catch(e){ freshCompletions={}; }
+    delete freshCompletions[agentId];
+    await _sb.from('briefings').update({completions:JSON.stringify(freshCompletions)}).eq('id',briefingId);
+    localB.completions=freshCompletions;
+  }catch(e){ alert('שגיאה: '+e.message); return; }
   renderTracking();
 }
 
