@@ -1694,6 +1694,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <option value="פריפיט">פריפיט</option>
             <option value="סחר">סחר</option>
             <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
           </select>
         </div>
         <div style="margin-right:auto;display:flex;gap:8px">
@@ -1836,6 +1837,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button class="dept-filter-btn" onclick="setAgentGroup('פריפיט',this)">פריפיט</button>
           <button class="dept-filter-btn" onclick="setAgentGroup('סחר',this)">סחר</button>
           <button class="dept-filter-btn" onclick="setAgentGroup('מאוחדת',this)">מאוחדת</button>
+          <button class="dept-filter-btn" onclick="setAgentGroup('אלן קאר',this)">אלן קאר</button>
         </div>
         <div style="position:relative;margin-bottom:14px">
           <input type="text" id="agent-search" placeholder="🔍 חפש שם עובד..." oninput="renderAgentLogin()" style="width:100%;padding-right:14px;font-size:15px">
@@ -2218,6 +2220,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 </optgroup>
                 <optgroup label="── מאוחדת ──">
                   <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
                 </optgroup>
               </select>
               <input type="text" id="k-search" placeholder="🔍 חפש..." oninput="renderKnowledgeArticles()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
@@ -2271,6 +2274,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                     <option value="פריפיט">פריפיט (כל מחלקות פריפיט)</option>
                     <option value="סחר">סחר</option>
                     <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
                   </optgroup>
                   <optgroup label="── מחלקות ספציפיות ──">
                     <option value="כללית אקטיב">כללית אקטיב</option>
@@ -2331,6 +2335,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 </optgroup>
                 <optgroup label="── מאוחדת ──">
                   <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
                 </optgroup>
             </select>
             </div>
@@ -2352,6 +2357,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <option value="פריפיט">פריפיט</option>
                 <option value="סחר">סחר</option>
                 <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
               </select>
               <input type="text" id="kb-briefings-search" placeholder="🔍 חפש תדריך..." oninput="renderKBBriefings()" style="flex:1;font-size:13px;padding:7px 12px;border-radius:10px">
             </div>
@@ -2492,6 +2498,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <option value="פריפיט">פריפיט</option>
               <option value="סחר">סחר</option>
               <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
               <option value="מעוף לעמית">מעוף לעמית</option>
             </select>
             <span style="font-size:12px;color:var(--gold);pointer-events:none">▾</span>
@@ -2622,6 +2629,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <option value="פריפיט">פריפיט</option>
           <option value="סחר">סחר</option>
           <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
           <option value="active">פעילים בלבד</option>
           <option value="inactive">לא פעילים</option>
         </select>
@@ -2667,6 +2675,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <option value="פריפיט">פריפיט</option>
                 <option value="סחר">סחר</option>
                 <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
                 <option value="active">פעילים בלבד</option>
                 <option value="inactive">לא פעילים</option>
               </select>
@@ -2725,6 +2734,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <option value="פריפיט">פריפיט</option>
               <option value="סחר">סחר</option>
               <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
               <option value="all">כל הנציגים</option>
             </select>
             <button class="btn btn-danger-soft" onclick="resetGroupBriefings()">מחק סימונים לקבוצה</button>
@@ -2815,12 +2825,13 @@ const LETTERS=['א','ב','ג','ד'];
 // Passwords removed — authentication via Supabase Auth only
 const ADMIN_PW='__DISABLED__';
 const SUPER_ADMIN_PW='__DISABLED__';
-const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת'];
+const DEPTS=['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT','מחלקת סחר','פריפיט שירות','פריפיט מכירות','מאוחדת','אלן קאר'];
 const GROUPS=[
   {key:'מובמנט', label:'מובמנט', depts:['כללית אקטיב','עובדים בריא','מעוף לעמית','מעוף לעמית מכירות','לאומית FIT']},
   {key:'פריפיט',  label:'פריפיט',  depts:['פריפיט שירות','פריפיט מכירות']},
   {key:'סחר',     label:'סחר',     depts:['מחלקת סחר']},
   {key:'מאוחדת',  label:'מאוחדת',  depts:['מאוחדת']},
+  {key:'אלן קאר', label:'אלן קאר', depts:['אלן קאר']},
 ];
 function agentGroup(a){
   const d=a.depts||[];
@@ -6833,25 +6844,25 @@ const DASH_PANEL_META = {
 };
 
 const PANEL_FILTERS = {
-  verbal: `<select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  verbal: `<select id="verbal-dept-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
            <select id="verbal-briefing-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
            <select id="verbal-date-filter" onchange="renderVerbalPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="7">שבוע</option><option value="30">חודש</option><option value="90">3 חודשים</option><option value="365">שנה</option></select>`,
-  scores: `<select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  scores: `<select id="scores-dept-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
            <select id="scores-briefing-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>
            <select id="scores-date-filter" onchange="renderScoresPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל הזמנים</option><option value="1">יום</option><option value="7">שבוע</option><option value="30">חודש</option><option value="365">שנה</option></select>`,
-  leaderboard: `<select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>`,
-  pending: `<select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  leaderboard: `<select id="lb-dept-filter" onchange="renderLeaderboardPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>`,
+  pending: `<select id="pending-dept-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
             <select id="pending-briefing-filter" onchange="renderPendingPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
-  weak: `<select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>`,
-  feedback: `<select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  weak: `<select id="weak-dept-filter" onchange="renderWeakPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>`,
+  feedback: `<select id="feedback-dept-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
              <select id="feedback-briefing-filter" onchange="renderFeedbackPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value="all">כל התדריכים</option></select>`,
-  calendar: `<select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  calendar: `<select id="cal-dept-filter" onchange="renderCalendarPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
              <button onclick="calPrevMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">◀</button>
              <span id="cal-month-label" style="font-size:14px;font-weight:700;color:var(--ice);min-width:110px;text-align:center;display:inline-block"></span>
              <button onclick="calNextMonth()" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:15px">▶</button>`,
 
   live: '',
-  'briefings-history': `<select id="bh-dept-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option></select>
+  'briefings-history': `<select id="bh-dept-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer"><option value='all'>כל המחלקות</option><option value='מובמנט'>מובמנט</option><option value='פריפיט'>פריפיט</option><option value='סחר'>סחר</option><option value='מאוחדת'>מאוחדת</option><option value='אלן קאר'>אלן קאר</option></select>
     <select id="bh-status-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer">
       <option value="all">הכל</option>
       <option value="pending">ממתינים</option>
@@ -11503,6 +11514,7 @@ function renderManagersDiscipline(){
           <option value="פריפיט">פריפיט (כל מחלקות פריפיט)</option>
           <option value="סחר">סחר</option>
           <option value="מאוחדת">מאוחדת</option>
+                  <option value="אלן קאר">אלן קאר</option>
         </optgroup>
         <optgroup label="── מחלקות ספציפיות ──">
           <option value="כללית אקטיב">כללית אקטיב</option>
