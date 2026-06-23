@@ -2535,6 +2535,28 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div><!-- /tracking-content -->
   </div><!-- /tab-tracking -->
   <!-- SETTINGS -->
+  <div class="sec" id="tab-logs">
+    <div class="sec-header">
+      <div class="sec-eyebrow">Super Admin Only</div>
+      <div class="sec-title">לוג <em>פעולות מנהלים</em></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <select id="log-filter-manager" onchange="loadLogs()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+          <option value="">כל המנהלים</option>
+        </select>
+        <input type="date" id="log-date-from" onchange="loadLogs()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        <span style="color:var(--ice3);font-size:13px">עד</span>
+        <input type="date" id="log-date-to" onchange="loadLogs()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        <button onclick="loadLogs()" class="btn btn-gold" style="padding:8px 16px;font-size:13px">🔄 רענן</button>
+        <button onclick="clearLogFilters()" style="padding:8px 14px;border-radius:10px;border:1px solid var(--line2);background:none;color:var(--ice3);font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">נקה סינון</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="logs-table-container"><div style="color:var(--ice3);text-align:center;padding:2rem">לחץ רענן לטעינה</div></div>
+    </div>
+  </div>
+
   <div class="sec" id="tab-settings">
     <div id="settings-lock" class="lock-scene" style="display:flex">
       <div class="lock-box">
@@ -3044,7 +3066,9 @@ function switchTab(name){
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
+  const tabEl=document.getElementById('tab-'+name);
+  if(tabEl) tabEl.classList.add('active');
+  else{ console.error('[switchTab] tab not found: tab-'+name); return; }
   if(name==='logs') loadLogs();
   if(name==='knowledge'){
     if(!_adminUnlocked){
