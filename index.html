@@ -1155,6 +1155,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
         <span class="nav-icon">◎</span><span class="nav-label">ניהול</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('logs')" id="nav-logs" style="display:none">
+        <span class="nav-icon">📋</span><span class="nav-label">לוגים</span>
+      </button>
       <button class="nav-btn" onclick="switchTab('knowledge')" id="nav-knowledge">
         <span class="nav-icon">🧠</span><span class="nav-label">ניהול ידע</span>
       </button>
@@ -2935,6 +2938,7 @@ function onAdminSignedIn(){
   unlockAll().then(()=>{
     applyPermissions();
     switchTab('tracking');
+    initSuperAdminUI();
   });
 }
 
@@ -3041,6 +3045,7 @@ function switchTab(name){
   const bn=document.getElementById('bnav-'+name);if(bn)bn.classList.add('active');
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
+  if(name==='logs') loadLogs();
   if(name==='knowledge'){
     if(!_adminUnlocked){
       // Auto-check Supabase session before showing lock
@@ -3172,6 +3177,7 @@ async function checkAdminInput(inputId, errorId){
   const { data: { session } } = await _sb.auth.getSession();
   if(session){
     await unlockAll();
+  await initSuperAdminUI();
   } else {
     // No Supabase session — redirect to main login
     const errEl = document.getElementById(errorId);
@@ -3719,6 +3725,7 @@ async function saveKnowledgeArticle(){
   const hasExpiry=document.getElementById('k-has-expiry')?.checked;
   const expiryDate=document.getElementById('k-expiry-date')?.value;
   if(hasExpiry && expiryDate) insertData.expiry_date=expiryDate;
+  await logManagerAction('הוספת מאמר', 'כותרת: '+title+' | מחלקה: '+dept);
   const {data,error}=await _sb.from('knowledge_base').insert(insertData).select().single();
   if(error){msg.textContent='שגיאה: '+error.message;msg.style.color='var(--danger)';return;}
   S_knowledge.unshift(data);
@@ -3765,6 +3772,7 @@ async function saveKnowledgeEdit(){
   var hasEditExpiry=document.getElementById('k-edit-has-expiry')?.checked||false;
   var editExpiryDate=document.getElementById('k-edit-expiry-date')?.value||'';
   var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null};
+  await logManagerAction('עריכת מאמר', 'כותרת: '+title+' | מאמר id='+_editingKbId);
   const {error} = await _sb.from('knowledge_base').update(updateData).eq('id',_editingKbId);
   if(error){alert('שגיאה: '+error.message);return;}
   const idx = S_knowledge.findIndex(a=>String(a.id)===String(_editingKbId));
@@ -3796,9 +3804,13 @@ function previewArticle(id){
 }
 
 async function deleteKnowledgeArticle(id){
-  if (!confirm('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?')) return;
   const { data: { session } } = await _sb.auth.getSession();
-  if(!session){ alert('נדרש להיות מחובר כמנהל'); return; }
+  if(!isSuperAdmin(session?.user?.email||'')){
+    alert('❌ רק אדיר יכול למחוק מאמרים.');
+    return;
+  }
+  if (!confirm('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?')) return;
+  await logManagerAction('מחיקת מאמר', 'מאמר id='+id+' נמחק');
   await _sb.from('knowledge_base').delete().eq('id',id);
   S_knowledge=S_knowledge.filter(a=>String(a.id)!==String(id));
   renderKnowledgeArticles();
@@ -4755,6 +4767,7 @@ async function addAgent(){
   if(pinRaw) row.pin=pinRaw;
   if(phoneRaw) row.phone=phoneRaw;
   if(idRaw) row.id_number=idRaw;
+  await logManagerAction('הוספת נציג', 'שם: '+name+' | מחלקות: '+depts.join(', '));
   const {data,error}=await _sb.from('agents').insert(row).select().single();
   if(error){alert('שגיאה בהוספת נציג: '+error.message);return;}
   data.depts=depts;
@@ -4792,7 +4805,13 @@ async function importFromExcel(input){
   alert(`ייבוא הושלם: ${added} נציגים נוספו, ${skipped} דולגו.`);
 }
 async function removeAgent(id){
+  const { data: { session } } = await _sb.auth.getSession();
+  if(!isSuperAdmin(session?.user?.email||'')){
+    alert('❌ רק אדיר יכול למחוק נציגים.');
+    return;
+  }
   if(!confirm('למחוק נציג זה?'))return;
+  await logManagerAction('מחיקת נציג', 'נציג id='+id+' נמחק');
   const {error}=await _sb.from('agents').delete().eq('id',id);
   if(error){alert('שגיאה במחיקה: '+error.message);return;}
   S.agents=S.agents.filter(a=>a.id!==id);
@@ -10051,6 +10070,88 @@ async function getCurrentUserEmail(){
 }
 
 function isSuperAdmin(email){ return email === SUPER_ADMIN_EMAIL; }
+
+async function initSuperAdminUI(){
+  const { data: { session } } = await _sb.auth.getSession();
+  const email = session?.user?.email||'';
+  const logsBtn = document.getElementById('nav-logs');
+  if(logsBtn) logsBtn.style.display = isSuperAdmin(email) ? '' : 'none';
+}
+
+async function loadLogs(){
+  const manager=document.getElementById('log-filter-manager')?.value||'';
+  const dateFrom=document.getElementById('log-date-from')?.value||'';
+  const dateTo=document.getElementById('log-date-to')?.value||'';
+  const el=document.getElementById('logs-table-container');
+  if(!el) return;
+  el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+
+  let q=_sb.from('manager_logs').select('*').order('created_at',{ascending:false}).limit(200);
+  if(manager) q=q.eq('manager_email',manager);
+  if(dateFrom) q=q.gte('created_at',dateFrom+'T00:00:00');
+  if(dateTo) q=q.lte('created_at',dateTo+'T23:59:59');
+
+  const {data:logs,error}=await q;
+  if(error){ el.innerHTML='<div style="color:var(--danger)">שגיאה: '+error.message+'</div>'; return; }
+
+  // Populate manager filter
+  const managerSel=document.getElementById('log-filter-manager');
+  if(managerSel && managerSel.options.length<=1){
+    const {data:allLogs}=await _sb.from('manager_logs').select('manager_email');
+    const emails=[...new Set((allLogs||[]).map(l=>l.manager_email))];
+    emails.forEach(em=>{
+      if(!managerSel.querySelector('option[value="'+em+'"]')){
+        const opt=document.createElement('option'); opt.value=em; opt.textContent=em;
+        managerSel.appendChild(opt);
+      }
+    });
+  }
+
+  if(!logs||!logs.length){
+    el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:2rem">אין לוגים בתקופה זו</div>';
+    return;
+  }
+
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+    '<tr style="background:var(--ink3)">'+
+    '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">תאריך ושעה</th>'+
+    '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">מנהל</th>'+
+    '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">פעולה</th>'+
+    '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">פרטים</th>'+
+    '</tr>';
+  logs.forEach(function(l,i){
+    var dt=l.created_at?new Date(l.created_at).toLocaleString('he-IL'):'-';
+    var bg=i%2===0?'transparent':'var(--ink3)';
+    html+='<tr style="border-bottom:1px solid var(--line);background:'+bg+'">'+
+      '<td style="padding:7px 12px;color:var(--ice3);white-space:nowrap;font-family:DM Mono,monospace;font-size:11px">'+dt+'</td>'+
+      '<td style="padding:7px 12px;color:var(--ice3);font-size:11px">'+l.manager_email+'</td>'+
+      '<td style="padding:7px 12px;font-weight:700;color:var(--gold)">'+l.action+'</td>'+
+      '<td style="padding:7px 12px;color:var(--ice2)">'+l.details+'</td>'+
+    '</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
+}
+
+function clearLogFilters(){
+  document.getElementById('log-filter-manager').value='';
+  document.getElementById('log-date-from').value='';
+  document.getElementById('log-date-to').value='';
+  loadLogs();
+}
+
+async function logManagerAction(action, details){
+  try{
+    const { data: { session } } = await _sb.auth.getSession();
+    const email = session?.user?.email||'לא ידוע';
+    await _sb.from('manager_logs').insert({
+      manager_email: email,
+      action: action,
+      details: details||'',
+      created_at: new Date().toISOString()
+    });
+  }catch(e){ console.warn('[Log] Failed to log action:', e.message); }
+}
 function isManager(email){ return MANAGER_EMAILS.includes(email) || isSuperAdmin(email); }
 
 async function applyPermissions(){
