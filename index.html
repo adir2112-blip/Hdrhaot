@@ -1682,6 +1682,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div>
           <label class="field-label">תקופה</label>
           <select id="rep-period" onchange="loadReports()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="0d">היום</option>
+            <option value="7d">שבוע אחרון</option>
             <option value="1">חודש אחרון</option>
             <option value="2">חודשיים</option>
             <option value="3">3 חודשים</option>
@@ -5255,12 +5257,8 @@ async function selectAgent(id){
   const loginTs=now();
   S.agent.last_login=loginTs;
   await _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id);
-  // Track login history
-  _sb.from('login_history').insert({
-    agent_id: S.agent.id,
-    agent_name: S.agent.name,
-    dept: (S.agent.depts||[])[0]||'כללי'
-  }).then(()=>{});
+  // Track login history + daily activity pulse
+  recordAgentActivity();
   S.briefings=await dbBriefings();
   updateAgentSidebar();
   showAgentPanel('main');
@@ -5268,6 +5266,35 @@ async function selectAgent(id){
   setTimeout(promptPushSubscription, 2000);
   setTimeout(checkPWABanner, 3000);
 }
+// Records one login_history entry per day per agent (no overload)
+async function recordAgentActivity(){
+  if(!S.agent) return;
+  const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+  const agentId = S.agent.id;
+
+  // Check if already logged today
+  const {data:existing} = await _sb.from('login_history')
+    .select('id')
+    .eq('agent_id', agentId)
+    .gte('login_at', today+'T00:00:00')
+    .lte('login_at', today+'T23:59:59')
+    .limit(1);
+
+  if(existing && existing.length > 0) return; // already logged today
+
+  _sb.from('login_history').insert({
+    agent_id: agentId,
+    agent_name: S.agent.name,
+    dept: (S.agent.depts||[])[0]||'כללי',
+    login_at: new Date().toISOString()
+  }).then(()=>{});
+}
+
+// Call activity pulse on user interactions (pages navigation)
+function touchAgentActivity(){
+  if(S.agent) recordAgentActivity();
+}
+
 async function refreshAgentBriefings(){
   S.briefings=await dbBriefings();
   renderAgentBriefings();
@@ -10815,10 +10842,17 @@ async function showAgentQuestions(agentId){
 }
 
 async function loadReports(){
-  const months = parseInt(document.getElementById('rep-period')?.value||'1');
+  const periodVal = document.getElementById('rep-period')?.value||'1';
   const dept = document.getElementById('rep-dept')?.value||'all';
   const since = new Date();
-  since.setMonth(since.getMonth() - months);
+  if(periodVal === '0d'){
+    since.setHours(0,0,0,0); // today only
+  } else if(periodVal === '7d'){
+    since.setDate(since.getDate() - 7);
+  } else {
+    const months = parseInt(periodVal)||1;
+    since.setMonth(since.getMonth() - months);
+  }
   const sinceIso = since.toISOString();
 
   let lq = _sb.from('login_history').select('*').gte('login_at', sinceIso).order('login_at',{ascending:false});
@@ -10880,7 +10914,7 @@ function exportReportExcel(type){
   if(!rows||!rows.length){ alert('אין נתונים לייצוא'); return; }
 
   const period = document.getElementById('rep-period')?.value||'1';
-  const periodLabel = {'1':'חודש אחרון','2':'חודשיים','3':'3 חודשים','6':'חצי שנה','12':'שנה'}[period]||period;
+  const periodLabel = {'0d':'היום','7d':'שבוע אחרון','1':'חודש אחרון','2':'חודשיים','3':'3 חודשים','6':'חצי שנה','12':'שנה'}[period]||period;
 
   let csv = '﻿'; // BOM for Hebrew
   if(type==='logins'){
