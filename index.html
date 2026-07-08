@@ -2312,6 +2312,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                     <input type="date" id="k-expiry-date" style="padding:10px 14px;border-radius:10px;border:1.5px solid var(--gold-line);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;width:100%;box-sizing:border-box">
                   </div>
                 </div>
+                <div class="field" style="margin-top:12px">
+                  <label style="display:flex;align-items:center;gap:10px;background:rgba(91,160,230,0.08);border:1.5px solid rgba(91,160,230,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+                    <input type="checkbox" id="k-has-visual" style="width:20px;height:20px;cursor:pointer;accent-color:#5BA0E6">
+                    <div>
+                      <div style="font-size:14px;font-weight:700;color:#5BA0E6">📸 מכיל מדריך חזותי עם תמונות</div>
+                      <div style="font-size:11px;color:var(--ice3);margin-top:2px">הסוכן יציג כפתור "פתח מדריך" בתשובה</div>
+                    </div>
+                  </label>
+                </div>
                 <button class="btn btn-gold" onclick="saveKnowledgeArticle()">💾 שמור</button>
                 <div id="k-save-msg" style="display:none;font-size:13px;font-family:'DM Mono',monospace;align-items:center"></div>
               </div>
@@ -3751,6 +3760,7 @@ async function saveKnowledgeArticle(){
   const hasExpiry=document.getElementById('k-has-expiry')?.checked;
   const expiryDate=document.getElementById('k-expiry-date')?.value;
   if(hasExpiry && expiryDate) insertData.expiry_date=expiryDate;
+  insertData.has_visual = !!(document.getElementById('k-has-visual')?.checked);
   await logManagerAction('הוספת מאמר', 'כותרת: '+title+' | מחלקה: '+dept);
   const {data,error}=await _sb.from('knowledge_base').insert(insertData).select().single();
   if(error){msg.textContent='שגיאה: '+error.message;msg.style.color='var(--danger)';return;}
@@ -3771,9 +3781,17 @@ function editKnowledgeArticle(id){
   const contentEl=document.getElementById('k-edit-content');
   const deptEl=document.getElementById('k-edit-dept');
   if(titleEl) titleEl.value=item.title||'';
-  if(contentEl) contentEl.value=item.content||'';
+  // Show content in editor, replace base64 images with short placeholders for readability
+  var rawContent = item.content||'';
+  if(contentEl){
+    // Store original for reference (don't actually replace - user sees full content)
+    contentEl.value = rawContent;
+  }
   if(deptEl) deptEl.value=item.dept||'כללי';
   // Load expiry
+  // Load has_visual
+  var visChk=document.getElementById('k-edit-has-visual');
+  if(visChk) visChk.checked=!!(item.has_visual);
   var hasExp=!!(item.expiry_date);
   var exChk=document.getElementById('k-edit-has-expiry');
   var exWrap=document.getElementById('k-edit-expiry-wrap');
@@ -3797,7 +3815,8 @@ async function saveKnowledgeEdit(){
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
   var hasEditExpiry=document.getElementById('k-edit-has-expiry')?.checked||false;
   var editExpiryDate=document.getElementById('k-edit-expiry-date')?.value||'';
-  var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null};
+  var hasVisual=document.getElementById('k-edit-has-visual')?.checked||false;
+  var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null,has_visual:hasVisual};
   await logManagerAction('עריכת מאמר', 'כותרת: '+title+' | מאמר id='+_editingKbId);
   const {error} = await _sb.from('knowledge_base').update(updateData).eq('id',_editingKbId);
   if(error){alert('שגיאה: '+error.message);return;}
@@ -4111,7 +4130,13 @@ function buildKnowledgeContext(dept){
   const articleCtx=articles.map(a=>{
     var isExpired = a.expiry_date && a.expiry_date < today;
     var prefix = isExpired ? '⚠️ [פג תוקף - '+a.expiry_date+'] '+a.title : '📌 '+a.title;
-    return prefix+':\n'+(a.content||'').slice(0,4000);
+    // Strip images (base64 and URLs) and embed blocks before sending to AI
+    var cleanContent = (a.content||'')
+      .replace(/!\[.*?\]\(data:image[^)]+\)/g, '[תמונה]')  // base64 images
+      .replace(/!\[.*?\]\(https?:[^)]+\)/g, '[תמונה]')       // URL images
+      .replace(/\[EMBED\][\s\S]*?\[\/EMBED\]/g, '[תוכן מוטמע]') // embeds
+      .slice(0,4000);
+    return prefix+':\n'+cleanContent;
   }).join('\n\n---\n\n');
 
   // Briefings: only for selected dept (or all depts briefings)
@@ -4228,7 +4253,11 @@ async function sendKnowledgeChat(mode){
     const expiredTitles = S_knowledge ? S_knowledge.filter(function(a){
       return a.expiry_date && a.expiry_date < today2 && ctxArticles.includes(String(a.id));
     }).map(function(a){ return a.title; }) : [];
-    _aiAnswerContext[thinkingId]={question:q, answer:ans, articleIds:ctxArticles, expiredTitles:expiredTitles};
+    // Find visual articles in context
+    const visualArticles = S_knowledge ? S_knowledge.filter(function(a){
+      return a.has_visual && ctxArticles.includes(String(a.id));
+    }) : [];
+    _aiAnswerContext[thinkingId]={question:q, answer:ans, articleIds:ctxArticles, expiredTitles:expiredTitles, visualArticles:visualArticles};
     updateKbMessage(boxId,thinkingId,ans);
     if(mode==='admin') _adminKbHistory.push({role:'ai',content:ans});
     else _agentKbHistory.push({role:'ai',content:ans});
@@ -4309,6 +4338,23 @@ function updateKbMessage(boxId,id,text){
       bubble.innerHTML='';
       // Show expired warning if exists
       var ctx2=_aiAnswerContext[id]||{};
+      // Show visual guide button if relevant article has images
+      if(ctx2.visualArticles && ctx2.visualArticles.length){
+        ctx2.visualArticles.forEach(function(art){
+          var guideDiv=document.createElement('div');
+          guideDiv.style.cssText='margin-top:10px';
+          var btn=document.createElement('button');
+          btn.style.cssText='display:inline-flex;align-items:center;gap:8px;background:rgba(91,160,230,0.12);border:1.5px solid rgba(91,160,230,0.35);color:#5BA0E6;border-radius:12px;padding:9px 16px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700';
+          btn.innerHTML='📸 פתח מדריך עם תמונות: '+art.title;
+          btn.dataset.articleId=art.id;
+          btn.addEventListener('click',function(){
+            // Open article in new tab with full content including images
+            previewArticle(btn.dataset.articleId);
+          });
+          guideDiv.appendChild(btn);
+          bubble.appendChild(guideDiv);
+        });
+      }
       if(ctx2.expiredTitles && ctx2.expiredTitles.length){
         var warnDiv=document.createElement('div');
         warnDiv.style.cssText='background:rgba(240,101,101,0.08);border:1.5px solid rgba(240,101,101,0.3);border-radius:10px;padding:8px 12px;margin-bottom:8px';
@@ -11686,6 +11732,15 @@ function renderManagersDiscipline(){
           <option value="מחלקת סחר">מחלקת סחר</option>
         </optgroup>
       </select>
+      <div class="field" style="margin-top:12px">
+        <label style="display:flex;align-items:center;gap:10px;background:rgba(91,160,230,0.08);border:1.5px solid rgba(91,160,230,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+          <input type="checkbox" id="k-edit-has-visual" style="width:20px;height:20px;cursor:pointer;accent-color:#5BA0E6">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#5BA0E6">📸 מכיל מדריך חזותי עם תמונות</div>
+            <div style="font-size:11px;color:var(--ice3);margin-top:2px">הסוכן יציג כפתור "פתח מדריך" בתשובה</div>
+          </div>
+        </label>
+      </div>
       <div class="field" style="margin-top:16px">
         <label style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
           <input type="checkbox" id="k-edit-has-expiry" onchange="document.getElementById('k-edit-expiry-wrap').style.display=this.checked?'block':'none'" style="width:20px;height:20px;cursor:pointer;accent-color:#C9A84C">
