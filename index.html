@@ -8725,15 +8725,14 @@ function formatContent(raw){
       .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
       })
-      // Auto URLs: http(s)://... — show clickable link (stop at HTML-unsafe chars)
-      .replace(/(?<!\]\()(?<!href=")(?<!src=")(https?:\/\/[^\s<>"'\)\]]+)/g, function(m,url){
-        // Don't linkify if this looks like it's already inside an HTML attribute
-        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:700">לפתיחת הקישור לחץ כאן ↗</a>';
-      })
       // Bold: **text**
       .replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>')
-      // Italic: _text_
-      .replace(/\_([^_]+?)\_/g,'<em style="font-style:italic;color:var(--ice2)">$1</em>');
+      // Italic: _text_ (only when surrounded by spaces/start/end, not inside URLs)
+      .replace(/(?<=[\s,;:]|^)_([^_\s][^_]*[^_\s]|[^_\s])_(?=[\s,;:.]|$)/gm,'<em style="font-style:italic;color:var(--ice2)">$1</em>')
+      // Auto URLs: http(s)://... — process LAST after all other formatting
+      .replace(/(?<!href=")(?<!src=")(https?:\/\/[^\s<>"']+)/g, function(m,url){
+        return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:700">לפתיחת הקישור לחץ כאן ↗</a>';
+      });
   }
 
   var lines=raw.split('\n');
