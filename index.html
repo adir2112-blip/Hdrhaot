@@ -8725,8 +8725,9 @@ function formatContent(raw){
       .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
       })
-      // Auto URLs: http(s)://... — show clickable link
-      .replace(/(?<!\]\()(?<!href=")(https?:\/\/[^\s<>"\)]+)/g, function(m,url){
+      // Auto URLs: http(s)://... — show clickable link (stop at HTML-unsafe chars)
+      .replace(/(?<!\]\()(?<!href=")(?<!src=")(https?:\/\/[^\s<>"'\)\]]+)/g, function(m,url){
+        // Don't linkify if this looks like it's already inside an HTML attribute
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:700">לפתיחת הקישור לחץ כאן ↗</a>';
       })
       // Bold: **text**
