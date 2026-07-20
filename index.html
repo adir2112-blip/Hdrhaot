@@ -1892,8 +1892,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- PANEL: MAIN (existing content) -->
       <div id="abp-main">
+      <!-- BRIEFINGDOCS NOTIFICATION -->
+      <div id="agent-briefingdocs-notif" style="display:none"></div>
+
       <!-- WELCOME BANNER -->
-      <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 24px rgba(184,134,42,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
+      <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
+           <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
+     <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 24px rgba(184,134,42,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
         <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(184,134,42,0.07) 0%,transparent 70%);pointer-events:none"></div>
         <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:radial-gradient(circle,rgba(184,134,42,0.05) 0%,transparent 70%);pointer-events:none"></div>
         <div style="position:relative">
@@ -8526,17 +8531,22 @@ function showAgentPanel(key){
   if(ach) ach.style.display = key==='achievements' ? 'block':'none';
   var kb=document.getElementById('abp-knowledge');
   if(kb) kb.style.display = key==='knowledge' ? 'block':'none';
+  var bd=document.getElementById('abp-briefingdocs-panel');
+  if(bd) bd.style.display = key==='briefingdocs' ? 'block':'none';
+  if(key==='briefingdocs') loadAgentBriefingDocs();
   const mainBtn=document.getElementById('asb-main');
   const brfBtn=document.getElementById('asb-briefings');
   var lbBtn=document.getElementById('asb-leaderboard');
   var achBtn=document.getElementById('asb-achievements');
   var kbBtn=document.getElementById('asb-knowledge');
+  var bdBtn=document.getElementById('asb-briefingdocs');
   [
     {btn:mainBtn,   k:'main'},
     {btn:brfBtn,    k:'briefings'},
     {btn:lbBtn,     k:'leaderboard'},
     {btn:achBtn,    k:'achievements'},
     {btn:kbBtn,     k:'knowledge'},
+    {btn:bdBtn,     k:'briefingdocs'},
   ].forEach(function(item){
     if(!item.btn) return;
     var active=key===item.k;
@@ -8852,6 +8862,20 @@ function updateAgentSidebar(){
   var bdBadge=document.getElementById('asb-briefingdocs-badge');
   var bdPending=(window._agentPendingBriefingDocs||[]).length;
   if(bdBadge){ bdBadge.style.display=bdPending?'inline':'none'; bdBadge.textContent=bdPending?String(bdPending):''; }
+  // Show briefingdocs notification on main panel
+  var bdNotif=document.getElementById('agent-briefingdocs-notif');
+  if(bdNotif){
+    if(bdPending>0){
+      bdNotif.style.display='block';
+      bdNotif.innerHTML='<div style="background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+bdPending+' תדריכים לחתימה</div>'+
+        '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>'+
+        '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>'+
+      '</div>';
+    } else {
+      bdNotif.style.display='none';
+    }
+  }
 }
 
 function renderAgentBriefingsPanel(){
@@ -10649,6 +10673,24 @@ async function loadAgentBriefingDocs(){
   window._agentPendingBriefingDocs = pending;
   window._agentAllBriefingDocs = relevant;
   renderAgentBriefingDocsPanel();
+
+  // Update badge and main panel notification
+  var bdBadge = document.getElementById('asb-briefingdocs-badge');
+  if(bdBadge){ bdBadge.style.display = pending.length ? 'inline' : 'none'; bdBadge.textContent = pending.length ? String(pending.length) : ''; }
+
+  var bdNotif = document.getElementById('agent-briefingdocs-notif');
+  if(bdNotif){
+    if(pending.length){
+      bdNotif.style.display = 'block';
+      bdNotif.innerHTML = '<div style="background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+pending.length+' תדריכים לחתימה</div>' +
+        '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>' +
+        '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>' +
+      '</div>';
+    } else {
+      bdNotif.style.display = 'none';
+    }
+  }
 }
 
 function renderAgentBriefingDocsPanel(){
