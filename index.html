@@ -71,7 +71,6 @@ body::before {
   opacity: 0.15;
 }
 
-  
 /* GLOW BLOBS */
 body::after {
   content: '';
@@ -1150,6 +1149,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('manager')" id="nav-manager">
         <span class="nav-icon">✦</span><span class="nav-label">בניית תדריך</span>
       </button>
+      <button class="nav-btn" onclick="switchTab('briefings-tab')" id="nav-briefings-tab">
+        <span class="nav-icon">📄</span><span class="nav-label">תדריכים</span>
+      </button>
       <button class="nav-btn" onclick="switchTab('tracking')" id="nav-tracking">
         <span class="nav-icon">◈</span><span class="nav-label">דשבורד</span>
       </button>
@@ -1865,7 +1867,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <span style="font-size:17px">🏠</span><span>ראשי</span>
         </button>
         <button onclick="showAgentPanel('briefings')" id="asb-briefings" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
-          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">📋</span><span>תדריכים</span></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">📋</span><span>מבחנים</span></div>
           <span id="asb-briefings-badge" style="display:none;background:var(--danger);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
         </button>
         <button onclick="showAgentPanel('leaderboard')" id="asb-leaderboard" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
@@ -1875,7 +1877,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <span style="font-size:17px">🏅</span><span>הישגים</span>
         </button>
         <div style="height:1px;background:rgba(184,134,42,0.15);margin:10px 4px"></div>
-        <button onclick="showAgentPanel('knowledge')" id="asb-knowledge" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:0;text-align:right;transition:all 0.15s">
+        <button onclick="showAgentPanel('briefingdocs')" id="asb-briefingdocs" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">📄</span><span>תדריכים</span></div>
+          <span id="asb-briefingdocs-badge" style="display:none;background:var(--warn);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
+        </button>
+        <button onclick="showAgentPanel('knowledge')" id="asb-knowledge" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
           <span style="font-size:17px">📚</span><span>ניהול ידע</span>
         </button>
       </div>
@@ -1997,8 +2003,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- /abp-main -->
 
-      <!-- PANEL: BRIEFINGS -->
+      <!-- PANEL: BRIEFINGS (מבחנים) -->
       <div id="abp-briefings" style="display:none;width:100%"><div id="abp-briefings-content"></div></div>
+
+      <!-- PANEL: BRIEFING DOCS (תדריכים) -->
+      <div id="abp-briefingdocs-panel" style="display:none;width:100%;padding:8px 0">
+        <div class="sec-eyebrow" style="margin-bottom:6px">תדריכים</div>
+        <div class="sec-title" style="margin-bottom:16px">תדריכים <em>ממתינים</em></div>
+        <div id="agent-briefing-docs-panel"></div>
+        <div id="agent-briefing-doc-screen" style="display:none"></div>
+      </div>
 
       <!-- PANEL: LEADERBOARD -->
       <div id="abp-leaderboard" style="display:none;width:100%">
@@ -2183,7 +2197,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <span style="font-size:18px">💬</span><span>בדוק AI</span>
             </button>
             <button onclick="showKnowledgePanel('briefings')" id="ksb-briefings" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
-              <span style="font-size:18px">📋</span><span>תדריכים</span>
+              <span style="font-size:18px">📋</span><span>מבחנים</span>
             </button>
             <button onclick="showKnowledgePanel('ai-feedback')" id="ksb-ai-feedback" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
               <span style="font-size:18px">⭐</span><span>הערות AI</span>
@@ -2447,7 +2461,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </button>
           <button onclick="showDashPanel('briefings-history')" id="sb-briefings-history" class="sb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:2px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">📋</span>
-            <span>תדריכים</span>
+            <span>מבחנים</span>
           </button>
 
           <div style="height:1px;background:var(--line);margin:10px 4px 12px"></div>
@@ -2531,7 +2545,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="tracking-alert-banner" style="display:none;margin-bottom:1.5rem"></div>
     <div id="weak-questions-badge" style="margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
-    <div class="section-divider"><div class="section-divider-inner">📋 תדריכים</div></div>
+    <div class="section-divider"><div class="section-divider-inner">📋 מבחנים</div></div>
     <div id="briefings-week-list"></div>
     <div class="div"></div>
     <div class="dept-filter-bar" id="dept-filter-bar"></div>
@@ -2547,6 +2561,157 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div><!-- /tracking-content -->
   </div><!-- /tab-tracking -->
   <!-- SETTINGS -->
+  <!-- ══ BRIEFINGS TAB ══ -->
+  <div class="sec" id="tab-briefings-tab">
+    <div class="sec-header">
+      <div class="sec-eyebrow">ניהול תדריכים</div>
+      <div class="sec-title">תדריכים <em>לנציגים</em></div>
+    </div>
+
+    <!-- Manager view -->
+    <div id="briefings-manager-view">
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">
+          ➕ תדריך חדש
+        </button>
+        <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+          <option value="all">כל המחלקות</option>
+          <option value="מובמנט">מובמנט</option>
+          <option value="פריפיט">פריפיט</option>
+          <option value="מאוחדת">מאוחדת</option>
+          <option value="אלן קאר">אלן קאר</option>
+          <option value="סחר">סחר</option>
+        </select>
+      </div>
+      <div id="briefings-tab-list"><div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div></div>
+    </div>
+  </div>
+
+  <!-- New Briefing Modal -->
+  <div id="new-briefing-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:20px;font-weight:800;color:var(--ice)">📄 תדריך חדש</div>
+        <button onclick="closeNewBriefingModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
+      </div>
+
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">כותרת התדריך</label>
+        <input type="text" id="nb-title" placeholder="למשל: נוהל טיפול בתלונות" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;box-sizing:border-box">
+      </div>
+
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">מחלקות (סמן את הרלוונטיות)</label>
+        <div id="nb-dept-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">תוכן התדריך</label>
+        <textarea id="nb-content" rows="8" placeholder="הכנס את תוכן התדריך כאן — נוהל, מדריך, הנחיות..." style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">מספר שאלות (2–10)</label>
+        <input type="number" id="nb-q-count" min="2" max="10" value="5" style="width:120px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
+        <button onclick="generateBriefingQuestions()" class="btn btn-gold" style="margin-right:12px;padding:9px 18px">
+          🤖 צור שאלות AI
+        </button>
+      </div>
+
+      <div id="nb-questions-area" style="display:none">
+        <div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:10px">שאלות (ניתן לערוך):</div>
+        <div id="nb-questions-list"></div>
+        <button onclick="addManualQuestion()" style="margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid var(--line2);color:var(--ice3);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:'Sora',sans-serif">+ הוסף שאלה ידנית</button>
+      </div>
+
+      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)">🤖 יוצר שאלות...</div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeNewBriefingModal()" style="padding:10px 20px;border-radius:12px;border:1px solid var(--line2);background:none;color:var(--ice3);cursor:pointer;font-family:'Sora',sans-serif">ביטול</button>
+        <button onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px">📢 פרסם תדריך</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Briefing Status Modal -->
+  <div id="briefing-status-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div id="bsm-title" style="font-size:18px;font-weight:800;color:var(--ice)"></div>
+        <button onclick="closeBriefingStatusModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
+      </div>
+      <div id="bsm-content"></div>
+    </div>
+  </div>
+
+  <!-- ══ BRIEFINGS TAB ══ -->
+  <div class="sec" id="tab-briefings-tab">
+    <div class="sec-header">
+      <div class="sec-eyebrow">ניהול תדריכים</div>
+      <div class="sec-title">תדריכים <em>לנציגים</em></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">➕ תדריך חדש</button>
+      <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+        <option value="all">כל המחלקות</option>
+        <option value="מובמנט">מובמנט</option>
+        <option value="פריפיט">פריפיט</option>
+        <option value="מאוחדת">מאוחדת</option>
+        <option value="אלן קאר">אלן קאר</option>
+        <option value="סחר">סחר</option>
+      </select>
+    </div>
+    <div id="briefings-tab-list"><div style="color:var(--ice3);text-align:center;padding:2rem">לחץ על "תדריך חדש" כדי להתחיל</div></div>
+  </div>
+
+  <!-- New Briefing Modal -->
+  <div id="new-briefing-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:20px;font-weight:800;color:var(--ice)">📄 תדריך חדש</div>
+        <button onclick="closeNewBriefingModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">כותרת התדריך</label>
+        <input type="text" id="nb-title" placeholder="למשל: נוהל טיפול בתלונות" style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;box-sizing:border-box">
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">מחלקות (סמן את הרלוונטיות)</label>
+        <div id="nb-dept-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px"></div>
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label class="field-label">תוכן התדריך</label>
+        <textarea id="nb-content" rows="8" placeholder="הכנס את תוכן התדריך כאן — נוהל, מדריך, הנחיות..." style="width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;resize:vertical;box-sizing:border-box"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:14px;display:flex;align-items:center;gap:12px">
+        <label class="field-label" style="margin-bottom:0">מספר שאלות (2-10):</label>
+        <input type="number" id="nb-q-count" min="2" max="10" value="5" style="width:80px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
+        <button onclick="generateBriefingQuestions()" class="btn btn-gold" style="padding:9px 18px">🤖 צור שאלות AI</button>
+      </div>
+      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)">🤖 יוצר שאלות...</div>
+      <div id="nb-questions-area" style="display:none">
+        <div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:10px">שאלות (ניתן לערוך):</div>
+        <div id="nb-questions-list"></div>
+        <button onclick="addManualQuestion()" style="margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid var(--line2);color:var(--ice3);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:'Sora',sans-serif">+ הוסף שאלה ידנית</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeNewBriefingModal()" style="padding:10px 20px;border-radius:12px;border:1px solid var(--line2);background:none;color:var(--ice3);cursor:pointer;font-family:'Sora',sans-serif">ביטול</button>
+        <button onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px">📢 פרסם תדריך</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Briefing Status Modal -->
+  <div id="briefing-status-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div id="bsm-title" style="font-size:18px;font-weight:800;color:var(--ice)"></div>
+        <button onclick="closeBriefingStatusModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
+      </div>
+      <div id="bsm-content"></div>
+    </div>
+  </div>
+
   <div class="sec" id="tab-logs">
     <div class="sec-header">
       <div class="sec-eyebrow">Super Admin Only</div>
@@ -2749,11 +2914,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div id="sp-delete" style="display:none">
       <div class="eyebrow">מחיקת נתונים</div>
       <div class="card" style="border-color:var(--danger-line)">
-        <div class="card-label" style="color:var(--danger)">מחיקת תדריכים</div>
+        <div class="card-label" style="color:var(--danger)">מחיקת מבחנים</div>
         <div style="font-size:12px;color:var(--ice3);margin-bottom:16px;line-height:1.7">מחיקה תסיר את התדריך מכל הנציגים. לא ניתן לשחזר.</div>
 
         <div class="field" style="margin-bottom:14px">
-          <label class="field-label">מחק תדריכים לנציג ספציפי</label>
+          <label class="field-label">מחק מבחנים לנציג ספציפי</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <select id="reset-agent-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
               <option value="">בחר נציג...</option>
@@ -2763,7 +2928,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
 
         <div class="field">
-          <label class="field-label">מחק תדריכים לקבוצה שלמה</label>
+          <label class="field-label">מחק מבחנים לקבוצה שלמה</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <select id="reset-group-select" style="flex:1;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:9px 14px;font-size:13px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
               <option value="">בחר קבוצה...</option>
@@ -2935,7 +3100,7 @@ function enterAgentOnlyMode(){
   hideAuthModal();
   switchTab('agent');
   // Hide manager nav buttons
-  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline','nav-reports'].forEach(id=>{
+  ['nav-manager','nav-briefings-tab','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline','nav-reports'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display='none';
   });
@@ -2959,7 +3124,7 @@ function switchToManagerMode(){
 function onAdminSignedIn(){
   _agentOnlyMode = false;
   // Restore all nav buttons
-  ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline','nav-reports'].forEach(id=>{
+  ['nav-manager','nav-briefings-tab','nav-tracking','nav-settings','nav-knowledge','nav-controls','nav-discipline','nav-reports'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.style.display='';
   });
@@ -3082,6 +3247,7 @@ function switchTab(name){
   if(tabEl) tabEl.classList.add('active');
   else{ console.error('[switchTab] tab not found: tab-'+name); return; }
   if(name==='logs') loadLogs();
+  if(name==='briefings-tab') loadBriefingsTab();
   if(name==='knowledge'){
     if(!_adminUnlocked){
       // Auto-check Supabase session before showing lock
@@ -3409,7 +3575,7 @@ function renderSettingsStats(){
   el.innerHTML=`
     <div class="kpi-grid" style="margin-bottom:1.5rem">
       <div class="kpi"><div class="kpi-val">${activeAgents.length}</div><div class="kpi-label">נציגים פעילים</div></div>
-      <div class="kpi"><div class="kpi-val">${totalBriefings}</div><div class="kpi-label">תדריכים</div></div>
+      <div class="kpi"><div class="kpi-val">${totalBriefings}</div><div class="kpi-label">מבחנים</div></div>
       <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז השלמה</div></div>
       <div class="kpi"><div class="kpi-val">${avgScore!==null?avgScore+'%':'—'}</div><div class="kpi-label">ממוצע ציונים</div></div>
     </div>
@@ -5520,11 +5686,11 @@ function renderAchievements(){
 
   const allBadges=[
     {icon:'🌟',label:'תדריך ראשון',desc:'השלמת את התדריך הראשון שלך',earned:done.length>=1},
-    {icon:'📚',label:'מתמיד',desc:'השלמת 5 תדריכים',earned:done.length>=5},
-    {icon:'🎓',label:'בוגר',desc:'השלמת 10 תדריכים',earned:done.length>=10},
+    {icon:'📚',label:'מתמיד',desc:'השלמת 5 מבחנים',earned:done.length>=5},
+    {icon:'🎓',label:'בוגר',desc:'השלמת 10 מבחנים',earned:done.length>=10},
     {icon:'⭐',label:'מושלם',desc:'קיבלת 100% בתדריך',earned:scores.some(s=>s===100)},
     {icon:'🎯',label:'מצטיין',desc:'ממוצע מעל 90%',earned:avg!==null&&avg>=90},
-    {icon:'🔥',label:'בוער',desc:'השלמת 3+ תדריכים',earned:streak>=3},
+    {icon:'🔥',label:'בוער',desc:'השלמת 3+ מבחנים',earned:streak>=3},
     {icon:'💎',label:'יהלום',desc:'ממוצע מעל 80%',earned:avg!==null&&avg>=80},
     {icon:'🏅',label:'אלוף',desc:'השלמת 20 תדריכים',earned:done.length>=20},
   ];
@@ -6957,7 +7123,7 @@ const DASH_PANEL_META = {
   weak:        {eyebrow:'ניתוח טעויות', title:'שאלות <em>בעייתיות</em>',     render:renderWeakPanel},
   feedback:    {eyebrow:'קול השטח',      title:'משובי <em>נציגים</em>',       render:renderFeedbackPanel},
   calendar:    {eyebrow:'לו"ז תדריכים', title:'לוח <em>שנה</em>',            render:renderCalendarPanel},
-  'briefings-history': {eyebrow:'תדריכים', title:'ניהול <em>תדריכים</em>', render:renderBriefingsHistoryPanel},
+  'briefings-history': {eyebrow:'מבחנים', title:'ניהול <em>תדריכים</em>', render:renderBriefingsHistoryPanel},
 };
 
 const PANEL_FILTERS = {
@@ -8383,6 +8549,15 @@ function showAgentPanel(key){
   if(key==='leaderboard')  renderAgentLeaderboardPanel();
   if(key==='achievements') renderAgentAchievementsPanel();
   if(key==='knowledge')    renderAgentKnowledgePanel();
+  // Load briefing docs for agent (check pending)
+  loadAgentBriefingDocs().then(function(){
+    var pending = window._agentPendingBriefingDocs || [];
+    var badge = document.getElementById('asb-briefingdocs-badge');
+    if(badge){
+      badge.style.display = pending.length ? 'inline' : 'none';
+      badge.textContent = pending.length ? String(pending.length) : '';
+    }
+  });
 }
 
 async function renderAgentKnowledgePanel(){
@@ -8619,11 +8794,11 @@ function renderAgentAchievementsPanel(){
 
   var allBadges=[
     {icon:'🌟',label:'תדריך ראשון',desc:'השלמת את התדריך הראשון שלך',earned:done.length>=1},
-    {icon:'📚',label:'מתמיד',desc:'השלמת 5 תדריכים',earned:done.length>=5},
-    {icon:'🎓',label:'בוגר',desc:'השלמת 10 תדריכים',earned:done.length>=10},
+    {icon:'📚',label:'מתמיד',desc:'השלמת 5 מבחנים',earned:done.length>=5},
+    {icon:'🎓',label:'בוגר',desc:'השלמת 10 מבחנים',earned:done.length>=10},
     {icon:'⭐',label:'מושלם',desc:'קיבלת 100% בתדריך',earned:scores.some(function(s){return s===100;})},
     {icon:'🎯',label:'מצטיין',desc:'ממוצע מעל 90%',earned:avg!==null&&avg>=90},
-    {icon:'🔥',label:'בוער',desc:'השלמת 3+ תדריכים',earned:done.length>=3},
+    {icon:'🔥',label:'בוער',desc:'השלמת 3+ מבחנים',earned:done.length>=3},
     {icon:'💎',label:'יהלום',desc:'ממוצע מעל 80%',earned:avg!==null&&avg>=80},
     {icon:'🏅',label:'אלוף',desc:'השלמת 20 תדריכים',earned:done.length>=20},
   ];
@@ -8673,6 +8848,10 @@ function updateAgentSidebar(){
   }).length;
   const badge=document.getElementById('asb-briefings-badge');
   if(badge){ badge.style.display=pending?'inline':'none'; badge.textContent=String(pending); }
+  // Also update briefingdocs badge
+  var bdBadge=document.getElementById('asb-briefingdocs-badge');
+  var bdPending=(window._agentPendingBriefingDocs||[]).length;
+  if(bdBadge){ bdBadge.style.display=bdPending?'inline':'none'; bdBadge.textContent=bdPending?String(bdPending):''; }
 }
 
 function renderAgentBriefingsPanel(){
@@ -10168,6 +10347,464 @@ async function getCurrentUserEmail(){
 }
 
 function isSuperAdmin(email){ return email === SUPER_ADMIN_EMAIL; }
+
+
+/* ══════════════════════════════════════════════════════
+   BRIEFINGS MODULE — תדריכים
+   ══════════════════════════════════════════════════════ */
+
+var _newBriefingQuestions = []; // holds generated questions
+// ── Open / Close New Briefing Modal ──────────────────
+function openNewBriefingModal(){
+  _newBriefingQuestions = [];
+  _editingBriefingId = null;
+  document.getElementById('nb-title').value = '';
+  document.getElementById('nb-content').value = '';
+  document.getElementById('nb-q-count').value = '5';
+  // Reset dept checkboxes and rebuild grid
+  var grid = document.getElementById('nb-dept-grid');
+  if(grid){
+    grid.innerHTML = '';
+    var allDepts = [...DEPTS, 'כולם'];
+    allDepts.forEach(function(d){
+      var lbl = document.createElement('label');
+      lbl.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:10px;padding:9px 12px;cursor:pointer;font-size:13px;color:var(--ice2);font-family:Sora,sans-serif';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = d; cb.className = 'nb-dept-cb';
+      cb.style.cssText = 'width:16px;height:16px;accent-color:var(--gold);cursor:pointer';
+      cb.addEventListener('change', function(){
+        if(d === 'כולם' && cb.checked){
+          document.querySelectorAll('.nb-dept-cb').forEach(function(c){ if(c.value!=='כולם') c.checked=false; });
+        } else if(cb.checked){
+          var allCb = document.querySelector('.nb-dept-cb[value="כולם"]');
+          if(allCb) allCb.checked = false;
+        }
+      });
+      lbl.appendChild(cb); lbl.appendChild(document.createTextNode(d));
+      grid.appendChild(lbl);
+    });
+  }
+  document.getElementById('nb-questions-area').style.display = 'none';
+  document.getElementById('nb-generating').style.display = 'none';
+  document.getElementById('nb-questions-list').innerHTML = '';
+  var modal = document.getElementById('new-briefing-modal');
+  modal.style.display = 'flex';
+}
+
+function closeNewBriefingModal(){
+  document.getElementById('new-briefing-modal').style.display = 'none';
+}
+
+// ── Generate Questions via AI ─────────────────────────
+async function generateBriefingQuestions(){
+  var content = document.getElementById('nb-content').value.trim();
+  var count = parseInt(document.getElementById('nb-q-count').value) || 5;
+  if(!content){ alert('יש להזין תוכן תדריך קודם'); return; }
+  if(count < 2) count = 2;
+  if(count > 10) count = 10;
+
+  document.getElementById('nb-generating').style.display = 'block';
+  document.getElementById('nb-questions-area').style.display = 'none';
+
+  var key = localStorage.getItem('bs_api_key') || '';
+  if(!key){ alert('נדרש מפתח API'); return; }
+
+  var prompt = 'קרא את התדריך הבא וצור בדיוק ' + count + ' שאלות אמריקאיות (multiple choice) בעברית.\n\n' +
+    'כל שאלה חייבת להיות בפורמט JSON הבא בדיוק:\n' +
+    '{\n  "q": "טקסט השאלה",\n  "options": ["אפשרות א", "אפשרות ב", "אפשרות ג", "אפשרות ד"],\n  "correct": 0,\n  "hint": "הסבר קצר"\n}\n\n' +
+    'correct הוא אינדקס (0-3) של התשובה הנכונה.\n' +
+    'החזר רק מערך JSON של השאלות, ללא טקסט נוסף.\n\n' +
+    'תוכן התדריך:\n' + content.slice(0, 3000);
+
+  try {
+    var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({model:'gpt-4o-mini', max_tokens:2000, messages:[{role:'user',content:prompt}]})
+    });
+    var data = await resp.json();
+    if(!resp.ok) throw new Error(data.error?.message || 'שגיאת API');
+    var raw = data.choices[0].message.content.trim();
+    raw = raw.replace(/```json|```/g,'').trim();
+    _newBriefingQuestions = JSON.parse(raw);
+    renderBriefingQuestions();
+  } catch(e) {
+    alert('שגיאה ביצירת שאלות: ' + e.message);
+  } finally {
+    document.getElementById('nb-generating').style.display = 'none';
+  }
+}
+
+function renderBriefingQuestions(){
+  var list = document.getElementById('nb-questions-list');
+  list.innerHTML = '';
+  _newBriefingQuestions.forEach(function(q, qi){
+    var div = document.createElement('div');
+    div.style.cssText = 'background:var(--ink3);border:1px solid var(--line2);border-radius:12px;padding:14px;margin-bottom:12px';
+    var optHtml = q.options.map(function(opt, oi){
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<input type="radio" name="correct-'+qi+'" value="'+oi+'" '+(q.correct===oi?'checked':'')+' onchange="_newBriefingQuestions['+qi+'].correct='+oi+'">' +
+        '<input type="text" value="'+opt+'" onchange="_newBriefingQuestions['+qi+'].options['+oi+']=this.value" style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;font-family:Sora,sans-serif">' +
+      '</div>';
+    }).join('');
+    div.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<span style="color:var(--gold);font-weight:700;font-size:14px">'+(qi+1)+'.</span>' +
+      '<input type="text" value="'+q.q+'" onchange="_newBriefingQuestions['+qi+'].q=this.value" style="flex:1;padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:14px;font-family:Sora,sans-serif;font-weight:600">' +
+      '<button onclick="_newBriefingQuestions.splice('+qi+',1);renderBriefingQuestions()" style="background:rgba(240,101,101,0.1);border:1px solid rgba(240,101,101,0.3);color:#F06565;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px">✕</button>' +
+    '</div>' + optHtml +
+    '<div style="margin-top:8px"><input type="text" value="'+(q.hint||'')+'" placeholder="הסבר (hint)" onchange="_newBriefingQuestions['+qi+'].hint=this.value" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice3);font-size:12px;font-family:Sora,sans-serif;box-sizing:border-box"></div>';
+    list.appendChild(div);
+  });
+  document.getElementById('nb-questions-area').style.display = 'block';
+}
+
+function addManualQuestion(){
+  _newBriefingQuestions.push({q:'שאלה חדשה',options:['אפשרות א','אפשרות ב','אפשרות ג','אפשרות ד'],correct:0,hint:''});
+  renderBriefingQuestions();
+}
+
+// ── Publish Briefing ─────────────────────────────────
+async function publishNewBriefing(){
+  var title = document.getElementById('nb-title').value.trim();
+  var selectedDepts = Array.from(document.querySelectorAll('.nb-dept-cb:checked')).map(function(cb){ return cb.value; });
+  var content = document.getElementById('nb-content').value.trim();
+  if(!title){ alert('יש להזין כותרת'); return; }
+  if(!content){ alert('יש להזין תוכן'); return; }
+  if(!selectedDepts.length){ alert('יש לבחור לפחות מחלקה אחת'); return; }
+  if(!_newBriefingQuestions.length){ alert('יש לצור שאלות קודם'); return; }
+
+  var dept = selectedDepts.includes('כולם') ? 'all' : selectedDepts.join(',');
+
+  var {data:{session}} = await _sb.auth.getSession();
+  var managerEmail = session?.user?.email || 'לא ידוע';
+
+  var row = {
+    title, dept, content,
+    questions: JSON.stringify(_newBriefingQuestions),
+    completions: JSON.stringify({}),
+    manager_email: managerEmail,
+    published_at: new Date().toISOString(),
+    is_active: true
+  };
+
+  var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
+  if(error){ alert('שגיאה בפרסום: ' + error.message); return; }
+
+  await logManagerAction('פרסום תדריך', 'כותרת: ' + title + ' | מחלקה: ' + dept);
+  closeNewBriefingModal();
+  loadBriefingsTab();
+  alert('✅ התדריך פורסם בהצלחה!');
+}
+
+// ── Load Briefings Tab (Manager) ──────────────────────
+async function loadBriefingsTab(){
+  var el = document.getElementById('briefings-tab-list');
+  if(!el) return;
+  el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+
+  var dept = document.getElementById('briefings-filter-dept')?.value || 'all';
+  var q = _sb.from('briefing_docs').select('*').eq('is_active', true).order('published_at', {ascending:false});
+  if(dept !== 'all') q = q.eq('dept', dept);
+  var {data:briefings, error} = await q;
+  if(error){ el.innerHTML = '<div style="color:var(--danger)">שגיאה: '+error.message+'</div>'; return; }
+  if(!briefings || !briefings.length){
+    el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">אין תדריכים. לחץ "תדריך חדש" כדי להתחיל.</div>';
+    return;
+  }
+
+  var html = '';
+  briefings.forEach(function(b){
+    var completions = {};
+    try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
+    var doneCount = Object.keys(completions).filter(function(k){ return !k.startsWith('_'); }).length;
+
+    // Count expected agents
+    var targetDepts = b.dept === 'all' ? [] : b.dept.split(',').map(function(s){ return s.trim(); });
+    var expectedAgents = b.dept === 'all'
+      ? S.agents.filter(function(a){ return a.active !== false; })
+      : S.agents.filter(function(a){ return a.active !== false && (a.depts||[]).some(function(d){ return targetDepts.includes(d); }); });
+    var totalExpected = expectedAgents.length;
+    var pending = totalExpected - doneCount;
+    var pct = totalExpected ? Math.round(doneCount/totalExpected*100) : 0;
+
+    var pubDate = b.published_at ? new Date(b.published_at).toLocaleDateString('he-IL') : '';
+    html += '<div class="card" style="margin-bottom:14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font-size:16px;font-weight:700;color:var(--ice);margin-bottom:4px">'+b.title+'</div>' +
+          '<div style="font-size:12px;color:var(--ice3)">'+b.dept+' · '+pubDate+' · '+b.manager_email+'</div>' +
+          '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
+            '<span style="background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">✅ '+doneCount+' חתמו</span>' +
+            '<span style="background:rgba(245,158,11,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">⏳ '+pending+' ממתינים</span>' +
+            '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">👁 סטטוס</button>' +
+          '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(240,101,101,0.08);border:1px solid rgba(240,101,101,0.2);color:#F06565;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px">🗑</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  el.innerHTML = html;
+}
+
+// ── Briefing Status Modal ─────────────────────────────
+async function showBriefingStatus(el){
+  var briefingId = el && el.dataset ? el.dataset.id : el;
+  var modal = document.getElementById('briefing-status-modal');
+  modal.style.display = 'flex';
+  document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+
+  var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
+  if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
+
+  document.getElementById('bsm-title').textContent = '📄 ' + b.title;
+
+  var completions = {};
+  try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
+
+  var targetDepts2 = b.dept === 'all' ? [] : b.dept.split(',').map(function(s){ return s.trim(); });
+  var expectedAgents = b.dept === 'all'
+    ? S.agents.filter(function(a){ return a.active !== false; })
+    : S.agents.filter(function(a){ return a.active !== false && (a.depts||[]).some(function(d){ return targetDepts2.includes(d); }); });
+
+  var doneAgents = [], pendingAgents = [];
+  expectedAgents.forEach(function(a){
+    var comp = completions[String(a.id)];
+    if(comp && comp.signed_at) doneAgents.push({agent:a, comp:comp});
+    else pendingAgents.push(a);
+  });
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:24px;font-weight:800;color:var(--ok)">'+doneAgents.length+'</div><div style="font-size:11px;color:var(--ice3)">חתמו</div></div>' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:24px;font-weight:800;color:var(--warn)">'+pendingAgents.length+'</div><div style="font-size:11px;color:var(--ice3)">ממתינים</div></div>' +
+  '</div>';
+
+  if(doneAgents.length){
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ חתמו:</div>';
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך חתימה</th></tr>';
+    doneAgents.forEach(function(item){
+      var dt = item.comp.signed_at ? new Date(item.comp.signed_at).toLocaleString('he-IL') : '-';
+      html += '<tr style="border-bottom:1px solid var(--line)"><td style="padding:7px 12px;color:var(--ice)">'+item.agent.name+'</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:var(--gold)">'+item.comp.score+'%</td><td style="padding:7px 12px;text-align:center;color:var(--ice3);font-size:11px">'+dt+'</td></tr>';
+    });
+    html += '</table></div>';
+  }
+
+  if(pendingAgents.length){
+    html += '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">⏳ ממתינים:</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    pendingAgents.forEach(function(a){
+      html += '<span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('bsm-content').innerHTML = html;
+}
+
+function closeBriefingStatusModal(){
+  document.getElementById('briefing-status-modal').style.display = 'none';
+}
+
+async function deleteBriefingDoc(el){
+  var id = el && el.dataset ? el.dataset.id : el;
+  if(!confirm('למחוק תדריך זה?')) return;
+  var {data:{session}} = await _sb.auth.getSession();
+  if(!isSuperAdmin(session?.user?.email||'')){
+    alert('רק אדיר יכול למחוק תדריכים');
+    return;
+  }
+  await _sb.from('briefing_docs').update({is_active:false}).eq('id',id);
+  loadBriefingsTab();
+}
+
+// ── Agent: load pending briefings ────────────────────
+async function loadAgentBriefingDocs(){
+  if(!S.agent) return;
+  var agentDepts = S.agent.depts || [];
+
+  // Get all active briefing docs relevant to this agent
+  var {data:docs} = await _sb.from('briefing_docs').select('*').eq('is_active',true);
+  if(!docs) return;
+
+  // Filter relevant — dept can be 'all', single dept, or comma-separated depts
+  var relevant = docs.filter(function(d){
+    if(d.dept === 'all') return true;
+    var targetDepts = d.dept.split(',').map(function(s){ return s.trim(); });
+    return targetDepts.some(function(td){
+      return agentDepts.includes(td);
+    });
+  });
+
+  // Check which ones agent hasn't signed
+  var pending = relevant.filter(function(d){
+    var comps = {};
+    try{ comps = typeof d.completions === 'string' ? JSON.parse(d.completions) : (d.completions||{}); }catch(e){}
+    var myComp = comps[String(S.agent.id)];
+    return !myComp || !myComp.signed_at;
+  });
+
+  window._agentPendingBriefingDocs = pending;
+  window._agentAllBriefingDocs = relevant;
+  renderAgentBriefingDocsPanel();
+}
+
+function renderAgentBriefingDocsPanel(){
+  var el = document.getElementById('agent-briefing-docs-panel');
+  if(!el) return;
+
+  var pending = window._agentPendingBriefingDocs || [];
+  var all = window._agentAllBriefingDocs || [];
+
+  if(!pending.length && !all.length){
+    el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">אין תדריכים פתוחים</div>';
+    return;
+  }
+
+  var html = '';
+
+  if(pending.length){
+    html += '<div style="background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px 16px;margin-bottom:16px">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:10px">⏳ תדריכים הממתינים לחתימה שלך ('+pending.length+')</div>';
+    pending.forEach(function(d){
+      html += '<div style="background:var(--ink3);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div style="font-size:14px;font-weight:600;color:var(--ice)">📄 '+d.title+'</div>' +
+        '<button onclick="openAgentBriefingDoc(this)" data-id="'+d.id+'" class="btn btn-gold" style="padding:7px 16px;font-size:13px">התחל ▶</button>' +
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  var done = all.filter(function(d){ return !pending.includes(d); });
+  if(done.length){
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ תדריכים שהשלמת</div>';
+    done.forEach(function(d){
+      html += '<div style="background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15);border-radius:10px;padding:10px 14px;margin-bottom:6px;font-size:13px;color:var(--ice2)">✅ '+d.title+'</div>';
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Agent: Open and do briefing doc ─────────────────
+async function openAgentBriefingDoc(el){
+  var docId = el && el.dataset ? el.dataset.id : el;
+  var doc = (window._agentAllBriefingDocs || []).find(function(d){ return String(d.id)===String(docId); });
+  if(!doc){ alert('תדריך לא נמצא'); return; }
+
+  var questions = [];
+  try{ questions = typeof doc.questions === 'string' ? JSON.parse(doc.questions) : (doc.questions||[]); }catch(e){}
+
+  window._currentBriefingDoc = doc;
+  window._currentBriefingDocQuestions = questions;
+  window._currentBriefingDocAnswers = [];
+
+  // Show reading screen
+  showAgentBriefingDocScreen('read');
+}
+
+function showAgentBriefingDocScreen(step){
+  var doc = window._currentBriefingDoc;
+  var questions = window._currentBriefingDocQuestions || [];
+  var el = document.getElementById('agent-briefing-doc-screen');
+  if(!el) return;
+
+  el.style.display = 'block';
+  document.getElementById('agent-briefing-docs-panel').style.display = 'none';
+
+  if(step === 'read'){
+    el.innerHTML = '<div style="max-width:680px;margin:0 auto">' +
+      '<div style="font-size:11px;color:var(--ice3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">📄 תדריך לקריאה</div>' +
+      '<div style="font-size:22px;font-weight:800;color:var(--ice);margin-bottom:20px">'+doc.title+'</div>' +
+      '<div style="background:var(--ink3);border-radius:14px;padding:20px;margin-bottom:20px;font-size:14px;line-height:1.8;color:var(--ice2);direction:rtl">'+formatContent(doc.content)+'</div>' +
+      '<button onclick="showAgentBriefingDocScreen(\'quiz\')" class="btn btn-gold" style="width:100%;padding:12px;font-size:15px">קראתי — המשך לשאלות ▶</button>' +
+    '</div>';
+  } else if(step === 'quiz'){
+    window._currentBriefingDocAnswers = new Array(questions.length).fill(-1);
+    var qHtml = questions.map(function(q, qi){
+      return '<div style="background:var(--ink3);border-radius:12px;padding:16px;margin-bottom:12px">' +
+        '<div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:12px">'+(qi+1)+'. '+q.q+'</div>' +
+        q.options.map(function(opt, oi){
+          return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--line2);margin-bottom:6px;cursor:pointer;color:var(--ice2)">' +
+            '<input type="radio" name="bdq-'+qi+'" value="'+oi+'" onchange="window._currentBriefingDocAnswers['+qi+']='+oi+'" style="width:16px;height:16px;accent-color:var(--gold)">' +
+            opt + '</label>';
+        }).join('') +
+      '</div>';
+    }).join('');
+    el.innerHTML = '<div style="max-width:680px;margin:0 auto">' +
+      '<div style="font-size:22px;font-weight:800;color:var(--ice);margin-bottom:20px">שאלות — '+doc.title+'</div>' +
+      qHtml +
+      '<button onclick="submitBriefingDocQuiz()" class="btn btn-gold" style="width:100%;padding:12px;font-size:15px;margin-top:8px">שלח תשובות ▶</button>' +
+    '</div>';
+  } else if(step === 'sign'){
+    var score = window._currentBriefingDocScore || 0;
+    var color = score >= 80 ? 'var(--ok)' : score >= 60 ? 'var(--warn)' : 'var(--danger)';
+    el.innerHTML = '<div style="max-width:500px;margin:0 auto;text-align:center">' +
+      '<div style="font-size:64px;font-weight:900;color:'+color+';margin-bottom:8px">'+score+'%</div>' +
+      '<div style="font-size:18px;color:var(--ice);margin-bottom:24px">'+doc.title+'</div>' +
+      '<div style="background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--ice2);direction:rtl">' +
+        'בלחיצה על "חתמתי והבנתי" אני מאשר/ת שקראתי את התדריך, ענیتי על השאלות ומתחייב/ת לפעול לפי ההנחיות.' +
+      '</div>' +
+      '<button onclick="signBriefingDoc()" class="btn btn-gold" style="width:100%;padding:14px;font-size:16px;margin-bottom:10px">✍️ חתמתי והבנתי את התוכן</button>' +
+      '<button onclick="closeAgentBriefingDocScreen()" style="width:100%;padding:10px;background:none;border:1px solid var(--line2);border-radius:12px;color:var(--ice3);cursor:pointer;font-family:Sora,sans-serif">חזרה</button>' +
+    '</div>';
+  }
+}
+
+function submitBriefingDocQuiz(){
+  var questions = window._currentBriefingDocQuestions || [];
+  var answers = window._currentBriefingDocAnswers || [];
+  // Validate all answered
+  if(answers.some(function(a){ return a === -1; })){
+    alert('יש לענות על כל השאלות');
+    return;
+  }
+  var correct = answers.filter(function(a, i){ return a === questions[i].correct; }).length;
+  window._currentBriefingDocScore = Math.round(correct / questions.length * 100);
+  showAgentBriefingDocScreen('sign');
+}
+
+async function signBriefingDoc(){
+  var doc = window._currentBriefingDoc;
+  var score = window._currentBriefingDocScore || 0;
+  var answers = window._currentBriefingDocAnswers || [];
+  var questions = window._currentBriefingDocQuestions || [];
+
+  // Fetch fresh completions (race-safe)
+  var {data:freshRow} = await _sb.from('briefing_docs').select('completions').eq('id', doc.id).single();
+  var freshCompletions = {};
+  try{ freshCompletions = freshRow.completions ? (typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):freshRow.completions) : {}; }catch(e){}
+
+  var agentId = String(S.agent.id);
+  freshCompletions[agentId] = {
+    name: S.agent.name,
+    score: score,
+    signed_at: new Date().toISOString(),
+    answers: questions.map(function(q, i){ return {q:q.q, options:q.options, correct:q.correct, chosen:answers[i]}; })
+  };
+
+  await _sb.from('briefing_docs').update({completions: JSON.stringify(freshCompletions)}).eq('id', doc.id);
+
+  // Remove from pending
+  window._agentPendingBriefingDocs = (window._agentPendingBriefingDocs||[]).filter(function(d){ return String(d.id)!==String(doc.id); });
+
+  closeAgentBriefingDocScreen();
+
+  // Show celebration
+  alert('🎉 חתמת בהצלחה! ציון: ' + score + '%');
+}
+
+function closeAgentBriefingDocScreen(){
+  var el = document.getElementById('agent-briefing-doc-screen');
+  if(el) el.style.display = 'none';
+  var panel = document.getElementById('agent-briefing-docs-panel');
+  if(panel) panel.style.display = 'block';
+  loadAgentBriefingDocs();
+}
+
+/* ══ END BRIEFINGS MODULE ══ */
 
 async function initSuperAdminUI(){
   const { data: { session } } = await _sb.auth.getSession();
