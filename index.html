@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Pragma" content="no-cFache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <link rel="manifest" href="/Hdrhaot/manifest.json">
@@ -6087,7 +6087,7 @@ async function signBriefing(){
     if(agPhone && briefingId){
       fetch('https://crm.azriasolutions.com/api/webhooks/briefing-signed', {
         method:'POST',
-        headers:{'Content-Type':'application/json','x-webhook-token':'-kLVfADk1eiMU5djww0wFTk9B_5JJJgxqTWM_c4-tPM'},
+        headers:{'Content-Type':'application/json','x-webhook-token':'3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb'},
         body:JSON.stringify({
           phone: agPhone,
           briefing_id: briefingId,
@@ -10850,7 +10850,7 @@ async function signBriefingDoc(){
   if(agentPhone){
     fetch('https://crm.azriasolutions.com/api/webhooks/briefing-signed', {
       method: 'POST',
-      headers: {'Content-Type':'application/json','x-webhook-token':'-kLVfADk1eiMU5djww0wFTk9B_5JJJgxqTWM_c4-tPM'},
+      headers: {'Content-Type':'application/json','x-webhook-token':'3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb'},
       body: JSON.stringify({
         phone: agentPhone,
         briefing_id: doc.id,
