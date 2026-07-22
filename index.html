@@ -10524,6 +10524,7 @@ async function publishNewBriefing(){
     is_active: true
   };
 var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
+  console.log('DEBUG insert result — data:', data, 'error:', error);
   if(error){ alert('שגיאה בפרסום: ' + error.message); return; }
   await logManagerAction('פרסום תדריך', 'כותרת: ' + title + ' | מחלקה: ' + dept);
 
