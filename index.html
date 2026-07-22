@@ -6083,20 +6083,15 @@ async function signBriefing(){
     console.log('[Sign] Saved (race-safe):', S.score);
 
     // Notify CRM
-    var agPhone = S.agent?.phone || S.agent?.mobile || '';
-    if(agPhone && briefingId){
-      fetch('https://crm.azriasolutions.com/api/webhooks/briefing-signed', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-webhook-token':'3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb'},
-        body:JSON.stringify({
-          phone: agPhone,
-          briefing_id: briefingId,
-          briefing_title: S.active?.title||'',
-          score: S.score,
-          signed_at: new Date().toISOString()
-        })
-      }).catch(function(e){ console.warn('[CRM Webhook] failed:', e.message); });
-    }
+ // Notify CRM
+    sendCRMWebhook({
+      agentId: S.agent.id,
+      agentName: S.agent.name,
+      phone: S.agent?.phone || S.agent?.mobile || '',
+      briefingId: briefingId,
+      briefingTitle: S.active?.title || '',
+score: S.score
+    });
   }catch(e){ console.warn('[Sign] Save failed:', e.message); }
 
   document.getElementById('sign-btn').style.display='none';
@@ -10846,21 +10841,14 @@ async function signBriefingDoc(){
   await _sb.from('briefing_docs').update({completions: JSON.stringify(freshCompletions)}).eq('id', doc.id);
 
   // Notify CRM
-  var agentPhone = S.agent.phone || S.agent.mobile || '';
-  if(agentPhone){
-    fetch('https://crm.azriasolutions.com/api/webhooks/briefing-signed', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-webhook-token':'3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb'},
-      body: JSON.stringify({
-        phone: agentPhone,
-        briefing_id: doc.id,
-        briefing_title: doc.title,
-        score: score,
-        signed_at: new Date().toISOString(),
-        answers: questions.map(function(q,i){ return {q:q.q,options:q.options,correct:q.correct,chosen:answers[i]}; })
-      })
-    }).catch(function(e){ console.warn('[CRM Webhook] failed:', e.message); });
-  }
+sendCRMWebhook({
+    agentId: S.agent.id,
+    agentName: S.agent.name,
+    phone: S.agent.phone || S.agent.mobile || '',
+    briefingId: doc.id,
+    briefingTitle: doc.title,
+    score: score
+  });
 
   // Remove from pending
   window._agentPendingBriefingDocs = (window._agentPendingBriefingDocs||[]).filter(function(d){ return String(d.id)!==String(doc.id); });
@@ -11130,6 +11118,65 @@ async function promptPushSubscription() {
 
   const mainPanel = document.getElementById('abp-main');
   if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
+}
+async function sendCRMWebhook(payload) {
+  const { agentId, agentName, phone, briefingId, briefingTitle, score } = payload;
+
+  if (!phone) return;
+
+  const url = 'https://crm.azriasolutions.com/api/webhooks/briefing-signed';
+  const token = '3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb';
+
+  let success = false, statusCode = null, errorMsg = null;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-webhook-token': token
+      },
+      body: JSON.stringify({
+        phone,
+        briefing_id: briefingId,
+        briefing_title: briefingTitle || '',
+        score,
+        signed_at: new Date().toISOString()
+      })
+    });
+
+    statusCode = res.status;
+
+    if (res.ok) {
+      success = true;
+    } else {
+      let bodyText = '';
+      try { bodyText = await res.text(); } catch(e) {}
+      errorMsg = 'HTTP ' + res.status + (bodyText ? ' — ' + bodyText.slice(0,300) : '');
+      console.warn('[CRM Webhook] non-ok response:', errorMsg);
+    }
+  } catch (e) {
+    errorMsg = 'Network/CORS error: ' + e.message;
+    console.warn('[CRM Webhook] fetch failed:', e.message);
+  }
+
+  try {
+    await _sb.from('crm_webhook_log').insert({
+      agent_id: agentId || null,
+      agent_name: agentName || '',
+      phone,
+      briefing_id: String(briefingId||''),
+      briefing_title: briefingTitle || '',
+      score: score,
+      success,
+      status_code: statusCode,
+      error_message: errorMsg
+    });
+  } catch(e) {
+    console.warn('[CRM Webhook] failed to write log:', e.message);
+  }
+
+  return success;
 }
 
 async function sendPushToAgents(briefingTitle, targetDepts) {
