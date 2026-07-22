@@ -6084,14 +6084,15 @@ async function signBriefing(){
 
     // Notify CRM
  // Notify CRM
-    sendCRMWebhook({
-      agentId: S.agent.id,
-      agentName: S.agent.name,
-      phone: S.agent?.phone || S.agent?.mobile || '',
-      briefingId: briefingId,
-      briefingTitle: S.active?.title || '',
-score: S.score
-    });
+sendCRMWebhook({
+    agentId: S.agent.id,
+    agentName: S.agent.name,
+    phone: S.agent.phone || S.agent.mobile || '',
+    briefingId: doc.id,
+    briefingTitle: doc.title,
+    score: score,
+    org: doc.dept || ''
+  });
   }catch(e){ console.warn('[Sign] Save failed:', e.message); }
 
   document.getElementById('sign-btn').style.display='none';
@@ -11120,10 +11121,9 @@ async function promptPushSubscription() {
   if (mainPanel) mainPanel.insertBefore(banner, mainPanel.firstChild);
 }
 async function sendCRMWebhook(payload) {
-  const { agentId, agentName, phone, briefingId, briefingTitle, score } = payload;
+  const { agentId, agentName, phone, briefingId, briefingTitle, score, org } = payload;
 
-if (!phone) return; // אין טלפון — לא שולחים, לא מתעדים
-
+  if (!phone) return; // אין טלפון — לא שולחים, לא מתעדים
   const url = 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/crm-webhook-out';
 
   let success = false, statusCode = null, errorMsg = null;
@@ -11134,12 +11134,13 @@ if (!phone) return; // אין טלפון — לא שולחים, לא מתעדי�
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
+    body: JSON.stringify({
         phone,
         briefing_id: briefingId,
         briefing_title: briefingTitle || '',
         score,
-        signed_at: new Date().toISOString()
+        signed_at: new Date().toISOString(),
+        org: org || ''
       })
     });
 
