@@ -11122,10 +11122,9 @@ async function promptPushSubscription() {
 async function sendCRMWebhook(payload) {
   const { agentId, agentName, phone, briefingId, briefingTitle, score } = payload;
 
-  if (!phone) return;
+if (!phone) return; // אין טלפון — לא שולחים, לא מתעדים
 
-  const url = 'https://crm.azriasolutions.com/api/webhooks/briefing-signed';
-  const token = '3a10dad25b7ee7f2089122d9a31e8aaabb0e17ed282ff2f749e37f0c3d21f2fb';
+  const url = 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/crm-webhook-out';
 
   let success = false, statusCode = null, errorMsg = null;
 
@@ -11133,8 +11132,7 @@ async function sendCRMWebhook(payload) {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-webhook-token': token
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         phone,
@@ -11145,21 +11143,18 @@ async function sendCRMWebhook(payload) {
       })
     });
 
-    statusCode = res.status;
+    const result = await res.json();
+    statusCode = result.status_code;
+    success = result.success;
+    errorMsg = result.error_message;
 
-    if (res.ok) {
-      success = true;
-    } else {
-      let bodyText = '';
-      try { bodyText = await res.text(); } catch(e) {}
-      errorMsg = 'HTTP ' + res.status + (bodyText ? ' — ' + bodyText.slice(0,300) : '');
+    if (!success) {
       console.warn('[CRM Webhook] non-ok response:', errorMsg);
     }
   } catch (e) {
-    errorMsg = 'Network/CORS error: ' + e.message;
+    errorMsg = 'Network error calling edge function: ' + e.message;
     console.warn('[CRM Webhook] fetch failed:', e.message);
   }
-
   try {
     await _sb.from('crm_webhook_log').insert({
       agent_id: agentId || null,
