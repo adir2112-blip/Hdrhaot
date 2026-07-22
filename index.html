@@ -10527,7 +10527,7 @@ var {data, error} = await _sb.from('briefing_docs').insert(row).select().single(
   console.log('DEBUG insert result — data:', data, 'error:', error);
   if(error){ alert('שגיאה בפרסום: ' + error.message); return; }
   await logManagerAction('פרסום תדריך', 'כותרת: ' + title + ' | מחלקה: ' + dept);
-
+console.log('DEBUG after logManagerAction — about to build relevantAgents');
   // Notify CRM about assignment — one request per relevant agent, sequential
   var relevantAgents = selectedDepts.includes('כולם')
     ? S.agents.filter(function(a){ return a.active!==false; })
