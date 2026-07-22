@@ -5388,6 +5388,7 @@ async function publishBriefing(){
   };
   const {data,error}=await _sb.from('briefings').insert(row).select().single();
   if(error){alert('שגיאה בפרסום: '+error.message);return;}
+  console.log('DEBUG data.id:', data.id, 'full data:', data);
   data.questions=S.eq;
   data.targetDepts=targetDepts;
   data.completions={};
