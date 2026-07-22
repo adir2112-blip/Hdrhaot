@@ -10537,10 +10537,11 @@ var {data, error} = await _sb.from('briefing_docs').insert(row).select().single(
   console.log('DEBUG selectedDepts:', selectedDepts);
   console.log('DEBUG relevantAgents:', relevantAgents.map(function(a){ return a.name + ' | depts=' + JSON.stringify(a.depts) + ' | phone=' + a.phone; }));
   
-
-  for(var ai=0; ai<relevantAgents.length; ai++){
+for(var ai=0; ai<relevantAgents.length; ai++){
+    console.log('DEBUG loop iteration', ai);
     var ag = relevantAgents[ai];
     var agPhone = ag.phone || ag.mobile || '';
+    console.log('DEBUG agPhone', agPhone);
     if(!agPhone) continue;
     var agOrg = selectedDepts.includes('כולם')
       ? ((ag.depts||[])[0] || '')
