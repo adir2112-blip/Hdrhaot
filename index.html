@@ -10524,10 +10524,8 @@ async function publishNewBriefing(){
     is_active: true
   };
 var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
-  console.log('DEBUG insert result — data:', data, 'error:', error);
   if(error){ alert('שגיאה בפרסום: ' + error.message); return; }
   await logManagerAction('פרסום תדריך', 'כותרת: ' + title + ' | מחלקה: ' + dept);
-console.log('DEBUG after logManagerAction — about to build relevantAgents');
   // Notify CRM about assignment — one request per relevant agent, sequential
   var relevantAgents = selectedDepts.includes('כולם')
     ? S.agents.filter(function(a){ return a.active!==false; })
@@ -10535,15 +10533,10 @@ console.log('DEBUG after logManagerAction — about to build relevantAgents');
         return a.active!==false && (a.depts||[]).some(function(d){ return selectedDepts.includes(d); });
       });
 
-  console.log('DEBUG selectedDepts:', selectedDepts);
-  console.log('DEBUG selectedDepts:', selectedDepts);
-  console.log('DEBUG relevantAgents:', relevantAgents.map(function(a){ return a.name + ' | depts=' + JSON.stringify(a.depts) + ' | phone=' + a.phone; }));
   
 for(var ai=0; ai<relevantAgents.length; ai++){
-    console.log('DEBUG loop iteration', ai);
     var ag = relevantAgents[ai];
     var agPhone = ag.phone || ag.mobile || '';
-    console.log('DEBUG agPhone', agPhone);
     if(!agPhone) continue;
     var agOrg = selectedDepts.includes('כולם')
       ? ((ag.depts||[])[0] || '')
@@ -11207,12 +11200,8 @@ async function sendCRMWebhook(payload) {
 }
 async function sendCRMAssignedWebhook(payload) {
   const { phone, briefingId, briefingTitle, content, questions, org } = payload;
-  console.log('DEBUG sendCRMAssignedWebhook called with:', phone, briefingId, briefingTitle);
 
-  if (!phone || !briefingId) {
-    console.log('DEBUG sendCRMAssignedWebhook EXITING EARLY — phone:', phone, 'briefingId:', briefingId);
-    return;
-  }
+if (!phone || !briefingId) return;
 
   const url = 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/crm-webhook-assigned';
 
