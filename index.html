@@ -10533,6 +10533,11 @@ var {data, error} = await _sb.from('briefing_docs').insert(row).select().single(
         return a.active!==false && (a.depts||[]).some(function(d){ return selectedDepts.includes(d); });
       });
 
+  console.log('DEBUG selectedDepts:', selectedDepts);
+  console.log('DEBUG selectedDepts:', selectedDepts);
+  console.log('DEBUG relevantAgents:', relevantAgents.map(function(a){ return a.name + ' | depts=' + JSON.stringify(a.depts) + ' | phone=' + a.phone; }));
+  
+
   for(var ai=0; ai<relevantAgents.length; ai++){
     var ag = relevantAgents[ai];
     var agPhone = ag.phone || ag.mobile || '';
