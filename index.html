@@ -11207,8 +11207,12 @@ async function sendCRMWebhook(payload) {
 }
 async function sendCRMAssignedWebhook(payload) {
   const { phone, briefingId, briefingTitle, content, questions, org } = payload;
-  // ... כל שאר הקוד שנתתי ...
-}
+  console.log('DEBUG sendCRMAssignedWebhook called with:', phone, briefingId, briefingTitle);
+
+  if (!phone || !briefingId) {
+    console.log('DEBUG sendCRMAssignedWebhook EXITING EARLY — phone:', phone, 'briefingId:', briefingId);
+    return;
+  }
   
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
