@@ -10522,11 +10522,34 @@ async function publishNewBriefing(){
     published_at: new Date().toISOString(),
     is_active: true
   };
-
-  var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
+var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
   if(error){ alert('שגיאה בפרסום: ' + error.message); return; }
-
   await logManagerAction('פרסום תדריך', 'כותרת: ' + title + ' | מחלקה: ' + dept);
+
+  // Notify CRM about assignment — one request per relevant agent, sequential
+  var relevantAgents = selectedDepts.includes('כולם')
+    ? S.agents.filter(function(a){ return a.active!==false; })
+    : S.agents.filter(function(a){
+        return a.active!==false && (a.depts||[]).some(function(d){ return selectedDepts.includes(d); });
+      });
+
+  for(var ai=0; ai<relevantAgents.length; ai++){
+    var ag = relevantAgents[ai];
+    var agPhone = ag.phone || ag.mobile || '';
+    if(!agPhone) continue;
+    var agOrg = selectedDepts.includes('כולם')
+      ? ((ag.depts||[])[0] || '')
+      : ((ag.depts||[]).find(function(d){ return selectedDepts.includes(d); }) || '');
+    await sendCRMAssignedWebhook({
+      phone: agPhone,
+      briefingId: data.id,
+      briefingTitle: data.title,
+      content: content,
+      questions: _newBriefingQuestions,
+      org: agOrg
+    });
+  }
+
   closeNewBriefingModal();
   loadBriefingsTab();
   alert('✅ התדריך פורסם בהצלחה!');
@@ -11174,7 +11197,11 @@ async function sendCRMWebhook(payload) {
 
   return success;
 }
-
+async function sendCRMAssignedWebhook(payload) {
+  const { phone, briefingId, briefingTitle, content, questions, org } = payload;
+  // ... כל שאר הקוד שנתתי ...
+}
+  
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
     const res = await fetch('https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/send-push', {
