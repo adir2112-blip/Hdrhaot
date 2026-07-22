@@ -11213,7 +11213,64 @@ async function sendCRMAssignedWebhook(payload) {
     console.log('DEBUG sendCRMAssignedWebhook EXITING EARLY — phone:', phone, 'briefingId:', briefingId);
     return;
   }
-  
+
+  const url = 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/crm-webhook-assigned';
+
+  let success = false, statusCode = null, errorMsg = null;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone,
+        briefing_id: briefingId,
+        briefing_title: briefingTitle || '',
+        content: content || '',
+        questions: (questions || []).map(function(q){
+          return {
+            question: q.q,
+            options: q.options,
+            correct_index: q.correct
+          };
+        }),
+        org: org || '',
+        assigned_at: new Date().toISOString()
+      })
+    });
+
+    const result = await res.json();
+    statusCode = result.status_code;
+    success = result.success;
+    errorMsg = result.error_message;
+
+    if (!success) {
+      console.warn('[CRM Assigned Webhook] non-ok response:', errorMsg);
+    }
+  } catch (e) {
+    errorMsg = 'Network error calling edge function: ' + e.message;
+    console.warn('[CRM Assigned Webhook] fetch failed:', e.message);
+  }
+
+  try {
+    await _sb.from('crm_webhook_log').insert({
+      agent_id: null,
+      agent_name: '',
+      phone,
+      briefing_id: String(briefingId||''),
+      briefing_title: briefingTitle || '',
+      score: null,
+      success,
+      status_code: statusCode,
+      error_message: errorMsg
+    });
+  } catch(e) {
+    console.warn('[CRM Assigned Webhook] failed to write log:', e.message);
+  }
+
+  return success;
+}
+
 async function sendPushToAgents(briefingTitle, targetDepts) {
   try {
     const res = await fetch('https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/send-push', {
