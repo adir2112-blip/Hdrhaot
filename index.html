@@ -10612,8 +10612,10 @@ async function loadBriefingsTab(){
 }
 
 // ── Briefing Status Modal ─────────────────────────────
+var _lastBriefingStatusId = null;
 async function showBriefingStatus(el){
   var briefingId = el && el.dataset ? el.dataset.id : el;
+  _lastBriefingStatusId = briefingId;
   var modal = document.getElementById('briefing-status-modal');
   modal.style.display = 'flex';
   document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
@@ -10647,9 +10649,13 @@ async function showBriefingStatus(el){
     html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ חתמו:</div>';
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך חתימה</th></tr>';
-    doneAgents.forEach(function(item){
+ doneAgents.forEach(function(item){
       var dt = item.comp.signed_at ? new Date(item.comp.signed_at).toLocaleString('he-IL') : '-';
-      html += '<tr style="border-bottom:1px solid var(--line)"><td style="padding:7px 12px;color:var(--ice)">'+item.agent.name+'</td><td style="padding:7px 12px;text-align:center;font-weight:700;color:var(--gold)">'+item.comp.score+'%</td><td style="padding:7px 12px;text-align:center;color:var(--ice3);font-size:11px">'+dt+'</td></tr>';
+      var answersData = encodeURIComponent(JSON.stringify(item.comp.answers||[]));
+      html += '<tr style="border-bottom:1px solid var(--line);cursor:pointer" onclick=\'showAgentAnswers("'+item.agent.name.replace(/"/g,'')+'", '+item.comp.score+', "'+answersData+'")\'>' +
+        '<td style="padding:7px 12px;color:var(--ice)">'+item.agent.name+'</td>' +
+        '<td style="padding:7px 12px;text-align:center;font-weight:700;color:var(--gold);text-decoration:underline">'+item.comp.score+'%</td>' +
+        '<td style="padding:7px 12px;text-align:center;color:var(--ice3);font-size:11px">'+dt+'</td></tr>';
     });
     html += '</table></div>';
   }
@@ -10665,7 +10671,30 @@ async function showBriefingStatus(el){
 
   document.getElementById('bsm-content').innerHTML = html;
 }
-
+function showAgentAnswers(agentName, score, answersJson){
+  var answers = [];
+  try{ answers = JSON.parse(decodeURIComponent(answersJson)); }catch(e){}
+  var html = '<div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:4px">'+agentName+'</div>' +
+    '<div style="font-size:12px;color:var(--gold);margin-bottom:16px">ציון: '+score+'%</div>';
+  answers.forEach(function(a, i){
+    html += '<div class="card" style="margin-bottom:10px;padding:12px">' +
+      '<div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:8px">שאלה '+(i+1)+': '+a.q+'</div>';
+    (a.options||[]).forEach(function(opt, oi){
+      var isCorrect = oi === a.correct;
+      var isChosen = oi === a.chosen;
+      var bg = 'transparent', border = 'var(--line2)', color = 'var(--ice3)', icon = '';
+      if(isCorrect){ bg = 'rgba(5,150,105,0.12)'; border = 'var(--ok)'; color = 'var(--ok)'; icon = ' ✓'; }
+      if(isChosen && !isCorrect){ bg = 'rgba(240,101,101,0.12)'; border = '#F06565'; color = '#F06565'; icon = ' ✗ (נבחר)'; }
+      if(isChosen && isCorrect){ icon = ' ✓ (נבחר בהצלחה)'; }
+      html += '<div style="background:'+bg+';border:1px solid '+border+';color:'+color+';border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px">'+opt+icon+'</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('bsm-title').textContent = '📝 תשובות נציג';
+  document.getElementById('bsm-content').innerHTML =
+    '<button onclick="showBriefingStatus(_lastBriefingStatusId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>' +
+    html;
+}
 function closeBriefingStatusModal(){
   document.getElementById('briefing-status-modal').style.display = 'none';
 }
