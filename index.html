@@ -3168,8 +3168,12 @@ let S={
 };
 
 /* DB helpers */
+// id_number (ID card number) is deliberately excluded here — anon (agents,
+// with no real per-agent auth) no longer has SELECT on that column at the
+// database level, and this shared list is loaded for everyone. Admin
+// screens that need it fetch it on demand instead (openEditIdNumber).
 async function dbAgents(){
-  const {data,error}=await _sb.from('agents').select('*').order('id');
+  const {data,error}=await _sb.from('agents').select('id,name,depts,pin,last_login,active,phone,is_active').order('id');
   if(error){console.error('agents load',error);return[];}
   return (data||[]).map(a=>{
     try{
@@ -9639,13 +9643,19 @@ function closeEditPhone() {
 }
 
 let _editIdAgentId = null;
-function openEditIdNumber(agentId) {
+async function openEditIdNumber(agentId) {
   _editIdAgentId = agentId;
   const a = S.agents.find(x=>String(x.id)===String(agentId));
   if(!a) return;
   document.getElementById('edit-id-agent-label').textContent = a.name;
-  document.getElementById('edit-id-input').value = a.id_number||'';
+  document.getElementById('edit-id-input').value = '...';
   document.getElementById('edit-id-modal').style.display='flex';
+  // id_number isn't in the shared S.agents cache anymore (excluded at the
+  // DB level for anon) — fetch it here specifically, as an authenticated
+  // admin.
+  const {data} = await _sb.from('agents').select('id_number').eq('id',agentId).single();
+  a.id_number = data?.id_number||'';
+  document.getElementById('edit-id-input').value = a.id_number;
   setTimeout(()=>document.getElementById('edit-id-input').focus(),100);
 }
 async function saveEditIdNumber() {

@@ -1,0 +1,15 @@
+-- Targeted fix: hide agents.id_number (Israeli ID number) from anonymous
+-- access specifically, without touching anything else about the `agents`
+-- table (still open for the picker/leaderboard, which need name/phone/pin
+-- etc. and have no real per-agent auth session yet — that's Phase 2).
+--
+-- This uses column-level privileges rather than a broader RLS/query
+-- restructure: PostgREST (which Supabase's REST API is built on) reads a
+-- role's actual column grants and silently omits columns it can't see
+-- when a request uses `select=*` — no application code needs to change.
+--
+-- Verified before writing this: no agent-facing screen ever reads
+-- id_number (grepped the whole app) — only admin edit/import screens do,
+-- and those run as the `authenticated` role once a manager is signed in,
+-- which keeps its existing grant and is unaffected by this revoke.
+revoke select (id_number) on public.agents from anon;
