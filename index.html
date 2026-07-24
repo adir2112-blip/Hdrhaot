@@ -7527,11 +7527,9 @@ function renderScoresPanel(){
     return;
   }
   rows.sort((a,b)=>b.score-a.score);
+  window._scoresPanelRows=rows;
   const sc=s=>s>=80?'var(--ok)':s>=60?'var(--warn)':'var(--danger)';
-  el.innerHTML=rows.map((r,i)=>{
-    const answersData=encodeURIComponent(JSON.stringify(r.answers||[]));
-    const safeName=String(r.name).replace(/"/g,'');
-    return `<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer" title="לחץ לצפייה בתשובות" onclick='openScoreAnswers("${safeName}", ${r.score}, "${answersData}", "${r.briefingId}")'>
+  el.innerHTML=rows.map((r,i)=>`<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer" title="לחץ לצפייה בתשובות" onclick="openScoreAnswers(${i})">
     <div style="font-size:18px;font-weight:800;color:var(--ice3);min-width:28px;text-align:center">#${i+1}</div>
     <div style="flex:1">
       <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
@@ -7539,15 +7537,19 @@ function renderScoresPanel(){
       ${r.ts?`<div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">🕐 ${r.ts}</div>`:''}
     </div>
     <div style="font-size:24px;font-weight:800;color:${sc(r.score)};text-decoration:underline dotted">${r.score}%</div>
-  </div>`;
-  }).join('');
+  </div>`).join('');
 }
 
 // Opens the shared answers-review modal (built for תדריכים → סטטוס) from the Scores panel
-function openScoreAnswers(agentName, score, answersJson, briefingId){
-  _lastBriefingStatusId = briefingId;
+function openScoreAnswers(rowIndex){
+  const r=(window._scoresPanelRows||[])[rowIndex];
+  if(!r) return;
+  _lastBriefingStatusId=r.briefingId;
   document.getElementById('briefing-status-modal').style.display='flex';
-  showAgentAnswers(agentName, score, answersJson);
+  document.getElementById('bsm-title').textContent='📝 תשובות נציג';
+  document.getElementById('bsm-content').innerHTML=
+    '<button onclick="showBriefingStatus(_lastBriefingStatusId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>'+
+    renderAnswersReviewHtml(r.name, r.score, r.answers);
 }
 
 /* ── LEADERBOARD PANEL ── */
@@ -10682,9 +10684,11 @@ async function showBriefingStatus(el){
 
   document.getElementById('bsm-content').innerHTML = html;
 }
-function showAgentAnswers(agentName, score, answersJson){
-  var answers = [];
-  try{ answers = JSON.parse(decodeURIComponent(answersJson)); }catch(e){}
+// Shared markup builder: agent name + score + one card per question, correct answer
+// highlighted in green and the agent's chosen answer flagged (used by both
+// showAgentAnswers below and openScoreAnswers in the Scores panel).
+function renderAnswersReviewHtml(agentName, score, answers){
+  answers = answers || [];
   var html = '<div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:4px">'+agentName+'</div>' +
     '<div style="font-size:12px;color:var(--gold);margin-bottom:16px">ציון: '+score+'%</div>';
   answers.forEach(function(a, i){
@@ -10701,10 +10705,15 @@ function showAgentAnswers(agentName, score, answersJson){
     });
     html += '</div>';
   });
+  return html;
+}
+function showAgentAnswers(agentName, score, answersJson){
+  var answers = [];
+  try{ answers = JSON.parse(decodeURIComponent(answersJson)); }catch(e){}
   document.getElementById('bsm-title').textContent = '📝 תשובות נציג';
   document.getElementById('bsm-content').innerHTML =
     '<button onclick="showBriefingStatus(_lastBriefingStatusId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>' +
-    html;
+    renderAnswersReviewHtml(agentName, score, answers);
 }
 function closeBriefingStatusModal(){
   document.getElementById('briefing-status-modal').style.display = 'none';
