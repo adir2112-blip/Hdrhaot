@@ -1260,7 +1260,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">תוכן הנוהל</label>
         <textarea id="briefing-content" placeholder="הדבק את הנוהל כאן בפשטות — AI ינסח וישפר עבורך..." style="min-height:140px"></textarea>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14)">
+          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14)">
             <span style="font-size:16px">✦</span>
             <span>שפר ונסח עם AI</span>
             <span style="font-size:10px;background:rgba(116,105,166,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">AI</span>
@@ -1274,7 +1274,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <div id="polish-preview" style="display:none;margin-bottom:18px">
         <div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:18px;overflow:hidden">
-          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15)">
+          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15)">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ תוצאת AI — בדוק ואשר</div>
             <div style="display:flex;gap:8px">
               <button onclick="approvePolish()" style="background:var(--ok);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">✓ אשר והחלף</button>
@@ -1948,7 +1948,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- KNOWLEDGE CHAT BUTTON -->
       <div id="agent-knowledge-btn-wrap" style="margin-bottom:14px">
-        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(116,105,166,0.18)'" onmouseout="this.style.boxShadow='none'">
+        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border:1.5px solid rgba(116,105,166,0.3);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(116,105,166,0.18)'" onmouseout="this.style.boxShadow='none'">
           <div style="display:flex;align-items:center;gap:12px">
             <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(116,105,166,0.4))">🧠</span>
             <div style="text-align:right">
@@ -2087,7 +2087,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <!-- AI SUMMARY CARD -->
         <div id="ai-summary-card" style="display:none;margin-top:16px;border-radius:18px;overflow:hidden;border:1.5px solid rgba(116,105,166,0.2);box-shadow:0 4px 18px rgba(116,105,166,0.08)">
-          <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+          <div style="background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ סיכום AI</div>
             <div id="ai-summary-loading" style="display:none;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">מסכם...</div>
           </div>
@@ -2098,7 +2098,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
           <button class="btn btn-gold" onclick="goStep('quiz');ttsStop()">קראתי — עבור לשאלות ◂</button>
-          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14),0 0 0 0 rgba(116,105,166,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(116,105,166,0.22),0 0 0 4px rgba(116,105,166,0.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(116,105,166,0.14)';this.style.transform=''">
+          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14),0 0 0 0 rgba(116,105,166,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(116,105,166,0.22),0 0 0 4px rgba(116,105,166,0.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(116,105,166,0.14)';this.style.transform=''">
             <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(116,105,166,0.7))">✦</span>
             <span>סיכום AI</span>
             <span style="font-size:10px;background:rgba(116,105,166,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">AI</span>
@@ -3089,12 +3089,14 @@ async function signIn(){
     errEl.textContent='✗ אימייל או סיסמה שגויים';
     return;
   }
+  localStorage.setItem('bs_login_ts', String(Date.now()));
   hideAuthModal();
   onAdminSignedIn();
 }
 
 async function signOut(){
   await _sb.auth.signOut();
+  localStorage.removeItem('bs_login_ts');
   lockAll();
   showAuthModal();
 }
@@ -3106,6 +3108,10 @@ function showAuthModal(){
 function hideAuthModal(){
   document.getElementById('auth-modal').style.display='none';
 }
+
+// Admin sessions expire 12h after login (or on manual sign-out), regardless
+// of how long the underlying Supabase token would otherwise stay valid.
+const AUTH_SESSION_MAX_MS = 12*60*60*1000;
 
 // Agent-only mode (no admin session)
 let _agentOnlyMode = false;
@@ -3156,16 +3162,25 @@ function onAdminSignedIn(){
   });
 }
 
-// Check session on page load
+// Check session on page load — keeps the admin signed in across refreshes,
+// unless the 12h window has elapsed (in which case force a real sign-out).
 async function checkAuthSession(){
   const { data: { session } } = await _sb.auth.getSession();
-  if(session){
-    hideAuthModal();
-    onAdminSignedIn();
-  } else {
-    showAuthModal();
+  if(!session){ showAuthModal(); return; }
+  const loginTs = parseInt(localStorage.getItem('bs_login_ts')||'0', 10);
+  if(!loginTs || Date.now()-loginTs > AUTH_SESSION_MAX_MS){
+    await signOut();
+    return;
   }
+  hideAuthModal();
+  onAdminSignedIn();
 }
+
+// Re-check every 5 minutes in case the tab is left open past the 12h mark
+setInterval(()=>{
+  const loginTs = parseInt(localStorage.getItem('bs_login_ts')||'0', 10);
+  if(loginTs && Date.now()-loginTs > AUTH_SESSION_MAX_MS) signOut();
+}, 5*60*1000);
 
 let S={
   agents:[],
@@ -4569,7 +4584,7 @@ function showFullAnswer(el){
   modal.style.cssText='position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
 
   modal.innerHTML='<div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
-    '<div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+    '<div style="background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
       '<div style="font-size:16px;font-weight:700;color:var(--ice)">🤖 תשובת AI מלאה</div>'+
       '<button onclick="document.getElementById(\'full-answer-modal\').remove()" style="background:rgba(36,31,61,0.06);border:1px solid rgba(36,31,61,0.1);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:15px">✕</button>'+
     '</div>'+
@@ -8551,6 +8566,9 @@ async function appInit(){
   if(_adminUnlocked){ renderSettings(); renderTracking(); }
   // Start on agent login screen
   switchTab('agent');
+  // If there's a still-valid (< 12h) admin session, this hides the login
+  // modal and restores the admin view instead of leaving it up
+  checkAuthSession();
 }
 appInit();
 function initBriefingDeptPicker(){
@@ -11833,7 +11851,7 @@ async function showAgentQuestions(agentId){
   }).join('');
 
   modal.innerHTML='<div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
-    '<div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+    '<div style="background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
       '<div>'+
         '<div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
         '<div style="font-size:18px;font-weight:800;color:var(--ice);font-family:Playfair Display,serif">'+agentName+'</div>'+
@@ -12617,7 +12635,7 @@ function renderManagersDiscipline(){
 <div id="agent-knowledge-modal" style="display:none;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:slide-up 0.25s ease">
   <div style="background:#fff;border:1.5px solid rgba(116,105,166,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(116,105,166,0.1);overflow:hidden;display:flex;flex-direction:column;max-height:520px">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:36px;height:36px;border-radius:50%;background:rgba(116,105,166,0.15);border:1px solid rgba(116,105,166,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
         <div>
@@ -13256,7 +13274,7 @@ function renderManagersDiscipline(){
 <div id="rating-feedback-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:16px">
   <div style="background:#F5F4F0;border-radius:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:20px 24px">
+    <div style="background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border-bottom:1px solid rgba(116,105,166,0.15);padding:20px 24px">
       <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
       <div style="font-size:22px;color:var(--ice);font-family:Playfair Display,serif;font-weight:700">מה הייתה הבעיה?</div>
       <div id="rfm-stars" style="font-size:20px;color:#7469A6;margin-top:6px">★★★★☆</div>
