@@ -7480,18 +7480,29 @@ function renderScoresPanel(){
   const bid=document.getElementById('scores-briefing-filter')?.value||'all';
   const days=parseInt(document.getElementById('scores-date-filter')?.value||'all');
 
-  // Update briefing dropdown filtered by dept
+  // Update briefing dropdown filtered by dept — newest published first
   const bSel=document.getElementById('scores-briefing-filter');
   if(bSel){
     const cur=bSel.value;
     const dept=document.getElementById('scores-dept-filter')?.value||'all';
+    const parsePublished=s=>{
+      if(!s) return 0;
+      const parts=s.split(' ');
+      const dp=(parts[0]||'').split('/');
+      if(dp.length<3) return 0;
+      const tp=(parts[1]||'00:00').split(':');
+      return new Date(+dp[2],+dp[1]-1,+dp[0],+tp[0]||0,+tp[1]||0).getTime();
+    };
     const relevantBriefs=S.briefings.filter(b=>{
       if(dept==='all') return true;
       if(!b.targetDepts||b.targetDepts.length===0) return true;
       return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agentDepts.has(d));
-    });
+    }).sort((a,b)=>parsePublished(b.publishedAt)-parsePublished(a.publishedAt));
     bSel.innerHTML='<option value="all">כל התדריכים</option>'+
-      relevantBriefs.map(b=>`<option value="${b.id}">${b.title}</option>`).join('');
+      relevantBriefs.map(b=>{
+        const dateLabel=b.publishedAt?b.publishedAt.split(' ')[0]:'';
+        return `<option value="${b.id}">${b.title}${dateLabel?' ('+dateLabel+')':''}</option>`;
+      }).join('');
     if([...bSel.options].some(o=>o.value===cur)) bSel.value=cur;
     else bSel.value='all';
   }
@@ -9313,6 +9324,7 @@ function renderBriefingsHistoryPanel(){
           <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">${b.title}${b.is_active===false?' <span style="font-size:11px;background:rgba(240,101,101,0.1);color:var(--danger);border-radius:20px;padding:2px 8px;font-family:DM Mono,monospace">מושבת</span>':''}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
             ${(b.targetDepts||[]).map(d=>`<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 8px">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">כל הנציגים</span>'}
+            ${b.deadline?`<span style="font-size:11px;background:rgba(91,160,230,0.1);color:#5BA0E6;border-radius:20px;padding:2px 8px">📅 ${new Date(b.deadline).toLocaleDateString('he-IL')}</span>`:''}
             ${daysLeft!==null?`<span style="font-size:11px;background:${overdue?'rgba(220,50,50,0.1)':'rgba(240,170,50,0.1)'};color:${overdue?'var(--danger)':'var(--warn)'};border-radius:20px;padding:2px 8px">⏰ ${overdue?'פג תוקף לפני '+Math.abs(daysLeft)+' ימים':'נותרו '+daysLeft+' ימים'}</span>`:''}
           </div>
         </div>
@@ -9328,10 +9340,10 @@ function renderBriefingsHistoryPanel(){
 
       <!-- Action buttons row -->
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="showCompletedAgents('${b.id}')" style="background:rgba(26,158,110,0.1);border:1px solid rgba(26,158,110,0.3);color:var(--ok);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+        <button onclick="showBriefingStatus('${b.id}')" style="background:rgba(26,158,110,0.1);border:1px solid rgba(26,158,110,0.3);color:var(--ok);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
           ✓ ${completedAgents.length} השלימו
         </button>
-        <button onclick="showPendingAgents('${b.id}')" style="background:rgba(240,170,50,0.1);border:1px solid rgba(240,170,50,0.3);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+        <button onclick="showBriefingStatus('${b.id}')" style="background:rgba(240,170,50,0.1);border:1px solid rgba(240,170,50,0.3);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
           ⏳ ${pendingAgents.length} ממתינים
         </button>
         <button onclick="requestRefresh('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
@@ -9341,33 +9353,6 @@ function renderBriefingsHistoryPanel(){
     </div>`;
   }).join('');
 }
-
-function showCompletedAgents(briefingId){
-  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
-  if(!b) return;
-  const agents=S.agents.filter(a=>b.completions[String(a.id)]);
-  if(!agents.length){alert('אין נציגים שהשלימו עדיין.');return;}
-  const rows=agents.map(a=>{
-    const comp=b.completions[String(a.id)];
-    return a.name+' — '+comp.score+'%';
-  }).join('\n');
-  alert('✓ השלימו:\n'+rows);
-}
-
-function showPendingAgents(briefingId){
-  const b=S.briefings.find(x=>String(x.id)===String(briefingId));
-  if(!b) return;
-  const agents=S.agents.filter(a=>{
-    if(b.completions[String(a.id)]) return false;
-    if(!b.targetDepts||!b.targetDepts.length) return true;
-    return (a.depts||[]).some(d=>b.targetDepts.includes(d));
-  });
-  if(!agents.length){alert('כל הנציגים הרלוונטיים השלימו!');return;}
-  alert('⏳ ממתינים:\n'+agents.map(a=>a.name).join('\n'));
-}
-
-
-
 
 /* ══ EDIT EXISTING BRIEFING ══════════════════════════════ */
 let _editingBriefingId = null;
@@ -10609,8 +10594,8 @@ async function loadBriefingsTab(){
           '<div style="font-size:16px;font-weight:700;color:var(--ice);margin-bottom:4px">'+b.title+'</div>' +
           '<div style="font-size:12px;color:var(--ice3)">'+b.dept+' · '+pubDate+' · '+b.manager_email+'</div>' +
           '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
-            '<span style="background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">✅ '+doneCount+' חתמו</span>' +
-            '<span style="background:rgba(245,158,11,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">⏳ '+pending+' ממתינים</span>' +
+            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם">✅ '+doneCount+' חתמו</span>' +
+            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(245,158,11,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
             '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
           '</div>' +
         '</div>' +
@@ -10714,6 +10699,18 @@ function showAgentAnswers(agentName, score, answersJson){
   document.getElementById('bsm-content').innerHTML =
     '<button onclick="showBriefingStatus(_lastBriefingStatusId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>' +
     renderAnswersReviewHtml(agentName, score, answers);
+}
+// Row click handler for the "חתמו" table in showBriefingStatus — looks up
+// the clicked agent from window._briefingStatusDoneAgents by index instead
+// of passing name/answers through the onclick attribute (same reasoning as
+// registerQuizReview above: raw text/JSON in an attribute breaks on quotes).
+function showAgentAnswersByIndex(idx){
+  var item = (window._briefingStatusDoneAgents||[])[idx];
+  if(!item) return;
+  document.getElementById('bsm-title').textContent = '📝 תשובות נציג';
+  document.getElementById('bsm-content').innerHTML =
+    '<button onclick="showBriefingStatus(_lastBriefingStatusId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>' +
+    renderAnswersReviewHtml(item.agent.name, item.comp.score, item.comp.answers||[]);
 }
 function closeBriefingStatusModal(){
   document.getElementById('briefing-status-modal').style.display = 'none';
