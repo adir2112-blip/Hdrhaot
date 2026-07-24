@@ -1125,26 +1125,6 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 </head>
 <body>
 
-<!-- API SETUP MODAL -->
-<div class="api-modal hidden" id="api-modal">
-  <div class="api-modal-box">
-    <div class="api-modal-title">הגדרת Gemini API</div>
-    <div class="api-modal-sub">
-      לצורך יצירת שאלות אוטומטית, הכנס מפתח API חינמי מ-<a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
-      המפתח נשמר בדפדפן שלך בלבד ולא יידרש שוב.
-    </div>
-    <div class="field">
-      <label class="field-label">מפתח API</label>
-      <input type="text" id="api-modal-key" placeholder="sk-..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px" onkeydown="if(event.key==='Enter')saveApiKey()">
-    </div>
-    <div id="api-modal-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:12px;font-family:'DM Mono',monospace"></div>
-    <div style="display:flex;gap:10px;margin-top:18px">
-      <button class="btn btn-gold" onclick="saveApiKey()" style="flex:1">שמור והמשך</button>
-      <button class="btn btn-outline btn-sm" onclick="closeApiModal()">דלג לעת עתה</button>
-    </div>
-  </div>
-</div>
-
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-inner">
@@ -2990,11 +2970,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div class="card-label">⚙️ הגדרות מערכת</div>
               <div class="field">
                 <label class="field-label">מפתח OpenAI API</label>
-                <div style="display:flex;gap:10px">
-                  <input type="text" id="config-api-key" placeholder="sk-..." style="direction:ltr;font-family:'DM Mono',monospace;font-size:13px;flex:1">
-                  <button class="btn btn-gold btn-sm" onclick="saveConfigApiKey()">שמור</button>
-                </div>
-                <div style="font-size:11px;color:var(--ice3);margin-top:6px;font-family:'DM Mono',monospace">נדרש ליצירת שאלות AI וניסוח תוכן</div>
+                <div style="font-size:12px;color:var(--ice3);background:var(--ink3);border-radius:10px;padding:10px 12px;line-height:1.6">🔒 מנוהל כעת ב-Supabase Edge Function secrets ולא דרך המסך הזה — כדי לעדכן, הרץ <code style="font-family:'DM Mono',monospace">supabase secrets set OPENAI_API_KEY=...</code></div>
               </div>
               <div class="field" style="margin-top:16px">
                 <label class="field-label">שינוי סיסמת מנהל</label>
@@ -3243,29 +3219,6 @@ function ini(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2);}
 function col(id){return AV_COLORS[(id-1)%AV_COLORS.length];}
 function now(){const n=new Date();return`${n.getDate()}/${n.getMonth()+1}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-/* API KEY */
-window.addEventListener('load',()=>{
-  // API key loaded from Supabase in appInit - no local check here
-});
-function openApiModal(){
-  const stored=localStorage.getItem('bs_api_key')||'';
-  document.getElementById('api-modal-key').value=stored?'••••••••••••••••':'';
-  document.getElementById('api-modal').classList.remove('hidden');
-}
-function closeApiModal(){document.getElementById('api-modal').classList.add('hidden');}
-async function saveApiKey(){
-  const k=document.getElementById('api-modal-key').value.trim();
-  if(k==='••••••••••••••••'){closeApiModal();return;}
-  if(!k.startsWith('sk-')&&!k.startsWith('gsk_')&&!k.startsWith('AIza')){
-    document.getElementById('api-modal-err').style.display='block';
-    document.getElementById('api-modal-err').textContent='✗ מפתח לא תקין — חייב להתחיל ב-sk-';
-    return;
-  }
-  await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
-  localStorage.setItem('bs_api_key',k);
-  closeApiModal();
-}
 
 /* TABS */
 function switchTab(name){
@@ -3638,12 +3591,6 @@ function renderSettingsStats(){
 }
 
 async function loadConfigValues(){
-  const keyEl = document.getElementById('config-api-key');
-  if(keyEl){
-    const stored = localStorage.getItem('bs_api_key');
-    keyEl.value = stored ? '••••••••••••••••' : '';
-    keyEl.placeholder = stored ? 'מפתח קיים — הכנס חדש לשינוי' : 'gsk_...';
-  }
   const pwMsg = document.getElementById('config-pw-msg');
   if(pwMsg) pwMsg.style.display='none';
   // Show AI usage counter
@@ -3664,16 +3611,6 @@ async function loadConfigValues(){
       </div>
       <div style="font-size:11px;color:var(--ice3);margin-top:6px">${today}</div>`;
   }
-}
-
-async function saveConfigApiKey(){
-  const k = document.getElementById('config-api-key')?.value?.trim();
-  if(!k||k==='••••••••••••••••') return;
-  if(!k.startsWith('sk-')&&!k.startsWith('AIza')){ alert('מפתח לא תקין — חייב להתחיל ב-sk-'); return; }
-  await _sb.from('app_settings').upsert({key:'gemini_api_key',value:k},{onConflict:'key'});
-  localStorage.setItem('bs_api_key',k);
-  document.getElementById('config-api-key').value='••••••••••••••••';
-  alert('✓ מפתח Groq API נשמר');
 }
 
 function saveConfigPw(){
@@ -4367,8 +4304,6 @@ async function sendKnowledgeChat(mode){
   const input=document.getElementById(inputId);
   const q=input?.value?.trim();
   if(!q) return;
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Groq API');return;}
   input.value='';
   appendKbMessage(boxId,'user',q);
   const thinkingId='think-'+Date.now();
@@ -4404,17 +4339,15 @@ async function sendKnowledgeChat(mode){
   ];
 
   try{
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({
+    const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
+      body:{
         model:'gpt-4o-mini',
         messages:groqMessages,
         temperature:0.2,
         max_tokens:500
-      })
+      }
     });
-    const data=await res.json();
+    if(_aiErr) throw _aiErr;
     if(data.error){
       const msg=data.error.message||'';
       if(msg.includes('rate_limit')||msg.includes('Rate limit')||msg.includes('tokens per')){
@@ -5250,8 +5183,6 @@ async function extractFromFile(input){
 
 /* ── AI SUMMARY ─────────────────────────────── */
 async function generateAISummary(){
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Groq API — עדכן בהגדרות');return;}
   const content=document.getElementById('flow-content')?.textContent||'';
   const title=document.getElementById('flow-title')?.textContent||'';
   if(!content.trim()){alert('אין תוכן לסכם');return;}
@@ -5279,12 +5210,10 @@ important = מה הכי חשוב לדעת
 forbidden = מה אסור להגיד/לעשות  
 todo = מה צריך לעשות`;
 
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000})
+    const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000}
     });
-    const data=await res.json();
+    if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message);
     const raw=(data.choices?.[0]?.message?.content||'').replace(/\`\`\`json|\`\`\`/g,'').trim();
     const parsed=JSON.parse(raw);
@@ -5320,8 +5249,6 @@ async function generateQuiz(){
   const title=document.getElementById('briefing-title').value.trim();
   const content=document.getElementById('briefing-content').value.trim();
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){openApiModal();return;}
   document.getElementById('gen-btn').disabled=true;
   document.getElementById('loading-ind').style.display='flex';
   document.getElementById('preview-section').style.display='none';
@@ -5334,12 +5261,10 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
 כותרת: ${title}
 תוכן: ${content}
 צור בדיוק ${numQ} שאלות.`;
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000})
+    const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000}
     });
-    const data=await res.json();
+    if(_aiErr) throw _aiErr;
     if(data.error)throw new Error(data.error.message);
     const raw=(data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(raw);
@@ -6240,8 +6165,6 @@ function finishReverseAndClose(){
 async function submitReverseBriefing(){
   const explanation=document.getElementById('reverse-briefing-text')?.value?.trim();
   if(!explanation){alert('כתוב הסבר קודם');return;}
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){alert('נדרש מפתח Groq API');return;}
   const content=S.active?.content||'';
   const title=S.active?.title||'';
 
@@ -6269,12 +6192,10 @@ ${content.slice(0,3000)}
   "summary": "משפט אחד קצר על ההבנה הכללית"
 }`;
 
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600})
+    const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600}
     });
-    const data=await res.json();
+    if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message);
     const raw=(data.choices?.[0]?.message?.content||'').replace(/\`\`\`json|\`\`\`/g,'').trim();
     const parsed=JSON.parse(raw);
@@ -8544,25 +8465,6 @@ function toggleFeatured(){
 }
 
 async function appInit(){
-  // Load API key from Supabase (works across all devices)
-  try{
-    const {data}=await _sb.from('app_settings').select('value').eq('key','gemini_api_key').single();
-    if(data&&data.value){
-      // Always overwrite localStorage with latest key from Supabase
-      localStorage.setItem('bs_api_key',data.value);
-    } else if(!localStorage.getItem('bs_api_key')){
-      document.getElementById('api-modal').classList.remove('hidden');
-    }
-  } catch(e){
-    if(!localStorage.getItem('bs_api_key'))
-      document.getElementById('api-modal').classList.remove('hidden');
-  }
-  // Clear any stale Gemini key (AIza...) - replaced by Groq
-  const storedKey=localStorage.getItem('bs_api_key')||'';
-  if(storedKey.startsWith('AIza')){
-    localStorage.removeItem('bs_api_key');
-    console.log('[API] Cleared stale Gemini key, will use Supabase key');
-  }
   await loadAll();
   renderAgentLogin();initBriefingDeptPicker();
   // Only render protected panels if already unlocked
@@ -9260,9 +9162,6 @@ async function polishContent(){
     alert('אנא הכנס תוכן לפני השיפור');
     return;
   }
-  const key=localStorage.getItem('bs_api_key');
-  if(!key){ alert('נדרש מפתח Groq API'); return; }
-
   const btn=document.getElementById('polish-btn');
   const originalHtml=btn.innerHTML;
   btn.innerHTML='<span style="font-size:16px">⏳</span><span>משפר...</span>';
@@ -9270,10 +9169,8 @@ async function polishContent(){
 
   const originalText=contentEl.value.trim();
   try{
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({
+    const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
+      body:{
         model:'gpt-4o-mini',
         messages:[
           {role:'user',content:
@@ -9285,9 +9182,9 @@ async function polishContent(){
         ],
         temperature:0.3,
         max_tokens:2000
-      })
+      }
     });
-    const data=await res.json();
+    if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message);
     const improved=data.choices[0].message.content.trim();
     contentEl.value=improved;
@@ -10608,9 +10505,6 @@ async function generateBriefingQuestions(){
   document.getElementById('nb-generating').style.display = 'block';
   document.getElementById('nb-questions-area').style.display = 'none';
 
-  var key = localStorage.getItem('bs_api_key') || '';
-  if(!key){ alert('נדרש מפתח API'); return; }
-
   var prompt = 'קרא את התדריך הבא וצור בדיוק ' + count + ' שאלות אמריקאיות (multiple choice) בעברית.\n\n' +
     'כל שאלה חייבת להיות בפורמט JSON הבא בדיוק:\n' +
     '{\n  "q": "טקסט השאלה",\n  "options": ["אפשרות א", "אפשרות ב", "אפשרות ג", "אפשרות ד"],\n  "correct": 0,\n  "hint": "הסבר קצר"\n}\n\n' +
@@ -10619,13 +10513,11 @@ async function generateBriefingQuestions(){
     'תוכן התדריך:\n' + content.slice(0, 3000);
 
   try {
-    var resp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body: JSON.stringify({model:'gpt-4o-mini', max_tokens:2000, messages:[{role:'user',content:prompt}]})
+    var {data, error: _aiErr} = await _sb.functions.invoke('ai-proxy', {
+      body: {model:'gpt-4o-mini', max_tokens:2000, messages:[{role:'user',content:prompt}]}
     });
-    var data = await resp.json();
-    if(!resp.ok) throw new Error(data.error?.message || 'שגיאת API');
+    if(_aiErr) throw _aiErr;
+    if(data.error) throw new Error(data.error.message || 'שגיאת API');
     var raw = data.choices[0].message.content.trim();
     raw = raw.replace(/```json|```/g,'').trim();
     _newBriefingQuestions = JSON.parse(raw);
