@@ -6484,7 +6484,7 @@ async function renderTracking(){
           const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
           return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
         })
-        .map(a=>({name:a.name,score:b.completions[String(a.id)].score,ts:b.completions[String(a.id)].ts,aid:a.id}))
+        .map(a=>({name:a.name,score:b.completions[String(a.id)].score,ts:b.completions[String(a.id)].ts,aid:a.id,answers:b.completions[String(a.id)].answers}))
         .sort((x,y)=>y.score-x.score);
       // who didn't complete (in filtered agents)
       const pendingList=filteredAgents.filter(a=>{
@@ -6519,7 +6519,7 @@ async function renderTracking(){
             <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--ok-bg);margin-bottom:6px">
               <span style="font-size:13px;color:var(--ice3);font-weight:700;min-width:20px">#${i+1}</span>
               <span style="font-size:14px;font-weight:600;color:var(--ice);flex:1">${c.name}</span>
-              <span onclick="showQuizReview('${c.name||a.name}',${c.score},${JSON.stringify(c.answers||[])},${JSON.stringify(b.questions||[])})" style="font-size:14px;font-weight:800;color:${c.score>=80?'var(--ok)':c.score>=60?'var(--warn)':'var(--danger)'};cursor:pointer;text-decoration:underline dotted" title="לחץ לסקירת תשובות">${c.score}%</span>
+              <span onclick="showQuizReviewAt(${registerQuizReview(c.name,c.score,c.answers,b.questions)})" style="font-size:14px;font-weight:800;color:${c.score>=80?'var(--ok)':c.score>=60?'var(--warn)':'var(--danger)'};cursor:pointer;text-decoration:underline dotted" title="לחץ לסקירת תשובות">${c.score}%</span>
               <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">${c.ts}</span>
               <button onclick="resetSingleCompletion(${bid},'${c.aid}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:12px;padding:0" title="בטל חתימה">✕</button>
             </div>`).join(''):'<div style="font-size:13px;color:var(--ice3)">טרם הושלם</div>'}
@@ -6558,7 +6558,7 @@ async function renderTracking(){
           <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
         </div>
-        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\'")}','${b.title.replace(/'/g,"\'")}')"
+        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\\'")}','${b.title.replace(/'/g,"\\'")}')"
           style="background:rgba(212,130,10,0.1);border:1.5px solid rgba(212,130,10,0.3);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sora',sans-serif;flex-shrink:0">
           🔄 מבחן חוזר
         </button>
@@ -6677,7 +6677,7 @@ function openAgentStats(agentId){
             ${comp.reverse_missing&&comp.reverse_missing.length?`<div style="font-size:11px;color:#D94040;font-family:'DM Mono',monospace">חסר: ${comp.reverse_missing.join(' · ')}</div>`:''}
           </div>`:''}
         </div>
-        <div onclick="showQuizReview('${agent.name}',${comp.score},${JSON.stringify(comp.answers||[])},[])" style="font-size:18px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'};cursor:pointer;text-decoration:underline dotted" title="לחץ לסקירת תשובות">${comp.score}%</div>
+        <div onclick="showQuizReviewAt(${registerQuizReview(agent.name,comp.score,comp.answers,[])})" style="font-size:18px;font-weight:700;color:${comp.score>=80?'var(--ok)':comp.score>=60?'var(--warn)':'var(--danger)'};cursor:pointer;text-decoration:underline dotted" title="לחץ לסקירת תשובות">${comp.score}%</div>
       </div>`;
     }).join('')
     :'<div style="font-size:13px;color:var(--ice3)">טרם השלים תדריכים</div>';
@@ -10662,10 +10662,10 @@ async function showBriefingStatus(el){
     html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ חתמו:</div>';
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך חתימה</th></tr>';
- doneAgents.forEach(function(item){
+    window._briefingStatusDoneAgents = doneAgents;
+    doneAgents.forEach(function(item, idx){
       var dt = item.comp.signed_at ? new Date(item.comp.signed_at).toLocaleString('he-IL') : '-';
-      var answersData = encodeURIComponent(JSON.stringify(item.comp.answers||[]));
-      html += '<tr style="border-bottom:1px solid var(--line);cursor:pointer" onclick=\'showAgentAnswers("'+item.agent.name.replace(/"/g,'')+'", '+item.comp.score+', "'+answersData+'")\'>' +
+      html += '<tr style="border-bottom:1px solid var(--line);cursor:pointer" onclick="showAgentAnswersByIndex('+idx+')">' +
         '<td style="padding:7px 12px;color:var(--ice)">'+item.agent.name+'</td>' +
         '<td style="padding:7px 12px;text-align:center;font-weight:700;color:var(--gold);text-decoration:underline">'+item.comp.score+'%</td>' +
         '<td style="padding:7px 12px;text-align:center;color:var(--ice3);font-size:11px">'+dt+'</td></tr>';
@@ -10946,6 +10946,17 @@ function closeAgentBriefingDocScreen(){
 /* ══ END BRIEFINGS MODULE ══ */
 
 // ── Quiz Review Modal ─────────────────────────────────
+// Registry so onclick handlers pass a safe integer index instead of
+// interpolating names/JSON (with quotes) directly into an HTML attribute.
+window._qrStore = window._qrStore || [];
+function registerQuizReview(name, score, answers, questions){
+  return window._qrStore.push({name:name, score:score, answers:answers||[], questions:questions||[]}) - 1;
+}
+function showQuizReviewAt(i){
+  var d = window._qrStore[i];
+  if(!d) return;
+  showQuizReview(d.name, d.score, d.answers, d.questions);
+}
 function showQuizReview(agentName, score, answers, questions){
   var existing = document.getElementById('quiz-review-modal-custom');
   if(existing) existing.remove();
