@@ -9374,10 +9374,13 @@ function renderBriefingsHistoryPanel(){
 
       <!-- Action buttons row -->
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="showBriefingStatus('${b.id}')" style="background:rgba(26,158,110,0.1);border:1px solid rgba(26,158,110,0.3);color:var(--ok);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+        <button onclick="viewBriefingFromMemory('${b.id}')" style="background:rgba(23,169,156,0.1);border:1px solid rgba(23,169,156,0.3);color:var(--accent2);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+          📖 צפייה
+        </button>
+        <button onclick="showBriefingStatusFromMemory('${b.id}')" style="background:rgba(26,158,110,0.1);border:1px solid rgba(26,158,110,0.3);color:var(--ok);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
           ✓ ${completedAgents.length} השלימו
         </button>
-        <button onclick="showBriefingStatus('${b.id}')" style="background:rgba(240,170,50,0.1);border:1px solid rgba(240,170,50,0.3);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
+        <button onclick="showBriefingStatusFromMemory('${b.id}')" style="background:rgba(240,170,50,0.1);border:1px solid rgba(240,170,50,0.3);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
           ⏳ ${pendingAgents.length} ממתינים
         </button>
         <button onclick="requestRefresh('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer">
@@ -9386,6 +9389,100 @@ function renderBriefingsHistoryPanel(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── View / Status for the "מבחנים" panel (S.briefings — already in memory) ──
+function viewBriefingFromMemory(briefingId){
+  var b = S.briefings.find(function(x){ return String(x.id)===String(briefingId); });
+  if(!b) return;
+  var modal = document.getElementById('briefing-status-modal');
+  modal.style.display = 'flex';
+
+  var deptChips = (!b.targetDepts || !b.targetDepts.length)
+    ? '<span class="chip chip-gold">כל המחלקות</span>'
+    : b.targetDepts.map(function(d){ return '<span class="chip chip-gold">'+d+'</span>'; }).join(' ');
+
+  var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+deptChips+'</div>';
+  if(b.content){
+    html += '<div style="font-size:13px;color:var(--ice2);white-space:pre-wrap;line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+esc(b.content)+'</div>';
+  }
+  var questions = b.questions||[];
+  if(questions.length){
+    html += '<div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:\'DM Mono\',monospace">שאלות המבחן ('+questions.length+')</div>';
+    html += questions.map(function(q,i){
+      var opts=(q.options||[]).map(function(opt,oi){
+        var isCorrect = oi===q.correct;
+        return '<div style="padding:8px 12px;margin-bottom:5px;border-radius:8px;font-size:13px;'+
+          (isCorrect?'background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);font-weight:700':'background:var(--ink3);color:var(--ice2);border:1px solid var(--line2)')+
+          '">'+(isCorrect?'✓ ':'')+opt+'</div>';
+      }).join('');
+      return '<div class="card" style="padding:14px 16px;margin-bottom:10px">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:8px">שאלה '+(i+1)+': '+q.q+'</div>'+
+        opts+
+      '</div>';
+    }).join('');
+  } else {
+    html += '<div style="text-align:center;padding:1.5rem;color:var(--ice3);font-size:13px">אין שאלות מבחן לתדריך זה</div>';
+  }
+  document.getElementById('bsm-title').textContent = '📖 ' + b.title;
+  document.getElementById('bsm-content').innerHTML = html;
+}
+
+var _lastBriefingHistoryId = null;
+function showBriefingStatusFromMemory(briefingId){
+  var b = S.briefings.find(function(x){ return String(x.id)===String(briefingId); });
+  if(!b) return;
+  _lastBriefingHistoryId = briefingId;
+  var modal = document.getElementById('briefing-status-modal');
+  modal.style.display = 'flex';
+  document.getElementById('bsm-title').textContent = '📄 ' + b.title;
+
+  var completions = b.completions || {};
+  var targetDepts = (b.targetDepts && b.targetDepts.length) ? b.targetDepts : [];
+  var expectedAgents = targetDepts.length
+    ? S.agents.filter(function(a){ return a.active!==false && (a.depts||[]).some(function(d){ return targetDepts.includes(d); }); })
+    : S.agents.filter(function(a){ return a.active!==false; });
+
+  var doneAgents=[], pendingAgents=[];
+  expectedAgents.forEach(function(a){
+    var comp = completions[String(a.id)];
+    if(comp) doneAgents.push({agent:a, comp:comp}); else pendingAgents.push(a);
+  });
+  window._briefingHistoryDoneAgents = doneAgents;
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:24px;font-weight:800;color:var(--ok)">'+doneAgents.length+'</div><div style="font-size:11px;color:var(--ice3)">השלימו</div></div>' +
+    '<div class="card" style="text-align:center;padding:12px"><div style="font-size:24px;font-weight:800;color:var(--warn)">'+pendingAgents.length+'</div><div style="font-size:11px;color:var(--ice3)">ממתינים</div></div>' +
+  '</div>';
+
+  if(doneAgents.length){
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ השלימו:</div>';
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך</th></tr>';
+    doneAgents.forEach(function(item,idx){
+      html += '<tr style="border-bottom:1px solid var(--line);cursor:pointer" onclick="showBriefingHistoryAnswers('+idx+')">' +
+        '<td style="padding:7px 12px;color:var(--ice)">'+item.agent.name+'</td>' +
+        '<td style="padding:7px 12px;text-align:center;font-weight:700;color:var(--gold);text-decoration:underline">'+(item.comp.score!=null?item.comp.score+'%':'-')+'</td>' +
+        '<td style="padding:7px 12px;text-align:center;color:var(--ice3);font-size:11px">'+(item.comp.ts||'-')+'</td></tr>';
+    });
+    html += '</table></div>';
+  }
+  if(pendingAgents.length){
+    html += '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">⏳ ממתינים:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    pendingAgents.forEach(function(a){
+      html += '<span style="background:rgba(184,113,15,0.1);border:1px solid rgba(184,113,15,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('bsm-content').innerHTML = html;
+}
+function showBriefingHistoryAnswers(idx){
+  var item = (window._briefingHistoryDoneAgents||[])[idx];
+  if(!item) return;
+  document.getElementById('bsm-title').textContent = '📝 תשובות נציג';
+  document.getElementById('bsm-content').innerHTML =
+    '<button onclick="showBriefingStatusFromMemory(_lastBriefingHistoryId)" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>' +
+    renderAnswersReviewHtml(item.agent.name, item.comp.score, item.comp.answers||[]);
 }
 
 /* ══ EDIT EXISTING BRIEFING ══════════════════════════════ */
@@ -10197,8 +10294,8 @@ function renderControlsTable(){
             const debriefed = agentControls.some(c=>c.debriefed);
             const debriefRecord = agentControls.find(c=>c.debriefed);
             const debriefBadge = debriefed
-              ? `<span style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">✅ מושב</span>`
-              : `<span style="background:var(--warn-bg);color:var(--warn);border:1px solid rgba(184,113,15,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">❌ טרם מושב</span>`;
+              ? `<span onclick="openDebriefModal('${a.id}','${m}')" style="cursor:pointer;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לצפייה בפרטי המשוב">✅ מושב</span>`
+              : `<span onclick="openDebriefModal('${a.id}','${m}')" style="cursor:pointer;background:var(--warn-bg);color:var(--warn);border:1px solid rgba(184,113,15,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לקביעת משוב">❌ טרם מושב</span>`;
             return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td><td style="padding:8px 12px;text-align:center">${debriefBadge}</td>`;
           }).join('')}
         </tr>`;
@@ -10634,6 +10731,7 @@ async function loadBriefingsTab(){
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
+          '<button onclick="viewBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(23,169,156,0.1);border:1px solid rgba(23,169,156,0.3);color:var(--accent2);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">📖 צפייה</button>' +
           '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="background:rgba(116,105,166,0.12);border:1px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">👁 סטטוס</button>' +
           '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(196,59,54,0.08);border:1px solid rgba(196,59,54,0.2);color:#C43B36;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px">🗑</button>' +
         '</div>' +
@@ -10641,6 +10739,49 @@ async function loadBriefingsTab(){
     '</div>';
   });
   el.innerHTML = html;
+}
+
+// ── View Briefing (content + quiz) ────────────────────
+async function viewBriefingDoc(el){
+  var briefingId = el && el.dataset ? el.dataset.id : el;
+  var modal = document.getElementById('briefing-status-modal');
+  modal.style.display = 'flex';
+  document.getElementById('bsm-title').textContent = '📖 צפייה בתדריך';
+  document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+
+  var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
+  if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
+
+  var questions = [];
+  try{ questions = typeof b.questions === 'string' ? JSON.parse(b.questions) : (b.questions||[]); }catch(e){}
+
+  var deptChips = b.dept === 'all'
+    ? '<span class="chip chip-gold">כל המחלקות</span>'
+    : b.dept.split(',').map(function(d){ return '<span class="chip chip-gold">'+d.trim()+'</span>'; }).join(' ');
+
+  var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+deptChips+'</div>'+
+    '<div style="font-size:13px;color:var(--ice2);white-space:pre-wrap;line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+esc(b.content||'')+'</div>';
+
+  if(questions.length){
+    html += '<div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:\'DM Mono\',monospace">שאלות המבחן ('+questions.length+')</div>';
+    html += questions.map(function(q,i){
+      var opts=(q.options||[]).map(function(opt,oi){
+        var isCorrect = oi===q.correct;
+        return '<div style="padding:8px 12px;margin-bottom:5px;border-radius:8px;font-size:13px;'+
+          (isCorrect?'background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);font-weight:700':'background:var(--ink3);color:var(--ice2);border:1px solid var(--line2)')+
+          '">'+(isCorrect?'✓ ':'')+opt+'</div>';
+      }).join('');
+      return '<div class="card" style="padding:14px 16px;margin-bottom:10px">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:8px">שאלה '+(i+1)+': '+q.q+'</div>'+
+        opts+
+      '</div>';
+    }).join('');
+  } else {
+    html += '<div style="text-align:center;padding:1.5rem;color:var(--ice3);font-size:13px">אין שאלות מבחן לתדריך זה</div>';
+  }
+
+  document.getElementById('bsm-title').textContent = '📖 ' + b.title;
+  document.getElementById('bsm-content').innerHTML = html;
 }
 
 // ── Briefing Status Modal ─────────────────────────────
