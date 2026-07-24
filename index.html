@@ -1931,17 +1931,17 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- PWA INSTALL BANNER -->
       <div id="pwa-install-banner" style="display:none;margin-bottom:14px">
-        <div style="background:linear-gradient(135deg,#1A3A5C,#1E4A7A);border:1.5px solid rgba(91,160,230,0.35);border-radius:18px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="background:linear-gradient(135deg,#241F3D,#3D3465);border:1.5px solid rgba(116,105,166,0.4);border-radius:18px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
           <div style="display:flex;align-items:center;gap:12px">
             <span style="font-size:28px">📱</span>
             <div>
-              <div style="font-size:13px;font-weight:700;color:#F0F6FF">הוסף לדף הבית</div>
-              <div style="font-size:11px;color:rgba(240,246,255,0.6)">גישה מהירה כאפליקציה</div>
+              <div style="font-size:13px;font-weight:700;color:#F5F2FB">הוסף לדף הבית</div>
+              <div style="font-size:11px;color:rgba(245,242,251,0.6)">גישה מהירה כאפליקציה</div>
             </div>
           </div>
           <div style="display:flex;gap:8px">
-            <button onclick="pwaInstall()" style="background:#fff;color:#1A3A5C;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">התקן</button>
-            <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:transparent;color:rgba(240,246,255,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
+            <button onclick="pwaInstall()" style="background:#fff;color:#241F3D;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">התקן</button>
+            <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:transparent;color:rgba(245,242,251,0.5);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
           </div>
         </div>
       </div>
@@ -2139,11 +2139,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div id="celebration-screen" style="text-align:center;padding:1rem 0">
             <!-- TOP REVERSE BANNER — shown only if reverse_mode -->
             <div id="reverse-top-banner" style="display:none;margin-bottom:20px;cursor:pointer" onclick="openReverseModal()">
-              <div style="background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(116,105,166,0.25),0 0 0 4px rgba(116,105,166,0.06);animation:glow-soft 2s ease-in-out infinite">
+              <div style="background:linear-gradient(135deg,#241F3D,#3D3465);border:1.5px solid rgba(116,105,166,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(116,105,166,0.25),0 0 0 4px rgba(116,105,166,0.06);animation:glow-soft 2s ease-in-out infinite">
                 <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.07;pointer-events:none">🎤</div>
-                <div style="font-size:11px;font-weight:700;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
-                <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
-                <div style="font-size:13px;color:rgba(247,243,236,0.6);margin-bottom:14px">הסבר במילים שלך וקבל ציון נוסף</div>
+                <div style="font-size:11px;font-weight:700;color:rgba(144,133,200,0.9);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
+                <div style="font-size:18px;font-weight:800;color:#F5F2FB;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
+                <div style="font-size:13px;color:rgba(245,242,251,0.6);margin-bottom:14px">הסבר במילים שלך וקבל ציון נוסף</div>
                 <div style="background:linear-gradient(135deg,var(--gold),#9085C8);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2A2340">
                   🎤 התחל חלק ב׳ עכשיו ◂
                 </div>
@@ -5803,7 +5803,7 @@ function renderAgentBriefings(){
     _welcomeStats.innerHTML=
       statItem(_done.length,'הושלמו','var(--gold)')+
       statItem(_avg!==null?_avg+'%':'—','ממוצע',_avg!==null?(_avg>=80?'var(--ok)':_avg>=60?'var(--warn)':'var(--danger)'):'var(--ice3)')+
-      statItem('#'+_rank,'דירוג','#8A68C8');
+      statItem('#'+_rank,'דירוג','var(--gold2)');
   }
   console.log('=== AGENT BRIEFINGS DEBUG ===');
   console.log('Agent:', S.agent.name, 'id:', S.agent.id);
@@ -5857,11 +5857,11 @@ function renderAgentBriefings(){
     });
     if(featured){
       featuredEl.style.display='block';
-      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(116,105,166,0.2)">
+      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#241F3D,#3D3465);border:1.5px solid rgba(116,105,166,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(116,105,166,0.2)">
         <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.06;pointer-events:none">⭐</div>
-        <div style="font-size:11px;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⭐ נוהל השבוע</div>
-        <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">${featured.title}</div>
-        <div style="font-size:13px;color:rgba(247,243,236,0.55)">${deadlineChip(featured.deadline)||'לחץ להתחלה →'}</div>
+        <div style="font-size:11px;color:rgba(144,133,200,0.9);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⭐ נוהל השבוע</div>
+        <div style="font-size:18px;font-weight:800;color:#F5F2FB;margin-bottom:4px">${featured.title}</div>
+        <div style="font-size:13px;color:rgba(245,242,251,0.55)">${deadlineChip(featured.deadline)||'לחץ להתחלה →'}</div>
       </div>`;
     } else {
       featuredEl.style.display='none';
@@ -5891,11 +5891,11 @@ function renderAgentBriefings(){
     if(refreshDue.length>0){
       refreshEl.style.display='block';
       const firstId=refreshDue[0].id;
-      refreshEl.innerHTML=`<div style="background:linear-gradient(135deg,#1A2A3A,#1E3550);border:1.5px solid rgba(91,160,230,0.35);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(30,70,140,0.2);cursor:pointer" onclick="openRefreshBriefing(${firstId})">
+      refreshEl.innerHTML=`<div style="background:linear-gradient(135deg,#0B3B37,#12695F);border:1.5px solid rgba(23,169,156,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(23,169,156,0.22);cursor:pointer" onclick="openRefreshBriefing(${firstId})">
         <div style="position:absolute;top:-10px;left:-10px;font-size:60px;opacity:0.08;pointer-events:none">🔄</div>
-        <div style="font-size:11px;color:rgba(120,180,255,0.7);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">🔄 זמן לרענון</div>
-        <div style="font-size:17px;font-weight:800;color:#F0F6FF;margin-bottom:4px">${refreshDue.length} תדריך${refreshDue.length>1?'ים':''} לרענון</div>
-        <div style="font-size:13px;color:rgba(240,246,255,0.55)">לא עברת על "${refreshDue[0].title}" כבר 30 יום</div>
+        <div style="font-size:11px;color:rgba(94,224,204,0.85);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">🔄 זמן לרענון</div>
+        <div style="font-size:17px;font-weight:800;color:#F0FFFC;margin-bottom:4px">${refreshDue.length} תדריך${refreshDue.length>1?'ים':''} לרענון</div>
+        <div style="font-size:13px;color:rgba(240,255,252,0.55)">לא עברת על "${refreshDue[0].title}" כבר 30 יום</div>
       </div>`;
     } else {
       refreshEl.style.display='none';
@@ -5921,7 +5921,7 @@ function renderAgentBriefings(){
       const firstId=pending[0].id;
       heroEl.style.display='block';
       heroEl.innerHTML=`
-        <div style="background:linear-gradient(135deg,#0F4C2A 0%,#1A7A45 100%);border-radius:20px;padding:22px 22px 18px;position:relative;overflow:hidden;box-shadow:0 8px 28px rgba(26,122,69,0.25)">
+        <div style="background:linear-gradient(135deg,#0B4A3C 0%,#0E9C7C 100%);border-radius:20px;padding:22px 22px 18px;position:relative;overflow:hidden;box-shadow:0 8px 28px rgba(14,156,124,0.28)">
           <div style="position:absolute;top:-20px;left:-20px;width:120px;height:120px;background:rgba(255,255,255,0.05);border-radius:50%"></div>
           <div style="position:absolute;bottom:-30px;right:20px;width:100px;height:100px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
           <div style="position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
@@ -5929,7 +5929,7 @@ function renderAgentBriefings(){
               <div style="font-size:48px;font-weight:800;color:#FFFFFF;line-height:1;font-family:'Playfair Display',serif">${pending.length}</div>
               <div style="font-size:14px;color:rgba(255,255,255,0.75);margin-top:4px;font-weight:500">תדריכים ממתינים לביצוע</div>
             </div>
-            <button onclick="openBriefing(${firstId})" style="background:#FFFFFF;border:none;border-radius:14px;padding:14px 22px;font-size:14px;font-weight:700;color:#0F4C2A;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.2)'">
+            <button onclick="openBriefing(${firstId})" style="background:#FFFFFF;border:none;border-radius:14px;padding:14px 22px;font-size:14px;font-weight:700;color:#0B4A3C;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.2)'">
               <span style="font-size:18px">▶</span> התחל תדריך כעת
             </button>
           </div>
@@ -7267,7 +7267,7 @@ async function renderLivePanel(){
 
   // Recent section
   if(recent.length){
-    html += '<div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:0.08em;padding:8px 14px;background:rgba(245,158,11,0.08);border-radius:8px;margin-bottom:8px">🟡 היום ('+recent.length+')</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:0.08em;padding:8px 14px;background:rgba(184,113,15,0.08);border-radius:8px;margin-bottom:8px">🟡 היום ('+recent.length+')</div>';
     html += '<div class="card" style="padding:0;margin-bottom:12px;overflow:hidden">';
     html += recent.map(function(a){ return agentRow(a,'recent'); }).join('');
     html += '</div>';
@@ -8933,7 +8933,7 @@ function updateAgentSidebar(){
   if(bdNotif){
     if(bdPending>0){
       bdNotif.style.display='block';
-      bdNotif.innerHTML='<div style="background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">'+
+      bdNotif.innerHTML='<div style="background:rgba(184,113,15,0.1);border:1.5px solid rgba(184,113,15,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">'+
         '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+bdPending+' תדריכים לחתימה</div>'+
         '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>'+
         '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>'+
@@ -8955,7 +8955,7 @@ function renderAgentBriefingsPanel(){
     return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
   });
   if(!pending.length){
-    el.innerHTML='<div style="text-align:center;padding:3rem 1rem;background:linear-gradient(135deg,#f0fff8,#e8fdf2);border-radius:20px;border:1.5px solid rgba(26,158,110,0.2)"><div style="font-size:48px;margin-bottom:14px">🎉</div><div style="font-size:20px;font-weight:800;color:var(--ok);margin-bottom:6px">כל הכבוד!</div><div style="font-size:15px;color:var(--ice3)">אין תדריכים ממתינים כרגע</div></div>';
+    el.innerHTML='<div style="text-align:center;padding:3rem 1rem;background:var(--ok-bg);border-radius:20px;border:1.5px solid var(--ok-line)"><div style="font-size:48px;margin-bottom:14px">🎉</div><div style="font-size:20px;font-weight:800;color:var(--ok);margin-bottom:6px">כל הכבוד!</div><div style="font-size:15px;color:var(--ice3)">אין תדריכים ממתינים כרגע</div></div>';
     return;
   }
   el.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--ice3);margin-bottom:14px">'+pending.length+' תדריכים ממתינים</div>'+
@@ -8963,10 +8963,10 @@ function renderAgentBriefingsPanel(){
       var dl=b.deadline?new Date(b.deadline):null;
       var daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
       var urgent=daysLeft!==null&&daysLeft<=2;
-      return '<div style="background:'+(urgent?'linear-gradient(135deg,#fff8f0,#fff3e6)':'linear-gradient(135deg,#0F4C2A,#1A7A45)')+';border-radius:20px;padding:22px;margin-bottom:12px">'+
+      return '<div style="background:'+(urgent?'linear-gradient(135deg,#FBEAE9,#F8DCDA)':'linear-gradient(135deg,#0B4A3C,#0E9C7C)')+';border-radius:20px;padding:22px;margin-bottom:12px">'+
         '<div style="color:'+(urgent?'var(--ice)':'#fff')+';font-size:17px;font-weight:800;margin-bottom:8px;text-align:right">'+b.title+'</div>'+
         (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'rgba(255,255,255,0.8)')+';margin-bottom:12px;text-align:right">⏰ '+daysLeft+' ימים לסיום</div>':'')+
-        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#2A2340':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
+        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#fff':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
         '</div>';
     }).join('');
 }
@@ -10626,7 +10626,7 @@ async function loadBriefingsTab(){
           '<div style="font-size:12px;color:var(--ice3)">'+b.dept+' · '+pubDate+' · '+b.manager_email+'</div>' +
           '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
             '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם">✅ '+doneCount+' חתמו</span>' +
-            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(245,158,11,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
+            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(184,113,15,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
             '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
           '</div>' +
         '</div>' +
@@ -10693,7 +10693,7 @@ async function showBriefingStatus(el){
     html += '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">⏳ ממתינים:</div>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
     pendingAgents.forEach(function(a){
-      html += '<span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
+      html += '<span style="background:rgba(184,113,15,0.1);border:1px solid rgba(184,113,15,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
     });
     html += '</div>';
   }
@@ -10797,7 +10797,7 @@ async function loadAgentBriefingDocs(){
   if(bdNotif){
     if(pending.length){
       bdNotif.style.display = 'block';
-      bdNotif.innerHTML = '<div style="background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
+      bdNotif.innerHTML = '<div style="background:rgba(184,113,15,0.1);border:1.5px solid rgba(184,113,15,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
         '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+pending.length+' תדריכים לחתימה</div>' +
         '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>' +
         '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>' +
@@ -10823,7 +10823,7 @@ function renderAgentBriefingDocsPanel(){
   var html = '';
 
   if(pending.length){
-    html += '<div style="background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.25);border-radius:12px;padding:12px 16px;margin-bottom:16px">' +
+    html += '<div style="background:rgba(184,113,15,0.08);border:1.5px solid rgba(184,113,15,0.25);border-radius:12px;padding:12px 16px;margin-bottom:16px">' +
       '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:10px">⏳ תדריכים הממתינים לחתימה שלך ('+pending.length+')</div>';
     pending.forEach(function(d){
       html += '<div style="background:var(--ink3);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">' +
