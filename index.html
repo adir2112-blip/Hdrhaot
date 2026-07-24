@@ -570,22 +570,22 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   /* ── CSS VARIABLES — warm graphite ── */
   :root {
-    --gold: #D9503B; --gold2: #F3E4BC;
+    --gold: #D9503B; --gold2: #F5C9BC;
     --gold-bg: rgba(217,80,59,0.1);
     --gold-line: rgba(217,80,59,0.25);
-    --ok: #3DBF8A; --ok-bg: rgba(61,191,138,0.1); --ok-line: rgba(61,191,138,0.25);
-    --warn: #E09B2A; --warn-bg: rgba(224,155,42,0.1); --warn-line: rgba(224,155,42,0.3);
-    --danger: #D94A5A; --danger-bg: rgba(217,74,90,0.1); --danger-line: rgba(217,74,90,0.3);
-    --ice: #1A1714; --ice2: #6E6B67; --ice3: #8C8880; --ice4: #A8A49C;
-    --line: rgba(0,0,0,0.05); --line2: rgba(0,0,0,0.08); --line3: rgba(0,0,0,0.11);
-    --ink: #E8E4DE; --ink2: #E0DAD2; --ink3: #F2EDE6; --ink4: #F0EAE2;
+    --ok: #129C82; --ok-bg: rgba(18,156,130,0.1); --ok-line: rgba(18,156,130,0.25);
+    --warn: #C98016; --warn-bg: rgba(201,128,22,0.1); --warn-line: rgba(201,128,22,0.3);
+    --danger: #C9433D; --danger-bg: rgba(201,67,61,0.1); --danger-line: rgba(201,67,61,0.3);
+    --ice: #2A2340; --ice2: #55496E; --ice3: #7D7396; --ice4: #ACA4C4;
+    --line: rgba(42,35,64,0.06); --line2: rgba(42,35,64,0.09); --line3: rgba(42,35,64,0.13);
+    --ink: #F5F2FB; --ink2: #EDE6F8; --ink3: #F8F4FC; --ink4: #F5EFFB;
     --r: 18px; --r2: 22px;
   }
 
   /* ── BASE ── */
   body {
     background: #E8E6E3;
-    color: #1A1714;
+    color: #2A2340;
     font-family: 'Outfit', sans-serif;
     font-size: 18px;
   }
@@ -607,7 +607,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .topbar-inner { padding:0 18px; height:56px; }
   .brand-mark {
     width:33px; height:33px; border-radius:10px;
-    background: linear-gradient(135deg,#EFEDEB,#F0EEEC);
+    background: linear-gradient(135deg,#FBF8FE,#FAF7FD);
     border: 1px solid rgba(217,80,59,0.35);
     box-shadow: 0 0 14px rgba(217,80,59,0.15);
     animation: glow-soft 3s ease-in-out infinite;
@@ -615,7 +615,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .brand-name {
     font-family:'Outfit',sans-serif; font-size:18px; font-weight:800;
     color:transparent;
-    background: linear-gradient(135deg,#F3E4BC,#D9503B,#F3E4BC);
+    background: linear-gradient(135deg,#F5C9BC,#D9503B,#F5C9BC);
     background-size:200% auto;
     -webkit-background-clip:text; background-clip:text;
     animation: shimmer 4s linear infinite;
@@ -630,13 +630,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   }
   .sec-title {
     font-family:'Outfit',sans-serif;
-    font-size:34px; font-weight:800; line-height:1.15; color:#1A1714;
+    font-size:34px; font-weight:800; line-height:1.15; color:#2A2340;
   }
   .sec-title em { font-style:normal; color:var(--gold); }
 
   /* ── CARDS ── */
   .card {
-    background: #EFEDEB;
+    background: #FBF8FE;
     border: 1px solid rgba(0,0,0,0.05);
     border-radius: var(--r2); padding:22px 18px; margin-bottom:14px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
@@ -658,7 +658,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   /* ── TRACK ROWS ── */
   .track-row {
-    background: #EFEDEB;
+    background: #FBF8FE;
     border: 1px solid rgba(0,0,0,0.05);
     border-radius:18px; padding:16px 18px;
     box-shadow: 0 3px 12px rgba(0,0,0,0.07);
@@ -667,14 +667,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── INPUTS ── */
   input[type=text], input[type=password], textarea, select {
     font-size:17px; padding:15px 17px; border-radius:14px;
-    background: #DAD6D1; border:1px solid rgba(0,0,0,0.08);
-    color:#1A1714; font-family:'Outfit',sans-serif;
+    background: #E7DFF4; border:1px solid rgba(0,0,0,0.08);
+    color:#2A2340; font-family:'Outfit',sans-serif;
     box-shadow: inset 0 2px 6px rgba(0,0,0,0.07);
   }
   input:focus, textarea:focus {
     border-color: rgba(217,80,59,0.45);
     box-shadow: 0 0 0 3px rgba(217,80,59,0.08), inset 0 2px 6px rgba(0,0,0,0.15);
-    background: #D8D4D2; outline:none;
+    background: #E5DDF3; outline:none;
   }
   .field-label {
     font-family:'Space Mono',monospace;
@@ -685,9 +685,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── BUTTONS ── */
   .btn { padding:17px 24px; font-size:17px; font-weight:700; border-radius:16px; font-family:'Outfit',sans-serif; }
   .btn-gold {
-    background: linear-gradient(135deg,#E8D4AC,#F3E4BC,#E8D4AC);
+    background: linear-gradient(135deg,#EFA890,#F5C9BC,#EFA890);
     background-size:200% auto;
-    color: #1A1714; border-radius:16px; border:none; font-weight:800;
+    color: #2A2340; border-radius:16px; border:none; font-weight:800;
     box-shadow: 0 4px 18px rgba(217,80,59,0.3), 0 2px 6px rgba(0,0,0,0.1);
     animation: shimmer 4s linear infinite;
   }
@@ -695,27 +695,27 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .btn-outline {
     background: rgba(255,255,255,0.35);
     border:1px solid rgba(255,255,255,0.14);
-    color:#1A1714; border-radius:16px;
+    color:#2A2340; border-radius:16px;
   }
   .btn-sm { padding:11px 18px; font-size:15px; border-radius:12px; }
-  .btn-danger-soft { padding:11px 16px; font-size:14px; border-radius:12px; background:rgba(217,74,90,0.1); border:1px solid rgba(217,74,90,0.25); color:var(--danger); }
+  .btn-danger-soft { padding:11px 16px; font-size:14px; border-radius:12px; background:rgba(201,67,61,0.1); border:1px solid rgba(201,67,61,0.25); color:var(--danger); }
 
   /* ── KPI GRID ── */
   .kpi-grid { grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:1.5rem; }
   .kpi {
-    background:#EFEDEB; border:1px solid rgba(0,0,0,0.05);
+    background:#FBF8FE; border:1px solid rgba(0,0,0,0.05);
     border-radius:20px; padding:18px 14px;
     box-shadow:0 3px 14px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95);
     position:relative; overflow:hidden;
   }
-  .kpi-val { font-family:'Outfit',sans-serif; font-size:34px; font-weight:800; color:#1A1714; line-height:1; }
+  .kpi-val { font-family:'Outfit',sans-serif; font-size:34px; font-weight:800; color:#2A2340; line-height:1; }
   .kpi-label { font-family:'Space Mono',monospace; font-size:13px; color:var(--ice3); margin-top:6px; text-transform:uppercase; letter-spacing:0.1em; }
 
   /* ── LOCK SCREEN ── */
   .lock-scene { min-height:calc(100dvh - 160px); }
   .lock-box {
     width:88vw; max-width:360px;
-    background: linear-gradient(145deg,#F0EEEC,#EEECEB);
+    background: linear-gradient(145deg,#FAF7FD,#F5F1FB);
     border:1px solid rgba(217,80,59,0.28);
     border-radius:26px; padding:38px 26px;
     box-shadow: 0 0 0 1px rgba(217,80,59,0.08), 0 20px 50px rgba(0,0,0,0.1), 0 0 60px rgba(217,80,59,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
@@ -726,13 +726,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     background:linear-gradient(90deg,transparent,rgba(217,80,59,0.65),transparent);
   }
   .lock-ico { font-size:58px; margin-bottom:16px; filter:drop-shadow(0 0 16px rgba(217,80,59,0.4)); animation:float 3s ease-in-out infinite; }
-  .lock-title { font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; color:#1A1714; margin-bottom:6px; }
+  .lock-title { font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; color:#2A2340; margin-bottom:6px; }
   .lock-sub { font-family:'Space Mono',monospace; font-size:13px; color:var(--ice3); margin-bottom:24px; letter-spacing:0.06em; }
 
   /* ── AGENT GRID ── */
   .agent-grid { grid-template-columns:repeat(2,1fr); gap:14px; margin-top:16px; }
   .agent-pick {
-    background: #F0EEEC;
+    background: #FAF7FD;
     border:1px solid rgba(0,0,0,0.06);
     border-radius:22px; padding:22px 12px 18px;
     cursor:pointer; text-align:center;
@@ -742,7 +742,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .agent-pick::before { content:''; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 50% 0%,rgba(217,80,59,0.08),transparent 60%); opacity:0; transition:opacity 0.2s; }
   .agent-pick:active { transform:scale(0.95); border-color:rgba(217,80,59,0.35); box-shadow:0 0 16px rgba(217,80,59,0.15); }
   .agent-pick:active::before { opacity:1; }
-  .agent-pick-name { font-size:14px; font-weight:700; color:#1A1714; margin-top:12px; line-height:1.3; font-family:'Outfit',sans-serif; }
+  .agent-pick-name { font-size:14px; font-weight:700; color:#2A2340; margin-top:12px; line-height:1.3; font-family:'Outfit',sans-serif; }
   .av { width:60px!important; height:60px!important; font-size:20px!important; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
 
   /* ── GROUP FILTER PILLS ── */
@@ -753,36 +753,36 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     letter-spacing:0.02em;
   }
   .dept-filter-btn.active {
-    background:linear-gradient(135deg,#E8D4AC,#F3E4BC);
-    border-color:transparent; color:#1A1714;
+    background:linear-gradient(135deg,#EFA890,#F5C9BC);
+    border-color:transparent; color:#2A2340;
     box-shadow:0 0 16px rgba(217,80,59,0.3), 0 3px 10px rgba(0,0,0,0.1);
     font-weight:800;
   }
   .dept-filter-bar { gap:8px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; margin-bottom:16px; }
   .dept-filter-bar::-webkit-scrollbar { display:none; }
-  #agent-search { background:#D5D1CF!important; border:1px solid rgba(0,0,0,0.1)!important; color:#1A1714!important; }
+  #agent-search { background:#E9E2F5!important; border:1px solid rgba(0,0,0,0.1)!important; color:#2A2340!important; }
 
   /* ── QUIZ ── */
   .opt {
     padding:18px 16px; font-size:17px; font-weight:500; font-family:'Outfit',sans-serif;
     border-radius:16px; margin-bottom:12px;
-    background:#F0EEEC; border:1px solid rgba(0,0,0,0.06); color:#1A1714;
+    background:#FAF7FD; border:1px solid rgba(0,0,0,0.06); color:#2A2340;
     transition:all 0.15s;
   }
   .opt:active { transform:scale(0.98); background:rgba(217,80,59,0.08); border-color:rgba(217,80,59,0.3); }
-  .opt.reveal-ok { background:rgba(61,191,138,0.1); border-color:rgba(61,191,138,0.35); color:var(--ok); }
-  .opt.reveal-wrong { background:rgba(217,74,90,0.1); border-color:rgba(217,74,90,0.35); color:var(--danger); }
+  .opt.reveal-ok { background:rgba(18,156,130,0.1); border-color:rgba(18,156,130,0.35); color:var(--ok); }
+  .opt.reveal-wrong { background:rgba(201,67,61,0.1); border-color:rgba(201,67,61,0.35); color:var(--danger); }
   .opt-key { width:32px;height:32px;font-size:12px;border-radius:9px;background:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ice3); }
-  .opt.reveal-ok .opt-key { background:rgba(61,191,138,0.15);border-color:var(--ok);color:var(--ok); }
-  .opt.reveal-wrong .opt-key { background:rgba(217,74,90,0.15);border-color:var(--danger);color:var(--danger); }
-  .q-text { font-size:17px; font-weight:700; line-height:1.6; color:#1A1714; margin-bottom:18px; font-family:'Outfit',sans-serif; }
-  .q-card { background:#EFEDEB; border:1px solid rgba(0,0,0,0.06); border-radius:22px; padding:22px 18px; box-shadow:0 6px 24px rgba(0,0,0,0.08); }
+  .opt.reveal-ok .opt-key { background:rgba(18,156,130,0.15);border-color:var(--ok);color:var(--ok); }
+  .opt.reveal-wrong .opt-key { background:rgba(201,67,61,0.15);border-color:var(--danger);color:var(--danger); }
+  .q-text { font-size:17px; font-weight:700; line-height:1.6; color:#2A2340; margin-bottom:18px; font-family:'Outfit',sans-serif; }
+  .q-card { background:#FBF8FE; border:1px solid rgba(0,0,0,0.06); border-radius:22px; padding:22px 18px; box-shadow:0 6px 24px rgba(0,0,0,0.08); }
   .q-card::before { display:none; }
   .hint-box { background:rgba(217,80,59,0.07)!important; border-right:3px solid var(--gold)!important; color:var(--ice2)!important; border-radius:10px; padding:10px 14px; margin-top:8px; }
 
   /* ── SCORE ── */
   .score-num { font-family:'Outfit',sans-serif; font-size:92px; font-weight:900; line-height:1; }
-  .score-num.s-great { color:var(--ok); filter:drop-shadow(0 0 20px rgba(61,191,138,0.4)); }
+  .score-num.s-great { color:var(--ok); filter:drop-shadow(0 0 20px rgba(18,156,130,0.4)); }
   .score-num.s-mid { color:var(--warn); }
   .score-num.s-low { color:var(--danger); }
 
@@ -793,7 +793,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   /* ── BRIEFING ROWS ── */
   .brief-row {
-    background:#F0EEEC; border:1px solid rgba(0,0,0,0.06);
+    background:#FAF7FD; border:1px solid rgba(0,0,0,0.06);
     border-radius:20px; padding:18px 16px; margin-bottom:12px;
     box-shadow:0 3px 14px rgba(0,0,0,0.07);
   }
@@ -802,41 +802,41 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   /* ── WELCOME BANNER ── */
   #agent-welcome-banner {
-    background:linear-gradient(135deg,#ECEAE8 0%,#EFEDEB 50%,#ECEAE8 100%)!important;
+    background:linear-gradient(135deg,#F7F3FC 0%,#FBF8FE 50%,#F7F3FC 100%)!important;
     border:1px solid rgba(217,80,59,0.22)!important;
     box-shadow:0 0 30px rgba(217,80,59,0.06), 0 6px 24px rgba(0,0,0,0.08)!important;
   }
-  #logged-agent-name { color:#1A1714!important; }
+  #logged-agent-name { color:#2A2340!important; }
   #agent-welcome-stats > div { background:rgba(255,255,255,0.35)!important; border:1px solid rgba(0,0,0,0.06)!important; }
 
   /* ── PENDING HERO ── */
   #agent-pending-hero > div { box-shadow:0 0 30px rgba(26,110,65,0.25), 0 6px 24px rgba(0,0,0,0.08)!important; }
 
   /* ── NO BRIEFINGS ── */
-  #no-briefings .card { background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important; border-color:rgba(217,80,59,0.18)!important; }
+  #no-briefings .card { background:linear-gradient(145deg,#FAF7FD,#F5F1FB)!important; border-color:rgba(217,80,59,0.18)!important; }
 
   /* ── PIN MODAL ── */
   #pin-modal > div {
-    background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
+    background:linear-gradient(145deg,#FAF7FD,#F5F1FB)!important;
     border:1px solid rgba(217,80,59,0.25)!important;
     box-shadow:0 0 50px rgba(217,80,59,0.08), 0 20px 50px rgba(0,0,0,0.1)!important;
   }
   .pin-key {
-    background:#D5D1CF!important; border:1px solid rgba(0,0,0,0.1)!important;
-    color:#1A1714!important; font-size:24px; padding:17px; border-radius:16px;
+    background:#E9E2F5!important; border:1px solid rgba(0,0,0,0.1)!important;
+    color:#2A2340!important; font-size:24px; padding:17px; border-radius:16px;
     box-shadow:0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95);
   }
   .pin-key:active { background:rgba(217,80,59,0.12)!important; border-color:rgba(217,80,59,0.35)!important; transform:scale(0.94); }
 
   /* ── CHIPS ── */
   .chip { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
-  .chip-ok { background:rgba(61,191,138,0.1); color:var(--ok); border-color:rgba(61,191,138,0.22); }
-  .chip-warn { background:rgba(224,155,42,0.1); color:var(--warn); border-color:rgba(224,155,42,0.22); }
+  .chip-ok { background:rgba(18,156,130,0.1); color:var(--ok); border-color:rgba(18,156,130,0.22); }
+  .chip-warn { background:rgba(201,128,22,0.1); color:var(--warn); border-color:rgba(201,128,22,0.22); }
   .dept-chip { background:rgba(217,80,59,0.08); color:var(--gold); border-color:rgba(217,80,59,0.18); font-family:'Space Mono',monospace; font-size:11px; }
 
   /* ── DONE PILLS ── */
-  .done-pill { background:rgba(61,191,138,0.07); border:1px solid rgba(61,191,138,0.15); border-radius:12px; padding:10px 14px; }
-  .done-pill-title { font-size:13px; font-weight:700; color:#1A1714; font-family:'Outfit',sans-serif; }
+  .done-pill { background:rgba(18,156,130,0.07); border:1px solid rgba(18,156,130,0.15); border-radius:12px; padding:10px 14px; }
+  .done-pill-title { font-size:13px; font-weight:700; color:#2A2340; font-family:'Outfit',sans-serif; }
   .done-pill-meta { font-size:13px; color:var(--ok); font-family:'Space Mono',monospace; margin-top:3px; }
 
   /* ── EYEBROW LABELS ── */
@@ -846,14 +846,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   #agent-stats-modal > div,
   #history-modal > div,
   #edit-pin-modal > div {
-    background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
+    background:linear-gradient(145deg,#FAF7FD,#F5F1FB)!important;
     border:1px solid rgba(217,80,59,0.18)!important;
     box-shadow:0 0 50px rgba(0,0,0,0.1)!important;
   }
   .sig-block { background:rgba(255,255,255,0.28)!important; border:1px solid rgba(255,255,255,0.45)!important; border-radius:18px!important; }
 
   /* ── EDIT CARDS ── */
-  .eq-card { background:#EFEDEB; border:1px solid rgba(0,0,0,0.05); border-radius:20px; padding:20px 18px; }
+  .eq-card { background:#FBF8FE; border:1px solid rgba(0,0,0,0.05); border-radius:20px; padding:20px 18px; }
   .eq-card::before { display:none; }
 
   /* ── RANGE SLIDER ── */
@@ -861,7 +861,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   #num-questions-val { font-size:32px; font-family:'Outfit',sans-serif; }
 
   /* ── AGENT FLOW ── */
-  #flow-title { font-family:'Outfit',sans-serif; font-size:25px!important; font-weight:800; color:#1A1714!important; }
+  #flow-title { font-family:'Outfit',sans-serif; font-size:25px!important; font-weight:800; color:#2A2340!important; }
   #flow-content { font-size:18px; line-height:1.9; color:var(--ice2); }
 
   /* ── SUCCESS BAR ── */
@@ -871,7 +871,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .between { gap:10px; }
 
   /* ── FOOTER ── */
-  footer { font-size:11px; color:rgba(255,255,255,0.2); }
+  footer { font-size:11px; color:var(--ice4); }
 
   /* ── AGENT BRIEFINGS LAYOUT ── */
   #agent-briefings { flex-direction:column!important; gap:0!important; }
@@ -914,7 +914,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     max-width:100%!important;
     max-height:92dvh!important;
     overflow-y:auto!important;
-    background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
+    background:linear-gradient(145deg,#FAF7FD,#F5F1FB)!important;
     border:1px solid rgba(217,80,59,0.18)!important;
   }
 
@@ -1871,7 +1871,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;align-self:stretch;min-height:100vh;background:var(--ink2);border-left:1px solid var(--line)">
       <div style="background:#fff;border:1.5px solid rgba(217,80,59,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(217,80,59,0.08)">
         <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(217,80,59,0.1);margin-bottom:10px;text-align:center"></div>
-        <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#1A1714;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
+        <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#2A2340;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
           <span style="font-size:17px">🏠</span><span>ראשי</span>
         </button>
         <button onclick="showAgentPanel('briefings')" id="asb-briefings" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
@@ -2140,7 +2140,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <div style="font-size:11px;font-weight:700;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
                 <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
                 <div style="font-size:13px;color:rgba(247,243,236,0.6);margin-bottom:14px">הסבר במילים שלך וקבל ציון נוסף</div>
-                <div style="background:linear-gradient(135deg,#B8862A,#EA6E56);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#1A1714">
+                <div style="background:linear-gradient(135deg,#B8862A,#EA6E56);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2A2340">
                   🎤 התחל חלק ב׳ עכשיו ◂
                 </div>
               </div>
@@ -4017,7 +4017,7 @@ function previewArticle(id){
     +'img{max-width:100%;border-radius:12px;margin:10px 0;display:block;box-shadow:0 4px 16px rgba(0,0,0,0.12)}'
     +'a{color:#D9503B;font-weight:600;text-decoration:underline}'
     +'strong{color:#1A1814;font-weight:700}'
-    +'hr{border:none;border-top:2px solid #E8E4DE;margin:16px 0}'
+    +'hr{border:none;border-top:2px solid #F5F2FB;margin:16px 0}'
     +'</style></head><body>'
     +'<h1>'+a.title+'</h1>'
     +'<div class="dept">'+(a.dept||'כללי')+'</div>'
@@ -4461,7 +4461,7 @@ function appendKbMessage(boxId,role,text,id){
   const div=document.createElement('div');
   if(id) div.id=id;
   div.style.cssText='display:flex;'+(isUser?'justify-content:flex-end':'justify-content:flex-start')+';';
-  div.innerHTML='<div style="max-width:82%;padding:10px 14px;border-radius:'+(isUser?'18px 4px 18px 18px':'4px 18px 18px 18px')+';background:'+(isUser?'linear-gradient(135deg,#B8862A,#EA6E56)':'#fff')+';border:1px solid '+(isUser?'transparent':'rgba(0,0,0,0.08)')+';font-size:14px;color:'+(isUser?'#1A1714':'var(--ice)')+';line-height:1.7;white-space:pre-wrap;text-align:right;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'+text+'</div>';
+  div.innerHTML='<div style="max-width:82%;padding:10px 14px;border-radius:'+(isUser?'18px 4px 18px 18px':'4px 18px 18px 18px')+';background:'+(isUser?'linear-gradient(135deg,#B8862A,#EA6E56)':'#fff')+';border:1px solid '+(isUser?'transparent':'rgba(0,0,0,0.08)')+';font-size:14px;color:'+(isUser?'#2A2340':'var(--ice)')+';line-height:1.7;white-space:pre-wrap;text-align:right;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'+text+'</div>';
   box.appendChild(div);
   box.scrollTop=box.scrollHeight;
 }
@@ -5634,7 +5634,7 @@ function showSearchDetail(id){
       <div style="display:flex;flex-direction:column;gap:8px">
         ${(q.options||[]).map((opt,oi)=>{
           const isCorrect=oi===q.correct;
-          return`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:${isCorrect?'rgba(61,191,138,0.1)':'rgba(0,0,0,0.03)'};border:1px solid ${isCorrect?'rgba(61,191,138,0.3)':'rgba(0,0,0,0.07)'}">
+          return`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:${isCorrect?'rgba(18,156,130,0.1)':'rgba(0,0,0,0.03)'};border:1px solid ${isCorrect?'rgba(18,156,130,0.3)':'rgba(0,0,0,0.07)'}">
             <span style="width:26px;height:26px;border-radius:7px;background:${isCorrect?'var(--ok)':'rgba(0,0,0,0.06)'};color:${isCorrect?'#fff':'var(--ice3)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${LETTERS[oi]}</span>
             <span style="font-size:14px;color:${isCorrect?'var(--ok)':'var(--ice2)'};font-weight:${isCorrect?700:400}">${opt}</span>
             ${isCorrect?'<span style="margin-right:auto;font-size:11px;color:var(--ok);font-weight:700">✓ נכון</span>':''}
@@ -7656,7 +7656,7 @@ function renderWeakPanel(){
       ${s.wrong} מתוך ${s.total} נציגים טעו — <span style="color:var(--danger);font-weight:700">הצג שמות ▾</span>
     </button>
     <div id="wq-names-${i}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:6px">
-      ${(s.wrongAgents||[]).map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(217,74,90,0.25);color:var(--danger);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')}
+      ${(s.wrongAgents||[]).map(n=>`<span style="background:#FEF0F0;border:1px solid rgba(201,67,61,0.25);color:var(--danger);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">${n}</span>`).join('')}
     </div>
     <div style="margin-top:10px;padding:8px 12px;background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:10px;font-size:13px;color:var(--ok);font-weight:600">
       ✓ תשובה נכונה: ${(s.options||[])[s.correct]||'—'}
@@ -8594,7 +8594,7 @@ function showAgentPanel(key){
     if(!item.btn) return;
     var active=key===item.k;
     item.btn.style.background = active ? 'linear-gradient(135deg,#B8862A,#EA6E56)' : 'none';
-    item.btn.style.color      = active ? '#1A1714' : 'var(--ice2)';
+    item.btn.style.color      = active ? '#2A2340' : 'var(--ice2)';
     item.btn.style.fontWeight = active ? '800' : '600';
     item.btn.style.border     = active ? 'none' : '1.5px solid var(--line2)';
   });
@@ -8943,7 +8943,7 @@ function renderAgentBriefingsPanel(){
       return '<div style="background:'+(urgent?'linear-gradient(135deg,#fff8f0,#fff3e6)':'linear-gradient(135deg,#0F4C2A,#1A7A45)')+';border-radius:20px;padding:22px;margin-bottom:12px">'+
         '<div style="color:'+(urgent?'var(--ice)':'#fff')+';font-size:17px;font-weight:800;margin-bottom:8px;text-align:right">'+b.title+'</div>'+
         (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'rgba(255,255,255,0.8)')+';margin-bottom:12px;text-align:right">⏰ '+daysLeft+' ימים לסיום</div>':'')+
-        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#1A1714':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
+        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#2A2340':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
         '</div>';
     }).join('');
 }
@@ -12090,8 +12090,8 @@ function exportWarningFromText(itemId){
   .type-check.active{font-weight:700;color:#D9503B}
   .content-field{margin-bottom:18px}
   .content-label{font-size:12px;font-weight:700;color:#555;margin-bottom:6px}
-  .content-box{border:1px solid #E8E4DE;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
-  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #E8E4DE;color:#555;font-size:13px}
+  .content-box{border:1px solid #F5F2FB;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
+  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #F5F2FB;color:#555;font-size:13px}
   .copies{margin-top:16px;font-size:12px;color:#888}
   @media print{button{display:none}}
 </style></head><body>
@@ -12154,8 +12154,8 @@ function exportWarningPDF(){
   .type-check.active{font-weight:700;color:#D9503B}
   .content-field{margin-bottom:18px}
   .content-label{font-size:12px;font-weight:700;color:#555;margin-bottom:6px}
-  .content-box{border:1px solid #E8E4DE;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
-  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #E8E4DE;color:#555;font-size:13px}
+  .content-box{border:1px solid #F5F2FB;border-radius:8px;padding:12px;min-height:60px;font-size:14px;color:#1A1814;background:#FAFAF7;white-space:pre-wrap}
+  .signature{margin-top:32px;padding-top:20px;border-top:1px solid #F5F2FB;color:#555;font-size:13px}
   .copies{margin-top:16px;font-size:12px;color:#888}
   @media print{button{display:none}body{padding:20px}}
 </style></head><body>
@@ -12633,7 +12633,7 @@ function renderManagersDiscipline(){
     <div style="padding:10px 14px;border-top:1px solid rgba(217,80,59,0.12);background:#fff;flex-shrink:0">
       <div style="display:flex;gap:8px;align-items:flex-end;background:var(--ink3);border:1.5px solid rgba(217,80,59,0.15);border-radius:14px;padding:8px 12px">
         <textarea id="agent-kb-input" placeholder="שאל שאלה..." style="flex:1;background:transparent;border:none;color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;line-height:1.5;resize:none;height:36px;max-height:80px;outline:none;direction:rtl" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendKnowledgeChat('agent');}" oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
-        <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#1A1714;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
+        <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#2A2340;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
       </div>
       <div style="text-align:center;margin-top:6px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">מבוסס על ידע המחלקה שלך בלבד</div>
     </div>
@@ -12799,7 +12799,7 @@ function renderManagersDiscipline(){
     <!-- Textarea -->
     <textarea id="reverse-briefing-text" placeholder="לדוגמה: בתדריך הזה למדתי ש..." style="width:100%;min-height:150px;font-size:15px;background:#fff;border:1.5px solid rgba(217,80,59,0.2);color:var(--ice);border-radius:16px;padding:14px 16px;font-family:'Sora',sans-serif;line-height:1.8;resize:vertical;box-shadow:inset 0 2px 6px rgba(0,0,0,0.04)"></textarea>
     <!-- Analyze button -->
-    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#1A1714;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(217,80,59,0.3)">
+    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#EA6E56);border:none;color:#2A2340;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(217,80,59,0.3)">
       <span style="font-size:18px">✦</span> נתח את ההסבר שלי
     </button>
     <!-- Result -->
@@ -13259,15 +13259,15 @@ function renderManagersDiscipline(){
     <div style="padding:24px">
       <div style="margin-bottom:16px">
         <label style="display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">❓ מה הסיבה לדירוג?</label>
-        <textarea id="rfm-reason" placeholder="לדוגמא: התשובה לא מדויקת, חסר מידע, לא רלוונטי..." style="width:100%;min-height:80px;background:white;border:1.5px solid #E8E4DE;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
+        <textarea id="rfm-reason" placeholder="לדוגמא: התשובה לא מדויקת, חסר מידע, לא רלוונטי..." style="width:100%;min-height:80px;background:white;border:1.5px solid #F5F2FB;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
       </div>
       <div style="margin-bottom:20px">
         <label style="display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">✅ מה התשובה הנכונה לדעתך?</label>
-        <textarea id="rfm-correct" placeholder="רשום את התשובה הנכונה..." style="width:100%;min-height:90px;background:white;border:1.5px solid #E8E4DE;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
+        <textarea id="rfm-correct" placeholder="רשום את התשובה הנכונה..." style="width:100%;min-height:90px;background:white;border:1.5px solid #F5F2FB;border-radius:12px;padding:10px 14px;font-size:14px;font-family:Sora,sans-serif;color:#1A1814;resize:none;box-sizing:border-box"></textarea>
       </div>
       <div style="display:flex;gap:10px">
         <button onclick="submitRatingFeedback()" style="flex:1;background:#D9503B;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;color:#1A1814;cursor:pointer;font-family:Sora,sans-serif">💾 שלח משוב</button>
-        <button onclick="closeRatingFeedback()" style="background:transparent;border:1.5px solid #E8E4DE;border-radius:14px;padding:12px 18px;font-size:13px;color:#888;cursor:pointer;font-family:Sora,sans-serif">דלג</button>
+        <button onclick="closeRatingFeedback()" style="background:transparent;border:1.5px solid #F5F2FB;border-radius:14px;padding:12px 18px;font-size:13px;color:#888;cursor:pointer;font-family:Sora,sans-serif">דלג</button>
       </div>
     </div>
   </div>
