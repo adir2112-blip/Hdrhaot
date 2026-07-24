@@ -1875,7 +1875,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;align-self:stretch;min-height:100vh;background:var(--ink2);border-left:1px solid var(--line)">
       <div style="background:#fff;border:1.5px solid rgba(116,105,166,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(116,105,166,0.08)">
         <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(116,105,166,0.1);margin-bottom:10px;text-align:center"></div>
-        <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#9085C8);border:none;color:#2A2340;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
+        <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),#9085C8);border:none;color:#2A2340;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
           <span style="font-size:17px">🏠</span><span>ראשי</span>
         </button>
         <button onclick="showAgentPanel('briefings')" id="asb-briefings" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right;transition:all 0.15s">
@@ -2144,7 +2144,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <div style="font-size:11px;font-weight:700;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
                 <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
                 <div style="font-size:13px;color:rgba(247,243,236,0.6);margin-bottom:14px">הסבר במילים שלך וקבל ציון נוסף</div>
-                <div style="background:linear-gradient(135deg,#B8862A,#9085C8);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2A2340">
+                <div style="background:linear-gradient(135deg,var(--gold),#9085C8);border-radius:12px;padding:10px 20px;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#2A2340">
                   🎤 התחל חלק ב׳ עכשיו ◂
                 </div>
               </div>
@@ -4465,7 +4465,7 @@ function appendKbMessage(boxId,role,text,id){
   const div=document.createElement('div');
   if(id) div.id=id;
   div.style.cssText='display:flex;'+(isUser?'justify-content:flex-end':'justify-content:flex-start')+';';
-  div.innerHTML='<div style="max-width:82%;padding:10px 14px;border-radius:'+(isUser?'18px 4px 18px 18px':'4px 18px 18px 18px')+';background:'+(isUser?'linear-gradient(135deg,#B8862A,#9085C8)':'#fff')+';border:1px solid '+(isUser?'transparent':'rgba(0,0,0,0.08)')+';font-size:14px;color:'+(isUser?'#2A2340':'var(--ice)')+';line-height:1.7;white-space:pre-wrap;text-align:right;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'+text+'</div>';
+  div.innerHTML='<div style="max-width:82%;padding:10px 14px;border-radius:'+(isUser?'18px 4px 18px 18px':'4px 18px 18px 18px')+';background:'+(isUser?'linear-gradient(135deg,var(--gold),#9085C8)':'#fff')+';border:1px solid '+(isUser?'transparent':'rgba(0,0,0,0.08)')+';font-size:14px;color:'+(isUser?'#2A2340':'var(--ice)')+';line-height:1.7;white-space:pre-wrap;text-align:right;box-shadow:0 1px 4px rgba(0,0,0,0.08)">'+text+'</div>';
   box.appendChild(div);
   box.scrollTop=box.scrollHeight;
 }
@@ -5286,7 +5286,7 @@ todo = מה צריך לעשות`;
       </div>`;
 
     contentEl.innerHTML=
-      section('💡','#B8862A','rgba(116,105,166,0.08)','מה הכי חשוב לדעת',parsed.important)+
+      section('💡','var(--gold)','rgba(116,105,166,0.08)','מה הכי חשוב לדעת',parsed.important)+
       section('🚫','#D94040','rgba(217,64,64,0.07)','מה אסור להגיד',parsed.forbidden)+
       section('✅','#1A9E6E','rgba(26,158,110,0.07)','מה צריך לעשות',parsed.todo);
 
@@ -7002,7 +7002,7 @@ function renderWeakBadge(agentPool){
 
   el.style.cursor='pointer';
   el.onclick=openWeakQuestionsPage;
-  el.innerHTML=`<div style="background:linear-gradient(135deg,#C97050,#DA8A6A);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 18px rgba(201,112,80,0.22);pointer-events:none">
+  el.innerHTML=`<div style="background:linear-gradient(135deg,var(--warn),#D9A64E);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 18px rgba(184,113,15,0.22);pointer-events:none">
     <div style="font-size:36px;flex-shrink:0">⚠️</div>
     <div style="flex:1">
       <div style="font-size:13px;color:rgba(255,255,255,0.75);font-family:'DM Mono',monospace;font-weight:600;letter-spacing:0.05em;margin-bottom:4px">שאלות לתשומת לב</div>
@@ -7067,7 +7067,7 @@ function openWeakQuestionsPage(){
   modal.style.display='block';
   modal.innerHTML=`
     <div style="max-width:600px;margin:0 auto">
-      <div style="background:linear-gradient(135deg,#C97050,#DA8A6A);border-radius:20px;padding:22px 20px;margin-bottom:20px;color:#fff;box-shadow:0 6px 24px rgba(201,112,80,0.2);display:flex;justify-content:space-between;align-items:center">
+      <div style="background:linear-gradient(135deg,var(--warn),#D9A64E);border-radius:20px;padding:22px 20px;margin-bottom:20px;color:#fff;box-shadow:0 6px 24px rgba(184,113,15,0.2);display:flex;justify-content:space-between;align-items:center">
         <div>
           <div style="font-size:20px;font-weight:800;margin-bottom:4px">⚠️ שאלות לתשומת לב מנהל</div>
           <div style="font-size:12px;opacity:0.75;font-family:monospace">${stats.length} שאלות בעייתיות · ${today}</div>
@@ -7076,7 +7076,7 @@ function openWeakQuestionsPage(){
       </div>
       ${stats.length?rows:'<div style="text-align:center;padding:3rem;color:#888;font-size:16px">✓ אין שאלות בעייתיות — כל הנציגים מצטיינים!</div>'}
       <div style="text-align:center;margin-top:1.5rem">
-        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(116,105,166,0.3)">◀ חזור לדשבורד</button>
+        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:var(--gold);color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(116,105,166,0.3)">◀ חזור לדשבורד</button>
       </div>
     </div>`;
 }
@@ -8104,18 +8104,18 @@ function downloadPDF(){
       @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap');
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:'Heebo',sans-serif;color:#1A1814;background:#fff;padding:32px;direction:rtl}
-      .header{border-bottom:3px solid #B8862A;padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
+      .header{border-bottom:3px solid #7469A6;padding-bottom:16px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
       .title{font-size:24px;font-weight:700;color:#1A1814}
       .subtitle{font-size:13px;color:#888;margin-top:4px}
       .meta{font-size:12px;color:#888;text-align:left;font-family:monospace}
-      .section-title{font-size:14px;font-weight:700;color:#B8862A;text-transform:uppercase;letter-spacing:0.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid #EDE9E0}
+      .section-title{font-size:14px;font-weight:700;color:#7469A6;text-transform:uppercase;letter-spacing:0.08em;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid #EDE9E0}
       table{width:100%;border-collapse:collapse;font-size:13px}
       th{background:#F7F3EC;padding:10px 12px;text-align:right;font-weight:700;color:#3D3830;border-bottom:2px solid #EDE9E0}
       td{padding:9px 12px;border-bottom:1px solid #F0EDE6;vertical-align:middle}
       tr:last-child td{border-bottom:none}
       tr:nth-child(even){background:#FAFAF7}
       .footer{margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #EDE9E0;padding-top:12px}
-      .gold{color:#B8862A;font-weight:700}
+      .gold{color:#7469A6;font-weight:700}
       @media print{body{padding:16px}.no-print{display:none}button{display:none}}
     </style>
   </head><body>
@@ -8126,7 +8126,7 @@ function downloadPDF(){
       </div>
       <div class="meta">${today}</div>
     </div>
-    <button onclick="window.print()" class="no-print" style="background:#B8862A;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:600;margin-bottom:20px">🖨️ הדפס / שמור PDF</button>
+    <button onclick="window.print()" class="no-print" style="background:#7469A6;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'Heebo',sans-serif;font-weight:600;margin-bottom:20px">🖨️ הדפס / שמור PDF</button>
     <div class="section-title">סטטוס נציגים</div>
     <table>
       <thead><tr><th>שם נציג</th><th>מחלקה</th><th>הושלמו</th><th>ממתינים</th><th>ממוצע</th></tr></thead>
@@ -8598,7 +8598,7 @@ function showAgentPanel(key){
   ].forEach(function(item){
     if(!item.btn) return;
     var active=key===item.k;
-    item.btn.style.background = active ? 'linear-gradient(135deg,#B8862A,#9085C8)' : 'none';
+    item.btn.style.background = active ? 'linear-gradient(135deg,var(--gold),#9085C8)' : 'none';
     item.btn.style.color      = active ? '#2A2340' : 'var(--ice2)';
     item.btn.style.fontWeight = active ? '800' : '600';
     item.btn.style.border     = active ? 'none' : '1.5px solid var(--line2)';
@@ -12638,7 +12638,7 @@ function renderManagersDiscipline(){
     <div style="padding:10px 14px;border-top:1px solid rgba(116,105,166,0.12);background:#fff;flex-shrink:0">
       <div style="display:flex;gap:8px;align-items:flex-end;background:var(--ink3);border:1.5px solid rgba(116,105,166,0.15);border-radius:14px;padding:8px 12px">
         <textarea id="agent-kb-input" placeholder="שאל שאלה..." style="flex:1;background:transparent;border:none;color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;line-height:1.5;resize:none;height:36px;max-height:80px;outline:none;direction:rtl" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendKnowledgeChat('agent');}" oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
-        <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,#B8862A,#9085C8);border:none;color:#2A2340;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
+        <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,var(--gold),#9085C8);border:none;color:#2A2340;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
       </div>
       <div style="text-align:center;margin-top:6px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace">מבוסס על ידע המחלקה שלך בלבד</div>
     </div>
@@ -12804,7 +12804,7 @@ function renderManagersDiscipline(){
     <!-- Textarea -->
     <textarea id="reverse-briefing-text" placeholder="לדוגמה: בתדריך הזה למדתי ש..." style="width:100%;min-height:150px;font-size:15px;background:#fff;border:1.5px solid rgba(116,105,166,0.2);color:var(--ice);border-radius:16px;padding:14px 16px;font-family:'Sora',sans-serif;line-height:1.8;resize:vertical;box-shadow:inset 0 2px 6px rgba(0,0,0,0.04)"></textarea>
     <!-- Analyze button -->
-    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#9085C8);border:none;color:#2A2340;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(116,105,166,0.3)">
+    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,var(--gold),#9085C8);border:none;color:#2A2340;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(116,105,166,0.3)">
       <span style="font-size:18px">✦</span> נתח את ההסבר שלי
     </button>
     <!-- Result -->
