@@ -10294,14 +10294,53 @@ function renderControlsTable(){
             const debriefed = agentControls.some(c=>c.debriefed);
             const debriefRecord = agentControls.find(c=>c.debriefed);
             const debriefBadge = debriefed
-              ? `<span onclick="openDebriefModal('${a.id}','${m}')" style="cursor:pointer;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לצפייה בפרטי המשוב">✅ מושב</span>`
-              : `<span onclick="openDebriefModal('${a.id}','${m}')" style="cursor:pointer;background:var(--warn-bg);color:var(--warn);border:1px solid rgba(184,113,15,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לקביעת משוב">❌ טרם מושב</span>`;
+              ? `<span onclick="showControlsSummary('${a.id}','${m}')" style="cursor:pointer;background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לסיכום הבקרות">✅ מושב</span>`
+              : `<span onclick="showControlsSummary('${a.id}','${m}')" style="cursor:pointer;background:var(--warn-bg);color:var(--warn);border:1px solid rgba(184,113,15,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700" title="לחץ לסיכום הבקרות">❌ טרם מושב</span>`;
             return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td><td style="padding:8px 12px;text-align:center">${debriefBadge}</td>`;
           }).join('')}
         </tr>`;
       }).join('')}
     </tbody>
   </table>`;
+}
+
+// ── Summary of the (up to 4) controls performed for an agent/month ──
+function showControlsSummary(agentId, month){
+  const agent = S.agents.find(a=>String(a.id)===String(agentId));
+  const agentControls = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month)
+    .sort((a,b)=>(a.control_date||'').localeCompare(b.control_date||'')||(a.control_time||'').localeCompare(b.control_time||''));
+
+  const modal = document.getElementById('briefing-status-modal');
+  modal.style.display = 'flex';
+  document.getElementById('bsm-title').textContent = '📋 סיכום בקרות — '+(agent?agent.name:'')+' · '+formatMonth(month);
+
+  if(!agentControls.length){
+    document.getElementById('bsm-content').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">אין בקרות רשומות לחודש זה</div>';
+    return;
+  }
+
+  const debriefRecord = agentControls.find(c=>c.debriefed);
+  let html = agentControls.map((c,i)=>{
+    const pct = Math.round((c.score||0)*100);
+    const color = pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--danger)';
+    return `<div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--ice)">בקרה ${i+1}${c.topic?' — '+esc(c.topic):''}</div>
+          <div style="font-size:11px;color:var(--ice3);margin-top:2px;font-family:'DM Mono',monospace">📅 ${c.control_date||'—'}${c.control_time?' · 🕐 '+c.control_time:''}${c.customer_name?' · 👤 '+esc(c.customer_name):''}</div>
+        </div>
+        <div style="font-size:20px;font-weight:800;color:${color};flex-shrink:0">${pct}%</div>
+      </div>
+      ${c.retention?`<div style="font-size:12px;color:var(--ok);background:var(--ok-bg);border-radius:8px;padding:8px 10px;margin-bottom:6px;line-height:1.5"><b>✓ שימור:</b> ${esc(c.retention)}</div>`:''}
+      ${c.improvement?`<div style="font-size:12px;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:8px 10px;line-height:1.5"><b>📈 שיפור:</b> ${esc(c.improvement)}</div>`:''}
+    </div>`;
+  }).join('');
+
+  html += debriefRecord
+    ? `<div style="text-align:center;font-size:12px;color:var(--ice3);margin-top:6px">✅ בוצעה ישיבת משוב ב-${debriefRecord.debrief_date||'—'} <button onclick="openDebriefModal('${agentId}','${month}')" style="background:none;border:1px solid var(--line2);color:var(--gold);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;margin-right:8px">✏ ערוך פרטי משוב</button></div>`
+    : `<div style="text-align:center;margin-top:6px"><button onclick="openDebriefModal('${agentId}','${month}')" style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">📝 תעד ישיבת משוב</button></div>`;
+
+  document.getElementById('bsm-content').innerHTML = html;
 }
 
 function exportControlsExcel(){
