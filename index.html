@@ -9089,7 +9089,7 @@ async function richFileUpload(areaId){
 
     // Build link based on file type
     var icon=ext==='pdf'?'📄':ext==='pptx'||ext==='ppt'?'📊':ext==='xlsx'||ext==='xls'?'📋':ext==='docx'||ext==='doc'?'📝':'📎';
-    var html='\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#1A3A5C;color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
+    var html='\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
 
     if(ta){ ta.value=(ta.value||'')+html; ta.placeholder=''; ta.focus(); }
   };
@@ -9208,7 +9208,7 @@ var {data, error} = await _sb.from('briefing_docs').insert(row).select().single(
       if(isImage){
         html = '\n!['+file.name+']('+publicUrl+')\n';
       } else {
-        html = '\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#1A3A5C;color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
+        html = '\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
       }
       const pos = ta.selectionStart || ta.value.length;
       ta.value = ta.value.slice(0,pos) + html + ta.value.slice(pos);
