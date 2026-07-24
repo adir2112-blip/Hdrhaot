@@ -3224,6 +3224,82 @@ function col(id){return AV_COLORS[(id-1)%AV_COLORS.length];}
 function now(){const n=new Date();return`${n.getDate()}/${n.getMonth()+1}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+/* ══ TOAST NOTIFICATIONS — styled replacement for window.alert ══ */
+(function(){
+  var stack;
+  function ensureStack(){
+    if(stack) return stack;
+    stack = document.createElement('div');
+    stack.id = 'toast-stack';
+    stack.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;max-width:92vw';
+    document.body.appendChild(stack);
+    return stack;
+  }
+  function detectType(msg){
+    if(/^\s*(✗|❌)/.test(msg) || /שגיאה/.test(msg)) return 'error';
+    if(/^\s*(✓|✅)/.test(msg)) return 'ok';
+    return 'warn';
+  }
+  var TYPE_STYLE = {
+    ok:    {color:'var(--ok)',     bg:'var(--ok-bg)',     border:'var(--ok-line)',     icon:'✓'},
+    error: {color:'var(--danger)', bg:'var(--danger-bg)', border:'var(--danger-line)', icon:'✗'},
+    warn:  {color:'var(--warn)',   bg:'var(--warn-bg)',   border:'var(--warn-line)',   icon:'!'}
+  };
+  window.showToast = function(message, type){
+    var st = ensureStack();
+    var t = type || detectType(String(message));
+    var sty = TYPE_STYLE[t] || TYPE_STYLE.warn;
+    var hasOwnIcon = /^\s*(✓|✅|✗|❌|⚠️|⏳|📢|📄|🔒|🔑)/.test(String(message));
+    var el = document.createElement('div');
+    el.style.cssText = 'pointer-events:auto;cursor:pointer;direction:rtl;display:flex;align-items:center;gap:10px;'+
+      'background:#fff;border:1px solid '+sty.border+';border-right:4px solid '+sty.color+';border-radius:14px;'+
+      'padding:12px 16px;box-shadow:0 1px 2px rgba(36,31,61,0.06),0 10px 28px rgba(36,31,61,0.14);'+
+      'font-family:Sora,sans-serif;font-size:13.5px;color:var(--ice);max-width:420px;'+
+      'opacity:0;transform:translateY(-10px);transition:opacity 0.2s,transform 0.2s';
+    el.innerHTML = (hasOwnIcon?'':'<span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:'+sty.bg+';color:'+sty.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800">'+sty.icon+'</span>')+
+      '<span style="flex:1;line-height:1.5;white-space:pre-wrap">'+esc(String(message))+'</span>'+
+      '<span style="flex-shrink:0;color:var(--ice3);font-size:16px;line-height:1">✕</span>';
+    st.appendChild(el);
+    requestAnimationFrame(function(){ el.style.opacity='1'; el.style.transform='none'; });
+    var dismissed = false;
+    function dismiss(){
+      if(dismissed) return; dismissed = true;
+      el.style.opacity='0'; el.style.transform='translateY(-10px)';
+      setTimeout(function(){ el.remove(); }, 200);
+    }
+    el.addEventListener('click', dismiss);
+    setTimeout(dismiss, 4200);
+  };
+  window.alert = function(message){ window.showToast(message); };
+})();
+
+/* ══ CONFIRM DIALOG — promise-based replacement for window.confirm ══ */
+function confirmDialog(message, opts){
+  opts = opts || {};
+  return new Promise(function(resolve){
+    var existing = document.getElementById('confirm-dialog-modal');
+    if(existing) existing.remove();
+    var danger = !!opts.danger;
+    var modal = document.createElement('div');
+    modal.id = 'confirm-dialog-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:3100;background:rgba(36,31,61,0.35);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML =
+      '<div style="background:#fff;border-radius:20px;max-width:400px;width:100%;padding:26px 24px;box-shadow:0 20px 60px rgba(36,31,61,0.25);direction:rtl;text-align:center">'+
+        '<div style="font-size:32px;margin-bottom:12px">'+(danger?'⚠️':'❓')+'</div>'+
+        '<div style="font-size:14.5px;color:var(--ice);line-height:1.6;margin-bottom:22px;white-space:pre-wrap">'+esc(String(message))+'</div>'+
+        '<div style="display:flex;gap:10px">'+
+          '<button id="confirm-dialog-yes" style="flex:1;background:'+(danger?'var(--danger)':'var(--gold)')+';color:#fff;border:none;border-radius:12px;padding:11px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">'+(opts.okLabel||(danger?'מחק':'אישור'))+'</button>'+
+          '<button id="confirm-dialog-no" style="flex:1;background:var(--ink3);color:var(--ice2);border:1px solid var(--line2);border-radius:12px;padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">'+(opts.cancelLabel||'ביטול')+'</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function finish(result){ modal.remove(); resolve(result); }
+    modal.addEventListener('click', function(e){ if(e.target===modal) finish(false); });
+    document.getElementById('confirm-dialog-yes').onclick = function(){ finish(true); };
+    document.getElementById('confirm-dialog-no').onclick = function(){ finish(false); };
+  });
+}
+
 /* TABS */
 function switchTab(name){
   document.querySelectorAll('.nav-btn').forEach(b=>{
@@ -3995,7 +4071,7 @@ async function deleteKnowledgeArticle(id){
     alert('❌ רק אדיר יכול למחוק מאמרים.');
     return;
   }
-  if (!confirm('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?')) return;
+  if (!(await confirmDialog('האם אתה בטוח שברצונך למחוק פריט ידע זה לצמיתות?', {danger:true}))) return;
   await logManagerAction('מחיקת מאמר', 'מאמר id='+id+' נמחק');
   await _sb.from('knowledge_base').delete().eq('id',id);
   S_knowledge=S_knowledge.filter(a=>String(a.id)!==String(id));
@@ -4072,7 +4148,7 @@ async function createFolder(parentId){
 }
 
 async function deleteFolder(id){
-  if (!confirm('האם אתה בטוח שברצונך למחוק תיקיה זו וכל תכניה לצמיתות?')) return;
+  if (!(await confirmDialog('האם אתה בטוח שברצונך למחוק תיקיה זו וכל תכניה לצמיתות?', {danger:true}))) return;
   const { data: { session: _dfs } } = await _sb.auth.getSession();
   if(!_dfs){ alert('נדרש להיות מחובר כמנהל'); return; }
   // Delete all articles in this folder and sub-folders recursively
@@ -4654,7 +4730,7 @@ async function markAIFeedbackHandled(id){
 }
 
 async function deleteAIFeedback(id){
-  if(!confirm('למחוק משוב זה?')) return;
+  if(!(await confirmDialog('למחוק משוב זה?', {danger:true}))) return;
   var res=await _sb.from('ai_feedback').delete().eq('id',id);
   if(res.error){alert('שגיאה: '+res.error.message);return;}
   window._aiFeedbackData=(window._aiFeedbackData||[]).filter(function(i){return String(i.id)!==String(id);});
@@ -5019,7 +5095,7 @@ async function removeAgent(id){
     alert('❌ רק אדיר יכול למחוק נציגים.');
     return;
   }
-  if(!confirm('למחוק נציג זה?'))return;
+  if(!(await confirmDialog('למחוק נציג זה?', {danger:true})))return;
   await logManagerAction('מחיקת נציג', 'נציג id='+id+' נמחק');
   const {error}=await _sb.from('agents').delete().eq('id',id);
   if(error){alert('שגיאה במחיקה: '+error.message);return;}
@@ -6817,8 +6893,8 @@ function toggleHistory(id){
 
 /* ── RETAKE BRIEFING ─────────────────────────── */
 async function retakeConfirm(agentId, briefingId, agentName, briefingTitle){
-  if(!confirm(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
-הציון הנוכחי יימחק.`)) return;
+  if(!(await confirmDialog(`לאפשר ל${agentName} לעשות מועד ב׳ על "${briefingTitle}"?
+הציון הנוכחי יימחק.`, {danger:true}))) return;
   try{
     const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
     if(fetchErr) throw fetchErr;
@@ -7029,9 +7105,9 @@ async function sendRefreshBriefing(briefingId){
   const localB=S.briefings.find(x=>String(x.id)===String(briefingId));
   if(!localB) return;
   const doneCountEstimate=Object.keys(localB.completions).length;
-  if(!confirm(`לאפס את תדריך "${localB.title}" לרענון חוזר לכל הנציגים?
+  if(!(await confirmDialog(`לאפס את תדריך "${localB.title}" לרענון חוזר לכל הנציגים?
 ${doneCountEstimate} נציגים שהשלימו יחזרו לממתינים.
-הציונים הקודמים יישמרו בהיסטוריה.`)) return;
+הציונים הקודמים יישמרו בהיסטוריה.`, {danger:true}))) return;
 
   try{
     // קריטי: קרא completions טרי מה-DB ממש לפני הארכוב — לא להסתמך על snapshot ישן
@@ -7782,7 +7858,7 @@ async function resetAgentBriefings(){
   const id=parseInt(document.getElementById('reset-agent-select').value);
   if(!id){alert('בחר נציג');return;}
   const agent=S.agents.find(a=>a.id===id);
-  if(!confirm(`למחוק את כל סימוני ההשלמה של ${agent.name}?`))return;
+  if(!(await confirmDialog(`למחוק את כל סימוני ההשלמה של ${agent.name}?`, {danger:true})))return;
   for(const localB of S.briefings){
     try{
       const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',localB.id).single();
@@ -7810,7 +7886,7 @@ async function resetGroupBriefings(){
     agentIds=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d))).map(a=>a.id);
   }
   if(!agentIds.length){alert('לא נמצאו נציגים בקבוצה זו');return;}
-  if(!confirm(`למחוק סימוני השלמה ל-${agentIds.length} נציגים בקבוצה "${grpKey}"?`))return;
+  if(!(await confirmDialog(`למחוק סימוני השלמה ל-${agentIds.length} נציגים בקבוצה "${grpKey}"?`, {danger:true})))return;
   for(const localB of S.briefings){
     try{
       const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',localB.id).single();
@@ -7832,7 +7908,7 @@ async function deleteBriefing(){
   const id=parseInt(document.getElementById('reset-briefing-select').value);
   if(!id){alert('בחר תדריך');return;}
   const b=S.briefings.find(x=>x.id===id);
-  if(!confirm(`למחוק את התדריך "${b.title}" לצמיתות?`))return;
+  if(!(await confirmDialog(`למחוק את התדריך "${b.title}" לצמיתות?`, {danger:true})))return;
   await _sb.from('briefings').delete().eq('id',id);
   S.briefings=S.briefings.filter(x=>x.id!==id);
   renderTracking();
@@ -7842,7 +7918,7 @@ async function deleteBriefing(){
 async function deleteBriefingFromDashboard(id){
   const b=S.briefings.find(x=>x.id===id);
   if(!b)return;
-  if(!confirm(`למחוק את התדריך "${b.title}" לצמיתות?`))return;
+  if(!(await confirmDialog(`למחוק את התדריך "${b.title}" לצמיתות?`, {danger:true})))return;
   await _sb.from('briefings').delete().eq('id',id);
   S.briefings=S.briefings.filter(x=>x.id!==id);
   renderTracking();
@@ -7853,7 +7929,7 @@ async function resetSingleCompletion(briefingId,agentId){
   if(!localB)return;
   const agent=S.agents.find(a=>a.id===agentId);
   const name=agent?agent.name:agentId;
-  if(!confirm(`לבטל את חתימת ${name} על תדריך זה?`))return;
+  if(!(await confirmDialog(`לבטל את חתימת ${name} על תדריך זה?`, {danger:true})))return;
   try{
     const {data:freshRow,error:fetchErr}=await _sb.from('briefings').select('completions').eq('id',briefingId).single();
     if(fetchErr) throw fetchErr;
@@ -10346,7 +10422,7 @@ function closeControlModal(){
 }
 
 async function deleteAgentControls(agentId, month){
-  if(!confirm('האם אתה בטוח שברצונך למחוק את כל הבקרות של נציג זה בחודש זה?')) return;
+  if(!(await confirmDialog('האם אתה בטוח שברצונך למחוק את כל הבקרות של נציג זה בחודש זה?', {danger:true}))) return;
   const { data: { session: _dcs } } = await _sb.auth.getSession();
   if(!_dcs){ alert('נדרש להיות מחובר כמנהל'); return; }
   const toDelete = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
@@ -10834,7 +10910,7 @@ function closeBriefingStatusModal(){
 
 async function deleteBriefingDoc(el){
   var id = el && el.dataset ? el.dataset.id : el;
-  if(!confirm('למחוק תדריך זה?')) return;
+  if(!(await confirmDialog('למחוק תדריך זה?', {danger:true}))) return;
   var {data:{session}} = await _sb.auth.getSession();
   if(!isSuperAdmin(session?.user?.email||'')){
     alert('רק אדיר יכול למחוק תדריכים');
@@ -11643,7 +11719,7 @@ async function saveDisciplineEvent(){
 }
 
 async function deleteDisciplineEvent(id){
-  if(!confirm('למחוק רשומה זו?')) return;
+  if(!(await confirmDialog('למחוק רשומה זו?', {danger:true}))) return;
   await _sb.from('discipline').delete().eq('id',id);
   S_discipline=S_discipline.filter(i=>String(i.id)!==String(id));
   S_managers_disc=S_managers_disc.filter(i=>String(i.id)!==String(id));
@@ -11803,7 +11879,7 @@ async function submitKbComment(){
 }
 
 async function deleteKbComment(commentId){
-  if(!confirm('למחוק תגובה זו?')) return;
+  if(!(await confirmDialog('למחוק תגובה זו?', {danger:true}))) return;
   await _sb.from('kb_comments').delete().eq('id',commentId);
   S_kb_comments = S_kb_comments.filter(c=>String(c.id)!==String(commentId));
   renderKbComments();
