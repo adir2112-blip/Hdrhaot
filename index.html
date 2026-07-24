@@ -4890,9 +4890,9 @@ function renderAgentDeptSwitcher(depts){
   sw.style.display='flex';
   sw.innerHTML=deptsWithContent.map(d=>`
     <button onclick="setAgentKbDept('${d}')" id="sw-btn-${d.replace(/[\s']/g,'_')}"
-      style="background:${d===_agentKbDept?'rgba(116,105,166,0.35)':'rgba(255,255,255,0.08)'};
-             border:1px solid ${d===_agentKbDept?'rgba(116,105,166,0.6)':'rgba(255,255,255,0.15)'};
-             color:${d===_agentKbDept?'#9085C8':'rgba(240,237,230,0.6)'};
+      style="background:${d===_agentKbDept?'rgba(116,105,166,0.16)':'rgba(36,31,61,0.05)'};
+             border:1px solid ${d===_agentKbDept?'rgba(116,105,166,0.45)':'rgba(36,31,61,0.12)'};
+             color:${d===_agentKbDept?'var(--gold)':'var(--ice3)'};
              border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;
              font-family:'Sora',sans-serif;font-weight:${d===_agentKbDept?'700':'400'};
              transition:all 0.15s">
