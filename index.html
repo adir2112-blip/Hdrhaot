@@ -1260,7 +1260,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">תוכן הנוהל</label>
         <textarea id="briefing-content" placeholder="הדבק את הנוהל כאן בפשטות — AI ינסח וישפר עבורך..." style="min-height:140px"></textarea>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1E1830,#2C2540);border:1.5px solid rgba(116,105,166,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.2)">
+          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14)">
             <span style="font-size:16px">✦</span>
             <span>שפר ונסח עם AI</span>
             <span style="font-size:10px;background:rgba(116,105,166,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">AI</span>
@@ -1273,23 +1273,23 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
 
       <div id="polish-preview" style="display:none;margin-bottom:18px">
-        <div style="background:linear-gradient(135deg,#1E1830,#2C2540);border-radius:18px;overflow:hidden">
-          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(116,105,166,0.15)">
+        <div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:18px;overflow:hidden">
+          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15)">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ תוצאת AI — בדוק ואשר</div>
             <div style="display:flex;gap:8px">
               <button onclick="approvePolish()" style="background:var(--ok);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">✓ אשר והחלף</button>
-              <button onclick="discardPolish()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">✕ בטל</button>
+              <button onclick="discardPolish()" style="background:rgba(36,31,61,0.05);border:1px solid rgba(36,31,61,0.1);color:var(--ice3);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">✕ בטל</button>
             </div>
           </div>
           <div style="padding:18px 20px">
             <!-- Rendered preview -->
-            <div id="polish-rendered" style="color:rgba(240,246,255,0.88);font-size:15px;font-family:'Sora',sans-serif;line-height:1.9;direction:rtl;min-height:100px"></div>
+            <div id="polish-rendered" style="color:var(--ice2);font-size:15px;font-family:'Sora',sans-serif;line-height:1.9;direction:rtl;min-height:100px"></div>
             <!-- Editable raw text (hidden by default, shown on edit) -->
-            <textarea id="polish-result-text" style="display:none;width:100%;min-height:200px;background:rgba(255,255,255,0.06);border:1px solid rgba(116,105,166,0.2);color:rgba(240,246,255,0.9);font-size:14px;font-family:'Sora',sans-serif;line-height:1.9;resize:vertical;outline:none;direction:rtl;border-radius:10px;padding:12px"></textarea>
+            <textarea id="polish-result-text" style="display:none;width:100%;min-height:200px;background:var(--ink3);border:1px solid rgba(116,105,166,0.2);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;line-height:1.9;resize:vertical;outline:none;direction:rtl;border-radius:10px;padding:12px"></textarea>
           </div>
           <div style="padding:0 18px 14px;display:flex;gap:10px;align-items:center">
-            <button onclick="togglePolishEdit()" id="polish-edit-btn" style="background:none;border:1px solid rgba(116,105,166,0.3);color:rgba(116,105,166,0.7);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">✏ ערוך</button>
-            <span style="font-size:11px;color:rgba(116,105,166,0.4);font-family:'DM Mono',monospace">אשר כדי להחליף את הטקסט המקורי</span>
+            <button onclick="togglePolishEdit()" id="polish-edit-btn" style="background:none;border:1px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">✏ ערוך</button>
+            <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">אשר כדי להחליף את הטקסט המקורי</span>
           </div>
         </div>
       </div>
@@ -1948,12 +1948,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- KNOWLEDGE CHAT BUTTON -->
       <div id="agent-knowledge-btn-wrap" style="margin-bottom:14px">
-        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1E1830,#2C2540);border:1.5px solid rgba(116,105,166,0.35);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(116,105,166,0.2)'" onmouseout="this.style.boxShadow='none'">
+        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(116,105,166,0.18)'" onmouseout="this.style.boxShadow='none'">
           <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(116,105,166,0.6))">🧠</span>
+            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(116,105,166,0.4))">🧠</span>
             <div style="text-align:right">
-              <div style="font-size:14px;font-weight:800;color:#F0EDE6">שאל את ה-AI</div>
-              <div style="font-size:12px;color:rgba(240,237,230,0.5)">בסיס הידע של המחלקה שלך</div>
+              <div style="font-size:14px;font-weight:800;color:var(--ice)">שאל את ה-AI</div>
+              <div style="font-size:12px;color:var(--ice3)">בסיס הידע של המחלקה שלך</div>
             </div>
           </div>
           <span style="font-size:20px;color:var(--gold)">◂</span>
@@ -2087,9 +2087,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <!-- AI SUMMARY CARD -->
         <div id="ai-summary-card" style="display:none;margin-top:16px;border-radius:18px;overflow:hidden;border:1.5px solid rgba(116,105,166,0.2);box-shadow:0 4px 18px rgba(116,105,166,0.08)">
-          <div style="background:linear-gradient(135deg,#1E1830,#2C2540);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+          <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ סיכום AI</div>
-            <div id="ai-summary-loading" style="display:none;font-size:11px;color:rgba(116,105,166,0.6);font-family:'DM Mono',monospace">מסכם...</div>
+            <div id="ai-summary-loading" style="display:none;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">מסכם...</div>
           </div>
           <div style="background:#fff;padding:18px">
             <div id="ai-summary-content"></div>
@@ -2098,7 +2098,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
           <button class="btn btn-gold" onclick="goStep('quiz');ttsStop()">קראתי — עבור לשאלות ◂</button>
-          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1E1830,#2C2540);border:1.5px solid rgba(116,105,166,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.2),0 0 0 0 rgba(116,105,166,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(116,105,166,0.35),0 0 0 4px rgba(116,105,166,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(116,105,166,0.2)';this.style.transform=''">
+          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border:1.5px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(116,105,166,0.14),0 0 0 0 rgba(116,105,166,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(116,105,166,0.22),0 0 0 4px rgba(116,105,166,0.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(116,105,166,0.14)';this.style.transform=''">
             <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(116,105,166,0.7))">✦</span>
             <span>סיכום AI</span>
             <span style="font-size:10px;background:rgba(116,105,166,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">AI</span>
@@ -4568,21 +4568,21 @@ function showFullAnswer(el){
   modal.id='full-answer-modal';
   modal.style.cssText='position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
 
-  modal.innerHTML='<div style="background:#1E1830;border:1px solid rgba(116,105,166,0.3);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
-    '<div style="background:linear-gradient(135deg,#1E1830,#2C2540);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
-      '<div style="font-size:16px;font-weight:700;color:#F0EDE6">🤖 תשובת AI מלאה</div>'+
-      '<button onclick="document.getElementById(\'full-answer-modal\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);width:30px;height:30px;border-radius:50%;cursor:pointer;color:#F0EDE6;font-size:15px">✕</button>'+
+  modal.innerHTML='<div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+    '<div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+      '<div style="font-size:16px;font-weight:700;color:var(--ice)">🤖 תשובת AI מלאה</div>'+
+      '<button onclick="document.getElementById(\'full-answer-modal\').remove()" style="background:rgba(36,31,61,0.06);border:1px solid rgba(36,31,61,0.1);width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:15px">✕</button>'+
     '</div>'+
-    '<div style="padding:6px 20px 4px;background:rgba(0,0,0,0.2);flex-shrink:0">'+
-      '<div style="font-size:10px;color:#888;margin-bottom:3px">❓ שאלה:</div>'+
-      '<div style="font-size:13px;color:#C8C4BC;direction:rtl">'+(r.question||'—')+'</div>'+
+    '<div style="padding:6px 20px 4px;background:rgba(36,31,61,0.03);flex-shrink:0">'+
+      '<div style="font-size:10px;color:var(--ice3);margin-bottom:3px">❓ שאלה:</div>'+
+      '<div style="font-size:13px;color:var(--ice);direction:rtl">'+(r.question||'—')+'</div>'+
     '</div>'+
     '<div style="overflow-y:auto;padding:16px 20px">'+
-      '<div style="font-size:10px;color:#888;margin-bottom:6px">🤖 תשובה:</div>'+
-      '<div style="font-size:14px;color:#E0DCD4;line-height:1.8;direction:rtl;white-space:pre-wrap">'+(r.answer||'')+'</div>'+
+      '<div style="font-size:10px;color:var(--ice3);margin-bottom:6px">🤖 תשובה:</div>'+
+      '<div style="font-size:14px;color:var(--ice2);line-height:1.8;direction:rtl;white-space:pre-wrap">'+(r.answer||'')+'</div>'+
     '</div>'+
-    '<div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0">'+
-      '<button onclick="document.getElementById(\'agent-questions-modal\') ? null : null; document.getElementById(\'full-answer-modal\').remove();" style="background:rgba(116,105,166,0.15);border:1px solid rgba(116,105,166,0.3);color:#7469A6;border-radius:12px;padding:8px 20px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif">← חזרה לרשימה</button>'+
+    '<div style="padding:12px 20px;border-top:1px solid var(--line);flex-shrink:0">'+
+      '<button onclick="document.getElementById(\'agent-questions-modal\') ? null : null; document.getElementById(\'full-answer-modal\').remove();" style="background:rgba(116,105,166,0.1);border:1px solid rgba(116,105,166,0.25);color:var(--gold);border-radius:12px;padding:8px 20px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif">← חזרה לרשימה</button>'+
     '</div>'+
   '</div>';
 
@@ -11820,37 +11820,37 @@ async function showAgentQuestions(agentId){
   var rows = agentUsage.map(function(r){
     var dateStr=r.created_at?new Date(r.created_at).toLocaleString('he-IL'):'-';
     var correct = r.is_correct===true ? '✅' : r.is_correct===false ? '❌' : '—';
-    var correctColor = r.is_correct===true ? '#0E9C7C' : r.is_correct===false ? '#C43B36' : '#555';
+    var correctColor = r.is_correct===true ? '#0E9C7C' : r.is_correct===false ? '#C43B36' : 'var(--ice3)';
     var ansPreview = r.answer ? r.answer.slice(0,150)+(r.answer.length>150?'…':'') : '';
-    return '<tr style="border-bottom:1px solid rgba(255,255,255,0.06)">'+
+    return '<tr style="border-bottom:1px solid var(--line)">'+
       '<td style="padding:8px 12px;font-size:12px;direction:rtl;cursor:'+(r.answer?'pointer':'default')+'" '+(r.answer?'onclick="showFullAnswer(this)" data-id="'+r.id+'"':'')+' title="'+(r.answer?'לחץ לתשובה המלאה':'')+'">'+
-        '<div style="color:#C8C4BC;margin-bottom:4px">'+( r.question||'—')+'</div>'+
-        (r.answer ? '<div style="color:#888;font-size:11px;background:rgba(255,255,255,0.04);border-radius:6px;padding:5px 8px;margin-top:3px">🤖 '+ansPreview+'</div>' : '')+
+        '<div style="color:var(--ice);margin-bottom:4px">'+( r.question||'—')+'</div>'+
+        (r.answer ? '<div style="color:var(--ice3);font-size:11px;background:rgba(36,31,61,0.04);border-radius:6px;padding:5px 8px;margin-top:3px">🤖 '+ansPreview+'</div>' : '')+
       '</td>'+
       '<td style="padding:8px 12px;text-align:center;font-size:16px;color:'+correctColor+';vertical-align:middle">'+correct+'</td>'+
-      '<td style="padding:8px 12px;color:#888;font-size:11px;white-space:nowrap;vertical-align:top">'+dateStr+'</td>'+
+      '<td style="padding:8px 12px;color:var(--ice3);font-size:11px;white-space:nowrap;vertical-align:top">'+dateStr+'</td>'+
     '</tr>';
   }).join('');
 
-  modal.innerHTML='<div style="background:#1E1830;border:1px solid rgba(116,105,166,0.3);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
-    '<div style="background:linear-gradient(135deg,#1E1830,#2C2540);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
+  modal.innerHTML='<div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+    '<div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
       '<div>'+
-        '<div style="font-size:11px;color:rgba(116,105,166,0.7);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
-        '<div style="font-size:18px;font-weight:800;color:#F0EDE6;font-family:Playfair Display,serif">'+agentName+'</div>'+
-        '<div style="font-size:12px;color:#888;margin-top:2px">'+agentUsage.length+' שאלות בתקופה</div>'+
+        '<div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
+        '<div style="font-size:18px;font-weight:800;color:var(--ice);font-family:Playfair Display,serif">'+agentName+'</div>'+
+        '<div style="font-size:12px;color:var(--ice3);margin-top:2px">'+agentUsage.length+' שאלות בתקופה</div>'+
       '</div>'+
-      '<button onclick="document.getElementById(\'agent-questions-modal\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);width:32px;height:32px;border-radius:50%;cursor:pointer;color:#F0EDE6;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>'+
+      '<button onclick="document.getElementById(\'agent-questions-modal\').remove()" style="background:rgba(36,31,61,0.06);border:1px solid rgba(36,31,61,0.1);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>'+
     '</div>'+
     '<div style="overflow-y:auto;padding:0">'+
       '<table style="width:100%;border-collapse:collapse">'+
-        '<tr style="background:rgba(255,255,255,0.04);position:sticky;top:0">'+
-          '<th style="padding:8px 12px;text-align:right;color:#888;font-size:11px;font-weight:600">שאלה ותשובת AI</th>'+
-          '<th style="padding:8px 12px;text-align:center;color:#888;font-size:11px;font-weight:600">נכון?</th>'+
-          '<th style="padding:8px 12px;text-align:center;color:#888;font-size:11px;font-weight:600;white-space:nowrap">תאריך ושעה</th>'+
+        '<tr style="background:rgba(36,31,61,0.03);position:sticky;top:0">'+
+          '<th style="padding:8px 12px;text-align:right;color:var(--ice3);font-size:11px;font-weight:600">שאלה ותשובת AI</th>'+
+          '<th style="padding:8px 12px;text-align:center;color:var(--ice3);font-size:11px;font-weight:600">נכון?</th>'+
+          '<th style="padding:8px 12px;text-align:center;color:var(--ice3);font-size:11px;font-weight:600;white-space:nowrap">תאריך ושעה</th>'+
         '</tr>'+
         rows+
       '</table>'+
-      (agentUsage.length===0?'<div style="text-align:center;padding:2rem;color:#555">אין שאלות בתקופה זו</div>':'')+
+      (agentUsage.length===0?'<div style="text-align:center;padding:2rem;color:var(--ice3)">אין שאלות בתקופה זו</div>':'')+
     '</div>'+
   '</div>';
 
@@ -12617,19 +12617,19 @@ function renderManagersDiscipline(){
 <div id="agent-knowledge-modal" style="display:none;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:slide-up 0.25s ease">
   <div style="background:#fff;border:1.5px solid rgba(116,105,166,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(116,105,166,0.1);overflow:hidden;display:flex;flex-direction:column;max-height:520px">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1E1830,#2C2540);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:36px;height:36px;border-radius:50%;background:rgba(116,105,166,0.15);border:1px solid rgba(116,105,166,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
         <div>
-          <div style="font-size:13px;font-weight:800;color:#F0EDE6" id="agent-kb-title">עוזר AI</div>
-          <div style="font-size:10px;color:rgba(240,237,230,0.45);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
+          <div style="font-size:13px;font-weight:800;color:var(--ice)" id="agent-kb-title">עוזר AI</div>
+          <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
           <div id="agent-kb-dept-switcher" style="display:none;margin-top:6px;display:flex;flex-wrap:wrap;gap:4px"></div>
 
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center">
-        <button onclick="toggleKbChatFullscreen()" id="kb-expand-btn" title="מסך מלא" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">⛶</button>
-        <button onclick="closeAgentKnowledgeChat()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(240,237,230,0.5);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+        <button onclick="toggleKbChatFullscreen()" id="kb-expand-btn" title="מסך מלא" style="background:rgba(36,31,61,0.06);border:none;color:var(--ice3);border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">⛶</button>
+        <button onclick="closeAgentKnowledgeChat()" style="background:rgba(36,31,61,0.06);border:none;color:var(--ice3);border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
       </div>
     </div>
     <!-- Messages -->
@@ -13256,9 +13256,9 @@ function renderManagersDiscipline(){
 <div id="rating-feedback-modal" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:16px">
   <div style="background:#F5F4F0;border-radius:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1E1830,#2C2540);padding:20px 24px">
-      <div style="font-size:10px;font-weight:700;color:rgba(116,105,166,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
-      <div style="font-size:22px;color:#F0EDE6;font-family:Playfair Display,serif;font-weight:700">מה הייתה הבעיה?</div>
+    <div style="background:linear-gradient(135deg,#EEE9FA,#F8F6FD);border-bottom:1px solid rgba(116,105,166,0.15);padding:20px 24px">
+      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
+      <div style="font-size:22px;color:var(--ice);font-family:Playfair Display,serif;font-weight:700">מה הייתה הבעיה?</div>
       <div id="rfm-stars" style="font-size:20px;color:#7469A6;margin-top:6px">★★★★☆</div>
     </div>
     <!-- Body -->
