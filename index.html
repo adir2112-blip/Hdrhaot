@@ -105,17 +105,18 @@ body::after {
   width: 34px; height: 34px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 32% 28%, var(--gold2), var(--gold) 72%);
-  box-shadow: 0 3px 8px rgba(217,80,59,0.35), inset 0 1px 1px rgba(255,255,255,0.4);
-  position: relative; overflow: visible;
+  background: #FFFFFF;
+  box-shadow: 0 3px 8px rgba(217,80,59,0.25), inset 0 1px 1px rgba(255,255,255,0.4);
+  position: relative; overflow: hidden;
 }
 .brand-mark::before {
   content: '';
   position: absolute; inset: -3px;
   border-radius: 50%;
   border: 1px solid rgba(217,80,59,0.25);
+  pointer-events: none;
 }
-.brand-mark svg { width: 15px; height: 15px; fill: #FFFFFF; position: relative; }
+.brand-mark img { width: 100%; height: 100%; object-fit: cover; position: relative; }
 .brand-name { font-size: 13px; font-weight: 600; color: var(--ice); letter-spacing: 0.02em; }
 .brand-sub { font-size: 10px; color: var(--ice3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 1px; font-family: 'DM Mono', monospace; }
 
@@ -1149,7 +1150,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <div class="topbar-inner">
     <div class="brand">
       <div class="brand-mark">
-        <svg viewBox="0 0 16 16"><path d="M2 3h12v1.5H2V3zm0 4h8v1.5H2V7zm0 4h10v1.5H2V11z"/></svg>
+        <img src="logo.jpg" alt="לוגו">
       </div>
       <div>
         <div class="brand-name">מערכת תדריכים</div>
@@ -8322,7 +8323,7 @@ function downloadPDF(){
   <div style="background:#fff;border:1px solid rgba(217,80,59,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#EA6E56,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:40px;margin-bottom:12px">📚</div>
+      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(217,80,59,0.25);position:relative"><img src="logo.jpg" alt="לוגו" style="width:100%;height:100%;object-fit:cover"></div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
       <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
     </div>
@@ -13059,7 +13060,7 @@ function renderManagersDiscipline(){
   <div style="background:#fff;border:1px solid rgba(217,80,59,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#EA6E56,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:40px;margin-bottom:12px">📚</div>
+      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(217,80,59,0.25);position:relative"><img src="logo.jpg" alt="לוגו" style="width:100%;height:100%;object-fit:cover"></div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
       <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
     </div>
