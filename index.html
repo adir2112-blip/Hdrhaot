@@ -23,32 +23,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root {
-  --ink:     #F5F4F0;
-  --ink2:    #FFFFFF;
-  --ink3:    #F0EEE9;
-  --ink4:    #E4E2DB;
-  --line:    rgba(0,0,0,0.07);
-  --line2:   rgba(0,0,0,0.12);
-  --line3:   rgba(0,0,0,0.2);
-  --gold:    #C9A84C;
-  --gold2:   #E8C97A;
-  --gold-bg: rgba(201,168,76,0.08);
-  --gold-line: rgba(201,168,76,0.25);
-  --ice:     #1A1A2E;
-  --ice2:    #3A3F5C;
-  --ice3:    #7A7F9A;
-  --ice4:    #B0B4C8;
-  --ok:      #2DD4A4;
-  --ok-bg:   rgba(45,212,164,0.08);
-  --ok-line: rgba(45,212,164,0.25);
-  --warn:    #F0A04B;
-  --warn-bg: rgba(240,160,75,0.08);
-  --warn-line: rgba(240,160,75,0.25);
-  --danger:  #F06565;
-  --danger-bg: rgba(240,101,101,0.08);
-  --danger-line: rgba(240,101,101,0.25);
-  --r: 10px;
-  --r2: 16px;
+  /* v1.9 "Nectar — Refined" palette */
+  --ink:     #F7F5FB;
+  --ink2:    #FEFDFF;
+  --ink3:    #F1EDFA;
+  --ink4:    #E5DFF5;
+  --line:    rgba(36,31,61,0.08);
+  --line2:   rgba(36,31,61,0.13);
+  --line3:   rgba(36,31,61,0.22);
+  --gold:    #D9503B;
+  --gold2:   #EA6E56;
+  --gold-bg: rgba(217,80,59,0.08);
+  --gold-line: rgba(217,80,59,0.25);
+  --ice:     #241F3D;
+  --ice2:    #4B4470;
+  --ice3:    #756F92;
+  --ice4:    #A9A3C4;
+  --ok:      #0E9C7C;
+  --ok-bg:   rgba(14,156,124,0.08);
+  --ok-line: rgba(14,156,124,0.25);
+  --warn:    #B8710F;
+  --warn-bg: rgba(184,113,15,0.08);
+  --warn-line: rgba(184,113,15,0.25);
+  --danger:  #C43B36;
+  --danger-bg: rgba(196,59,54,0.08);
+  --danger-line: rgba(196,59,54,0.25);
+  --accent2:    #17A99C;
+  --accent2-bg: rgba(23,169,156,0.08);
+  --accent2-line: rgba(23,169,156,0.25);
+  --ink-accent: #4B3F82;
+  --r: 12px;
+  --r2: 20px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -76,8 +81,9 @@ body::after {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 600px 400px at 80% 10%, rgba(201,168,76,0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 600px at 10% 80%, rgba(45,212,164,0.04) 0%, transparent 70%);
+    radial-gradient(ellipse 600px 400px at 80% 10%, rgba(217,80,59,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 600px at 10% 80%, rgba(23,169,156,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 700px 500px at 50% 45%, rgba(75,63,130,0.03) 0%, transparent 70%);
 }
 
 /* TOP BAR */
@@ -86,7 +92,7 @@ body::after {
   background: rgba(255,255,255,0.92);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border-bottom: 1px solid rgba(184,134,42,0.15);
+  border-bottom: 1px solid rgba(217,80,59,0.15);
   box-shadow: 0 1px 20px rgba(0,0,0,0.06);
 }
 .topbar-inner {
@@ -106,7 +112,7 @@ body::after {
 .brand-mark::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(201,168,76,0.15) 100%);
+  background: linear-gradient(135deg, transparent 40%, rgba(217,80,59,0.15) 100%);
 }
 .brand-mark svg { width: 16px; height: 16px; fill: var(--gold); position: relative; }
 .brand-name { font-size: 13px; font-weight: 600; color: var(--ice); letter-spacing: 0.02em; }
@@ -180,16 +186,16 @@ body::after {
 
 /* CARDS */
 .card {
-  background: #FFFFFF;
-  border: 1px solid rgba(184,134,42,0.12);
+  background: var(--ink2);
+  border: 1px solid rgba(36,31,61,0.05);
   border-radius: var(--r2);
   padding: 1.75rem;
   margin-bottom: 16px;
   position: relative; overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 1px 2px rgba(36,31,61,0.04), 0 8px 20px rgba(36,31,61,0.05);
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
 }
-.card:hover { border-color: rgba(184,134,42,0.25); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.card:hover { border-color: rgba(217,80,59,0.2); box-shadow: 0 4px 10px rgba(36,31,61,0.06), 0 16px 32px rgba(36,31,61,0.09); transform: translateY(-2px); }
 .card::before {
   content: '';
   position: absolute; top:0; right:0; left:0; height:2px; pointer-events:none;
@@ -223,7 +229,7 @@ input[type=text], input[type=password], textarea {
 input[type=text]:focus, input[type=password]:focus, textarea:focus {
   border-color: var(--gold-line);
   background: var(--ink4);
-  box-shadow: 0 0 0 3px rgba(201,168,76,0.07);
+  box-shadow: 0 0 0 3px rgba(217,80,59,0.07);
 }
 textarea { resize: vertical; min-height: 130px; line-height: 1.75; }
 input::placeholder, textarea::placeholder { color: var(--ice4); }
@@ -249,7 +255,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   opacity: 0; transition: opacity 0.2s;
 }
 .btn-gold:hover::before { opacity: 1; }
-.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.25); }
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(217,80,59,0.25); }
 .btn-gold:active { transform: translateY(0); }
 .btn-gold:disabled { background: var(--ink4); color: var(--ice4); cursor: not-allowed; box-shadow: none; transform: none; }
 .btn-outline {
@@ -264,7 +270,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   background: var(--danger-bg); border: 1px solid var(--danger-line);
   color: var(--danger); font-size: 12px; padding: 6px 12px;
 }
-.btn-danger-soft:hover { background: rgba(240,101,101,0.14); }
+.btn-danger-soft:hover { background: rgba(196,59,54,0.14); }
 .btn-sm { padding: 7px 14px; font-size: 12px; }
 
 /* CHIPS / BADGES */
@@ -291,8 +297,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .kpi:nth-child(1)::after { background: linear-gradient(90deg, var(--gold), transparent); }
 .kpi:nth-child(2)::after { background: linear-gradient(90deg, var(--ok), transparent); }
 .kpi:nth-child(3)::after { background: linear-gradient(90deg, var(--warn), transparent); }
-.kpi:nth-child(4)::after { background: linear-gradient(90deg, #7B8CDE, transparent); }
-.kpi-val { font-size: 34px; font-weight: 300; color: var(--ice); line-height: 1; font-family: 'Playfair Display', serif; letter-spacing: -0.02em; }
+.kpi:nth-child(4)::after { background: linear-gradient(90deg, var(--ink-accent), transparent); }
+.kpi { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+.kpi:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(36,31,61,0.06), 0 16px 32px rgba(36,31,61,0.10); }
+.kpi-val { font-size: 34px; font-weight: 300; color: var(--ink-accent); line-height: 1; font-family: 'Playfair Display', serif; letter-spacing: -0.02em; }
 .kpi-label { font-size: 10px; color: var(--ice3); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
 
 /* PROGRESS */
@@ -334,7 +342,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 }
 .opt:hover .opt-key { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
 .opt.reveal-ok { border-color: var(--ok-line); background: var(--ok-bg); color: var(--ok); }
-.opt.reveal-ok .opt-key { border-color: var(--ok); color: var(--ok); background: rgba(45,212,164,0.15); }
+.opt.reveal-ok .opt-key { border-color: var(--ok); color: var(--ok); background: rgba(14,156,124,0.15); }
 .opt.reveal-wrong { border-color: var(--danger-line); background: var(--danger-bg); color: var(--danger); }
 .opt.reveal-wrong .opt-key { border-color: var(--danger); color: var(--danger); }
 .hint-reveal {
@@ -388,22 +396,22 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 12px; margin-top: 18px; }
 .agent-pick {
   background: #FFFFFF;
-  border: 1.5px solid rgba(184,134,42,0.12);
+  border: 1.5px solid rgba(217,80,59,0.12);
   border-radius: 20px; padding: 22px 14px;
   cursor: pointer; text-align: center;
   transition: all 0.2s;
   position: relative; overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.agent-pick::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(184,134,42,0.04) 0%, transparent 60%); opacity: 0; transition: opacity 0.2s; border-radius:inherit; }
-.agent-pick:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 36px rgba(184,134,42,0.15); }
+.agent-pick::before { content: ''; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(217,80,59,0.04) 0%, transparent 60%); opacity: 0; transition: opacity 0.2s; border-radius:inherit; }
+.agent-pick:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 16px 36px rgba(217,80,59,0.15); }
 .agent-pick:hover::before { opacity: 1; }
 .agent-pick-name { font-size: 13px; font-weight: 600; color: var(--ice); margin-top: 12px; }
 
 /* BRIEFING ROW */
 .brief-row {
   background: #FFFFFF;
-  border: 1px solid rgba(184,134,42,0.1);
+  border: 1px solid rgba(217,80,59,0.1);
   border-radius: var(--r2); padding: 18px 22px;
   margin-bottom: 10px; cursor: pointer;
   display: flex; align-items: center; justify-content: space-between;
@@ -415,7 +423,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .brief-row:hover::before { background: var(--gold); }
 
 /* TRACKING AGENT */
-.track-row { background: #FFFFFF; border: 1px solid rgba(184,134,42,0.1); border-radius: var(--r2); padding: 18px 22px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+.track-row { background: #FFFFFF; border: 1px solid rgba(217,80,59,0.1); border-radius: var(--r2); padding: 18px 22px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
 .done-pill { background: var(--ink3); border: 1px solid var(--line2); border-radius: 8px; padding: 8px 12px; font-size: 12px; }
 .done-pill-title { color: var(--ice2); font-weight: 500; }
 .done-pill-meta { color: var(--ok); font-size: 11px; margin-top: 2px; font-family: 'DM Mono', monospace; }
@@ -424,14 +432,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .lock-scene { display: flex; align-items: center; justify-content: center; min-height: 360px; }
 .lock-box {
   background: #FFFFFF;
-  border: 1px solid rgba(184,134,42,0.15);
+  border: 1px solid rgba(217,80,59,0.15);
   border-radius: 24px; padding: 3rem 2.5rem;
   width: 360px; text-align: center;
   position: relative; overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
 }
 .lock-box::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-.lock-ico { font-size: 36px; margin-bottom: 18px; filter: drop-shadow(0 0 12px rgba(201,168,76,0.3)); }
+.lock-ico { font-size: 36px; margin-bottom: 18px; filter: drop-shadow(0 0 12px rgba(217,80,59,0.3)); }
 .lock-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--ice); margin-bottom: 6px; }
 .lock-sub { font-size: 13px; color: var(--ice3); margin-bottom: 22px; }
 
@@ -443,7 +451,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 /* SUCCESS */
 .success-bar { background: var(--ok-bg); border: 1px solid var(--ok-line); border-radius: var(--r); padding: 16px 18px; margin-top: 16px; }
 .success-bar-t { font-size: 14px; font-weight: 600; color: var(--ok); }
-.success-bar-s { font-size: 12px; color: rgba(45,212,164,0.6); margin-top: 3px; font-family: 'DM Mono', monospace; }
+.success-bar-s { font-size: 12px; color: rgba(14,156,124,0.6); margin-top: 3px; font-family: 'DM Mono', monospace; }
 
 /* LOADING */
 .loading { display: none; align-items: center; gap: 10px; font-size: 13px; color: var(--ice3); }
@@ -484,7 +492,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   display: none;
   position: fixed; bottom: 0; right: 0; left: 0; z-index: 200;
   background: rgba(255,255,255,0.97);
-  box-shadow: 0 -1px 0 rgba(184,134,42,0.1);
+  box-shadow: 0 -1px 0 rgba(217,80,59,0.1);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
   backdrop-filter: saturate(180%) blur(24px);
   border-top: 0.5px solid rgba(0,0,0,0.12);
@@ -522,7 +530,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
 @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-@keyframes glow-soft { 0%,100%{box-shadow:0 0 16px rgba(184,134,42,0.2)} 50%{box-shadow:0 0 28px rgba(184,134,42,0.4)} }
+@keyframes glow-soft { 0%,100%{box-shadow:0 0 16px rgba(217,80,59,0.2)} 50%{box-shadow:0 0 28px rgba(217,80,59,0.4)} }
 @keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pulse-gold { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
@@ -531,13 +539,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   display: none;
   position: fixed; bottom: 0; right: 0; left: 0; z-index: 300;
   background: #2A2622;
-  border-top: 2px solid rgba(201,168,76,0.35);
+  border-top: 2px solid rgba(217,80,59,0.35);
   padding: 10px 8px max(env(safe-area-inset-bottom,0px),14px);
   box-shadow: 0 -6px 30px rgba(0,0,0,0.25);
 }
 .bottom-nav::before {
   content:''; position:absolute; top:0; right:0; left:0; height:2px;
-  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.7), transparent);
+  background: linear-gradient(90deg, transparent, rgba(217,80,59,0.7), transparent);
 }
 .bottom-nav-inner { display:flex; justify-content:space-around; align-items:flex-start; }
 .bnav-btn {
@@ -551,9 +559,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .bnav-btn .bnl { font-size:12px; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; color:inherit; }
 .bnav-btn.active {
   color: #C9A84C;
-  background: rgba(201,168,76,0.12);
+  background: rgba(217,80,59,0.12);
 }
-.bnav-btn.active .bni { transform:scale(1.2) translateY(-2px); filter:drop-shadow(0 0 8px rgba(201,168,76,0.7)); }
+.bnav-btn.active .bni { transform:scale(1.2) translateY(-2px); filter:drop-shadow(0 0 8px rgba(217,80,59,0.7)); }
 .bnav-btn.active .bnl { color: #C9A84C; }
 
 @media(max-width:640px){
@@ -563,8 +571,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── CSS VARIABLES — warm graphite ── */
   :root {
     --gold: #C9A84C; --gold2: #F3E4BC;
-    --gold-bg: rgba(201,168,76,0.1);
-    --gold-line: rgba(201,168,76,0.25);
+    --gold-bg: rgba(217,80,59,0.1);
+    --gold-line: rgba(217,80,59,0.25);
     --ok: #3DBF8A; --ok-bg: rgba(61,191,138,0.1); --ok-line: rgba(61,191,138,0.25);
     --warn: #E09B2A; --warn-bg: rgba(224,155,42,0.1); --warn-line: rgba(224,155,42,0.3);
     --danger: #D94A5A; --danger-bg: rgba(217,74,90,0.1); --danger-line: rgba(217,74,90,0.3);
@@ -593,15 +601,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── TOPBAR ── */
   .topbar {
     background: rgba(168,162,156,0.97);
-    border-bottom: 1px solid rgba(201,168,76,0.18);
+    border-bottom: 1px solid rgba(217,80,59,0.18);
     box-shadow: 0 2px 20px rgba(0,0,0,0.1);
   }
   .topbar-inner { padding:0 18px; height:56px; }
   .brand-mark {
     width:33px; height:33px; border-radius:10px;
     background: linear-gradient(135deg,#EFEDEB,#F0EEEC);
-    border: 1px solid rgba(201,168,76,0.35);
-    box-shadow: 0 0 14px rgba(201,168,76,0.15);
+    border: 1px solid rgba(217,80,59,0.35);
+    box-shadow: 0 0 14px rgba(217,80,59,0.15);
     animation: glow-soft 3s ease-in-out infinite;
   }
   .brand-name {
@@ -636,10 +644,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   }
   .card::before {
     content:''; position:absolute; top:0; right:0; left:0; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.45),transparent);
+    background:linear-gradient(90deg,transparent,rgba(217,80,59,0.45),transparent);
     opacity:0; transition:opacity 0.2s;
   }
-  .card:hover { border-color:rgba(201,168,76,0.18); box-shadow:0 6px 28px rgba(0,0,0,0.1); }
+  .card:hover { border-color:rgba(217,80,59,0.18); box-shadow:0 6px 28px rgba(0,0,0,0.1); }
   .card:hover::before { opacity:1; }
   .card-label {
     font-family:'Space Mono',monospace;
@@ -664,8 +672,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     box-shadow: inset 0 2px 6px rgba(0,0,0,0.07);
   }
   input:focus, textarea:focus {
-    border-color: rgba(201,168,76,0.45);
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.08), inset 0 2px 6px rgba(0,0,0,0.15);
+    border-color: rgba(217,80,59,0.45);
+    box-shadow: 0 0 0 3px rgba(217,80,59,0.08), inset 0 2px 6px rgba(0,0,0,0.15);
     background: #D8D4D2; outline:none;
   }
   .field-label {
@@ -680,7 +688,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     background: linear-gradient(135deg,#E8D4AC,#F3E4BC,#E8D4AC);
     background-size:200% auto;
     color: #1A1714; border-radius:16px; border:none; font-weight:800;
-    box-shadow: 0 4px 18px rgba(201,168,76,0.3), 0 2px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 18px rgba(217,80,59,0.3), 0 2px 6px rgba(0,0,0,0.1);
     animation: shimmer 4s linear infinite;
   }
   .btn-gold:active { transform:scale(0.97); }
@@ -708,16 +716,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .lock-box {
     width:88vw; max-width:360px;
     background: linear-gradient(145deg,#F0EEEC,#EEECEB);
-    border:1px solid rgba(201,168,76,0.28);
+    border:1px solid rgba(217,80,59,0.28);
     border-radius:26px; padding:38px 26px;
-    box-shadow: 0 0 0 1px rgba(201,168,76,0.08), 0 20px 50px rgba(0,0,0,0.1), 0 0 60px rgba(201,168,76,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 1px rgba(217,80,59,0.08), 0 20px 50px rgba(0,0,0,0.1), 0 0 60px rgba(217,80,59,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
     position:relative; overflow:hidden;
   }
   .lock-box::before {
     content:''; position:absolute; top:0; right:0; left:0; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.65),transparent);
+    background:linear-gradient(90deg,transparent,rgba(217,80,59,0.65),transparent);
   }
-  .lock-ico { font-size:58px; margin-bottom:16px; filter:drop-shadow(0 0 16px rgba(201,168,76,0.4)); animation:float 3s ease-in-out infinite; }
+  .lock-ico { font-size:58px; margin-bottom:16px; filter:drop-shadow(0 0 16px rgba(217,80,59,0.4)); animation:float 3s ease-in-out infinite; }
   .lock-title { font-family:'Outfit',sans-serif; font-size:24px; font-weight:800; color:#1A1714; margin-bottom:6px; }
   .lock-sub { font-family:'Space Mono',monospace; font-size:13px; color:var(--ice3); margin-bottom:24px; letter-spacing:0.06em; }
 
@@ -731,8 +739,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     box-shadow:0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95);
     transition:all 0.18s; position:relative; overflow:hidden;
   }
-  .agent-pick::before { content:''; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 50% 0%,rgba(201,168,76,0.08),transparent 60%); opacity:0; transition:opacity 0.2s; }
-  .agent-pick:active { transform:scale(0.95); border-color:rgba(201,168,76,0.35); box-shadow:0 0 16px rgba(201,168,76,0.15); }
+  .agent-pick::before { content:''; position:absolute; inset:0; border-radius:inherit; background:radial-gradient(circle at 50% 0%,rgba(217,80,59,0.08),transparent 60%); opacity:0; transition:opacity 0.2s; }
+  .agent-pick:active { transform:scale(0.95); border-color:rgba(217,80,59,0.35); box-shadow:0 0 16px rgba(217,80,59,0.15); }
   .agent-pick:active::before { opacity:1; }
   .agent-pick-name { font-size:14px; font-weight:700; color:#1A1714; margin-top:12px; line-height:1.3; font-family:'Outfit',sans-serif; }
   .av { width:60px!important; height:60px!important; font-size:20px!important; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
@@ -747,7 +755,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .dept-filter-btn.active {
     background:linear-gradient(135deg,#E8D4AC,#F3E4BC);
     border-color:transparent; color:#1A1714;
-    box-shadow:0 0 16px rgba(201,168,76,0.3), 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow:0 0 16px rgba(217,80,59,0.3), 0 3px 10px rgba(0,0,0,0.1);
     font-weight:800;
   }
   .dept-filter-bar { gap:8px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; margin-bottom:16px; }
@@ -761,7 +769,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     background:#F0EEEC; border:1px solid rgba(0,0,0,0.06); color:#1A1714;
     transition:all 0.15s;
   }
-  .opt:active { transform:scale(0.98); background:rgba(201,168,76,0.08); border-color:rgba(201,168,76,0.3); }
+  .opt:active { transform:scale(0.98); background:rgba(217,80,59,0.08); border-color:rgba(217,80,59,0.3); }
   .opt.reveal-ok { background:rgba(61,191,138,0.1); border-color:rgba(61,191,138,0.35); color:var(--ok); }
   .opt.reveal-wrong { background:rgba(217,74,90,0.1); border-color:rgba(217,74,90,0.35); color:var(--danger); }
   .opt-key { width:32px;height:32px;font-size:12px;border-radius:9px;background:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ice3); }
@@ -770,7 +778,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .q-text { font-size:17px; font-weight:700; line-height:1.6; color:#1A1714; margin-bottom:18px; font-family:'Outfit',sans-serif; }
   .q-card { background:#EFEDEB; border:1px solid rgba(0,0,0,0.06); border-radius:22px; padding:22px 18px; box-shadow:0 6px 24px rgba(0,0,0,0.08); }
   .q-card::before { display:none; }
-  .hint-box { background:rgba(201,168,76,0.07)!important; border-right:3px solid var(--gold)!important; color:var(--ice2)!important; border-radius:10px; padding:10px 14px; margin-top:8px; }
+  .hint-box { background:rgba(217,80,59,0.07)!important; border-right:3px solid var(--gold)!important; color:var(--ice2)!important; border-radius:10px; padding:10px 14px; margin-top:8px; }
 
   /* ── SCORE ── */
   .score-num { font-family:'Outfit',sans-serif; font-size:92px; font-weight:900; line-height:1; }
@@ -795,8 +803,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   /* ── WELCOME BANNER ── */
   #agent-welcome-banner {
     background:linear-gradient(135deg,#ECEAE8 0%,#EFEDEB 50%,#ECEAE8 100%)!important;
-    border:1px solid rgba(201,168,76,0.22)!important;
-    box-shadow:0 0 30px rgba(201,168,76,0.06), 0 6px 24px rgba(0,0,0,0.08)!important;
+    border:1px solid rgba(217,80,59,0.22)!important;
+    box-shadow:0 0 30px rgba(217,80,59,0.06), 0 6px 24px rgba(0,0,0,0.08)!important;
   }
   #logged-agent-name { color:#1A1714!important; }
   #agent-welcome-stats > div { background:rgba(255,255,255,0.35)!important; border:1px solid rgba(0,0,0,0.06)!important; }
@@ -805,26 +813,26 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   #agent-pending-hero > div { box-shadow:0 0 30px rgba(26,110,65,0.25), 0 6px 24px rgba(0,0,0,0.08)!important; }
 
   /* ── NO BRIEFINGS ── */
-  #no-briefings .card { background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important; border-color:rgba(201,168,76,0.18)!important; }
+  #no-briefings .card { background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important; border-color:rgba(217,80,59,0.18)!important; }
 
   /* ── PIN MODAL ── */
   #pin-modal > div {
     background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
-    border:1px solid rgba(201,168,76,0.25)!important;
-    box-shadow:0 0 50px rgba(201,168,76,0.08), 0 20px 50px rgba(0,0,0,0.1)!important;
+    border:1px solid rgba(217,80,59,0.25)!important;
+    box-shadow:0 0 50px rgba(217,80,59,0.08), 0 20px 50px rgba(0,0,0,0.1)!important;
   }
   .pin-key {
     background:#D5D1CF!important; border:1px solid rgba(0,0,0,0.1)!important;
     color:#1A1714!important; font-size:24px; padding:17px; border-radius:16px;
     box-shadow:0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.95);
   }
-  .pin-key:active { background:rgba(201,168,76,0.12)!important; border-color:rgba(201,168,76,0.35)!important; transform:scale(0.94); }
+  .pin-key:active { background:rgba(217,80,59,0.12)!important; border-color:rgba(217,80,59,0.35)!important; transform:scale(0.94); }
 
   /* ── CHIPS ── */
   .chip { font-family:'Space Mono',monospace; font-size:13px; font-weight:700; }
   .chip-ok { background:rgba(61,191,138,0.1); color:var(--ok); border-color:rgba(61,191,138,0.22); }
   .chip-warn { background:rgba(224,155,42,0.1); color:var(--warn); border-color:rgba(224,155,42,0.22); }
-  .dept-chip { background:rgba(201,168,76,0.08); color:var(--gold); border-color:rgba(201,168,76,0.18); font-family:'Space Mono',monospace; font-size:11px; }
+  .dept-chip { background:rgba(217,80,59,0.08); color:var(--gold); border-color:rgba(217,80,59,0.18); font-family:'Space Mono',monospace; font-size:11px; }
 
   /* ── DONE PILLS ── */
   .done-pill { background:rgba(61,191,138,0.07); border:1px solid rgba(61,191,138,0.15); border-radius:12px; padding:10px 14px; }
@@ -832,14 +840,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .done-pill-meta { font-size:13px; color:var(--ok); font-family:'Space Mono',monospace; margin-top:3px; }
 
   /* ── EYEBROW LABELS ── */
-  .eyebrow { font-family:'Space Mono',monospace!important; font-size:12px; letter-spacing:0.18em; color:rgba(201,168,76,0.65)!important; }
+  .eyebrow { font-family:'Space Mono',monospace!important; font-size:12px; letter-spacing:0.18em; color:rgba(217,80,59,0.65)!important; }
 
   /* ── MODALS ── */
   #agent-stats-modal > div,
   #history-modal > div,
   #edit-pin-modal > div {
     background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
-    border:1px solid rgba(201,168,76,0.18)!important;
+    border:1px solid rgba(217,80,59,0.18)!important;
     box-shadow:0 0 50px rgba(0,0,0,0.1)!important;
   }
   .sig-block { background:rgba(255,255,255,0.28)!important; border:1px solid rgba(255,255,255,0.45)!important; border-radius:18px!important; }
@@ -907,7 +915,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     max-height:92dvh!important;
     overflow-y:auto!important;
     background:linear-gradient(145deg,#F0EEEC,#EEECEB)!important;
-    border:1px solid rgba(201,168,76,0.18)!important;
+    border:1px solid rgba(217,80,59,0.18)!important;
   }
 
   /* ── AGENT STATS MODAL ── */
@@ -1248,10 +1256,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">תוכן הנוהל</label>
         <textarea id="briefing-content" placeholder="הדבק את הנוהל כאן בפשטות — AI ינסח וישפר עבורך..." style="min-height:140px"></textarea>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2)">
+          <button id="polish-btn" onclick="polishContent()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(217,80,59,0.4);color:var(--gold);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(217,80,59,0.2)">
             <span style="font-size:16px">✦</span>
             <span>שפר ונסח עם AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">AI</span>
+            <span style="font-size:10px;background:rgba(217,80,59,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace">AI</span>
           </button>
           <div id="polish-loading" style="display:none;font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;align-items:center;gap:6px">
             <div class="dot-row"><div class="ld"></div><div class="ld"></div><div class="ld"></div></div>
@@ -1262,7 +1270,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <div id="polish-preview" style="display:none;margin-bottom:18px">
         <div style="background:linear-gradient(135deg,#1A1814,#2E2820);border-radius:18px;overflow:hidden">
-          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(201,168,76,0.15)">
+          <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(217,80,59,0.15)">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ תוצאת AI — בדוק ואשר</div>
             <div style="display:flex;gap:8px">
               <button onclick="approvePolish()" style="background:var(--ok);border:none;color:#fff;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">✓ אשר והחלף</button>
@@ -1273,11 +1281,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <!-- Rendered preview -->
             <div id="polish-rendered" style="color:rgba(240,246,255,0.88);font-size:15px;font-family:'Sora',sans-serif;line-height:1.9;direction:rtl;min-height:100px"></div>
             <!-- Editable raw text (hidden by default, shown on edit) -->
-            <textarea id="polish-result-text" style="display:none;width:100%;min-height:200px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.2);color:rgba(240,246,255,0.9);font-size:14px;font-family:'Sora',sans-serif;line-height:1.9;resize:vertical;outline:none;direction:rtl;border-radius:10px;padding:12px"></textarea>
+            <textarea id="polish-result-text" style="display:none;width:100%;min-height:200px;background:rgba(255,255,255,0.06);border:1px solid rgba(217,80,59,0.2);color:rgba(240,246,255,0.9);font-size:14px;font-family:'Sora',sans-serif;line-height:1.9;resize:vertical;outline:none;direction:rtl;border-radius:10px;padding:12px"></textarea>
           </div>
           <div style="padding:0 18px 14px;display:flex;gap:10px;align-items:center">
-            <button onclick="togglePolishEdit()" id="polish-edit-btn" style="background:none;border:1px solid rgba(201,168,76,0.3);color:rgba(201,168,76,0.7);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">✏ ערוך</button>
-            <span style="font-size:11px;color:rgba(201,168,76,0.4);font-family:'DM Mono',monospace">אשר כדי להחליף את הטקסט המקורי</span>
+            <button onclick="togglePolishEdit()" id="polish-edit-btn" style="background:none;border:1px solid rgba(217,80,59,0.3);color:rgba(217,80,59,0.7);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace">✏ ערוך</button>
+            <span style="font-size:11px;color:rgba(217,80,59,0.4);font-family:'DM Mono',monospace">אשר כדי להחליף את הטקסט המקורי</span>
           </div>
         </div>
       </div>
@@ -1487,7 +1495,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               </div>
               <!-- Warning call template trigger -->
               <div id="warning-template-btn-wrap" style="display:none;margin-bottom:14px">
-                <button onclick="openWarningTemplate()" style="width:100%;background:linear-gradient(135deg,rgba(240,160,75,0.1),rgba(240,160,75,0.05));border:1.5px solid rgba(240,160,75,0.4);border-radius:14px;padding:14px 18px;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:12px">
+                <button onclick="openWarningTemplate()" style="width:100%;background:linear-gradient(135deg,rgba(184,113,15,0.1),rgba(184,113,15,0.05));border:1.5px solid rgba(184,113,15,0.4);border-radius:14px;padding:14px 18px;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:12px">
                   <span style="font-size:24px">📋</span>
                   <div style="text-align:right">
                     <div style="font-size:14px;font-weight:700;color:var(--warn)">מלא טמפלט שיחת אזהרה</div>
@@ -1861,8 +1869,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
   <!-- AGENT SIDEBAR -->
     <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;align-self:stretch;min-height:100vh;background:var(--ink2);border-left:1px solid var(--line)">
-      <div style="background:#fff;border:1.5px solid rgba(184,134,42,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(184,134,42,0.08)">
-        <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(184,134,42,0.1);margin-bottom:10px;text-align:center"></div>
+      <div style="background:#fff;border:1.5px solid rgba(217,80,59,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(217,80,59,0.08)">
+        <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(217,80,59,0.1);margin-bottom:10px;text-align:center"></div>
         <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
           <span style="font-size:17px">🏠</span><span>ראשי</span>
         </button>
@@ -1876,7 +1884,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <button onclick="showAgentPanel('achievements')" id="asb-achievements" style="width:100%;display:flex;align-items:center;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
           <span style="font-size:17px">🏅</span><span>הישגים</span>
         </button>
-        <div style="height:1px;background:rgba(184,134,42,0.15);margin:10px 4px"></div>
+        <div style="height:1px;background:rgba(217,80,59,0.15);margin:10px 4px"></div>
         <button onclick="showAgentPanel('briefingdocs')" id="asb-briefingdocs" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:1.5px solid var(--line2);color:var(--ice2);border-radius:14px;padding:11px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right;transition:all 0.15s">
           <div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">📄</span><span>תדריכים</span></div>
           <span id="asb-briefingdocs-badge" style="display:none;background:var(--warn);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
@@ -1898,9 +1906,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- WELCOME BANNER -->
       <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
            <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
-     <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 24px rgba(184,134,42,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
-        <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(184,134,42,0.07) 0%,transparent 70%);pointer-events:none"></div>
-        <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:radial-gradient(circle,rgba(184,134,42,0.05) 0%,transparent 70%);pointer-events:none"></div>
+     <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(217,80,59,0.2);box-shadow:0 4px 24px rgba(217,80,59,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
+        <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(217,80,59,0.07) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:radial-gradient(circle,rgba(217,80,59,0.05) 0%,transparent 70%);pointer-events:none"></div>
         <div style="position:relative">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
             <div>
@@ -1908,7 +1916,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--ice);font-weight:500;line-height:1.1" id="logged-agent-name"></div>
             </div>
             <div style="display:flex;gap:8px">
-              <button onclick="refreshAgentBriefings()" title="רענן" style="background:none;border:1px solid rgba(184,134,42,0.2);color:var(--ice3);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer">↻</button>
+              <button onclick="refreshAgentBriefings()" title="רענן" style="background:none;border:1px solid rgba(217,80,59,0.2);color:var(--ice3);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer">↻</button>
               <button onclick="openHistoryModal()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📖 היסטוריה</button>
               <button onclick="logoutAgent()" style="background:var(--danger-bg);border:1.5px solid var(--danger-line);color:var(--danger);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='var(--danger-bg)';this.style.color='var(--danger)'">✕ התנתקות</button>
             </div>
@@ -1936,9 +1944,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- KNOWLEDGE CHAT BUTTON -->
       <div id="agent-knowledge-btn-wrap" style="margin-bottom:14px">
-        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.35);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(184,134,42,0.2)'" onmouseout="this.style.boxShadow='none'">
+        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(217,80,59,0.35);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(217,80,59,0.2)'" onmouseout="this.style.boxShadow='none'">
           <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(201,168,76,0.6))">🧠</span>
+            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(217,80,59,0.6))">🧠</span>
             <div style="text-align:right">
               <div style="font-size:14px;font-weight:800;color:#F0EDE6">שאל את ה-AI</div>
               <div style="font-size:12px;color:rgba(240,237,230,0.5)">בסיס הידע של המחלקה שלך</div>
@@ -1954,7 +1962,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           placeholder="🔍  חפש תדריך לפי שם או תוכן..."
           oninput="searchBriefings(this.value)"
           style="width:100%;padding-right:16px;font-size:16px;border-radius:16px">
-        <div id="briefing-search-results" style="display:none;position:absolute;top:calc(100% + 8px);right:0;left:0;z-index:50;background:#fff;border:1.5px solid rgba(201,168,76,0.25);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.12);max-height:70vh;overflow-y:auto;padding:8px"></div>
+        <div id="briefing-search-results" style="display:none;position:absolute;top:calc(100% + 8px);right:0;left:0;z-index:50;background:#fff;border:1.5px solid rgba(217,80,59,0.25);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.12);max-height:70vh;overflow-y:auto;padding:8px"></div>
       </div>
 
       <!-- FEATURED BRIEFING BANNER -->
@@ -1967,7 +1975,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- BRIEFINGS -->
       <div id="agent-briefing-list"></div>
       <div id="no-briefings" style="display:none">
-        <div class="card" style="text-align:center;padding:3rem 2rem;background:linear-gradient(135deg,#FFFDF8,#FFF5DC);border-color:rgba(184,134,42,0.2)">
+        <div class="card" style="text-align:center;padding:3rem 2rem;background:linear-gradient(135deg,#FFFDF8,#FFF5DC);border-color:rgba(217,80,59,0.2)">
           <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 16px;display:block">
             <defs>
               <linearGradient id="tg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5C842"/><stop offset="100%" stop-color="#E8890A"/></linearGradient>
@@ -2074,10 +2082,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div style="font-size:14px;line-height:1.9;color:var(--ice2);white-space:pre-wrap" id="flow-content"></div>
         </div>
         <!-- AI SUMMARY CARD -->
-        <div id="ai-summary-card" style="display:none;margin-top:16px;border-radius:18px;overflow:hidden;border:1.5px solid rgba(184,134,42,0.2);box-shadow:0 4px 18px rgba(184,134,42,0.08)">
+        <div id="ai-summary-card" style="display:none;margin-top:16px;border-radius:18px;overflow:hidden;border:1.5px solid rgba(217,80,59,0.2);box-shadow:0 4px 18px rgba(217,80,59,0.08)">
           <div style="background:linear-gradient(135deg,#1A1814,#2E2820);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
             <div style="font-size:12px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase">✦ סיכום AI</div>
-            <div id="ai-summary-loading" style="display:none;font-size:11px;color:rgba(201,168,76,0.6);font-family:'DM Mono',monospace">מסכם...</div>
+            <div id="ai-summary-loading" style="display:none;font-size:11px;color:rgba(217,80,59,0.6);font-family:'DM Mono',monospace">מסכם...</div>
           </div>
           <div style="background:#fff;padding:18px">
             <div id="ai-summary-content"></div>
@@ -2086,10 +2094,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
           <button class="btn btn-gold" onclick="goStep('quiz');ttsStop()">קראתי — עבור לשאלות ◂</button>
-          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,134,42,0.2),0 0 0 0 rgba(184,134,42,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(184,134,42,0.35),0 0 0 4px rgba(184,134,42,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(184,134,42,0.2)';this.style.transform=''">
-            <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span>
+          <button id="ai-summary-btn" onclick="generateAISummary()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A1814,#2E2820);border:1.5px solid rgba(217,80,59,0.4);color:var(--gold);border-radius:14px;padding:13px 20px;font-size:14px;font-weight:800;font-family:'Sora',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(217,80,59,0.2),0 0 0 0 rgba(217,80,59,0);transition:all 0.2s;letter-spacing:0.02em" onmouseover="this.style.boxShadow='0 6px 22px rgba(217,80,59,0.35),0 0 0 4px rgba(217,80,59,0.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 4px 16px rgba(217,80,59,0.2)';this.style.transform=''">
+            <span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(217,80,59,0.7))">✦</span>
             <span>סיכום AI</span>
-            <span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">AI</span>
+            <span style="font-size:10px;background:rgba(217,80,59,0.15);border-radius:6px;padding:2px 6px;font-family:'DM Mono',monospace;letter-spacing:0.05em">AI</span>
           </button>
         </div>
       </div>
@@ -2127,7 +2135,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <div id="celebration-screen" style="text-align:center;padding:1rem 0">
             <!-- TOP REVERSE BANNER — shown only if reverse_mode -->
             <div id="reverse-top-banner" style="display:none;margin-bottom:20px;cursor:pointer" onclick="openReverseModal()">
-              <div style="background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(184,134,42,0.25),0 0 0 4px rgba(184,134,42,0.06);animation:glow-soft 2s ease-in-out infinite">
+              <div style="background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(217,80,59,0.25),0 0 0 4px rgba(217,80,59,0.06);animation:glow-soft 2s ease-in-out infinite">
                 <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.07;pointer-events:none">🎤</div>
                 <div style="font-size:11px;font-weight:700;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⚡ אל תשכח</div>
                 <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">יש לך חלק ב׳ — מבחן מילולי!</div>
@@ -2321,7 +2329,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               </div>
               <div style="display:flex;gap:10px;margin-top:6px">
                 <div class="field" style="margin-top:16px">
-                  <label style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+                  <label style="display:flex;align-items:center;gap:10px;background:rgba(217,80,59,0.08);border:1.5px solid rgba(217,80,59,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
                     <input type="checkbox" id="k-has-expiry" onchange="document.getElementById('k-expiry-wrap').style.display=this.checked?'block':'none'" style="width:20px;height:20px;cursor:pointer;accent-color:#C9A84C">
                     <div>
                       <div style="font-size:14px;font-weight:700;color:var(--gold)">📅 תאריך תפוגה</div>
@@ -3000,13 +3008,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
 <!-- ADMIN CONFIG PASSWORD MODAL -->
 <div id="admin-config-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);align-items:center;justify-content:center">
-  <div style="background:linear-gradient(145deg,#1A1814,#2A2420);border:1px solid rgba(201,168,76,0.3);border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
+  <div style="background:linear-gradient(145deg,#1A1814,#2A2420);border:1px solid rgba(217,80,59,0.3);border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
     <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:24px 24px 0 0"></div>
-    <div style="font-size:40px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(201,168,76,0.5))">🔑</div>
+    <div style="font-size:40px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(217,80,59,0.5))">🔑</div>
     <div style="font-family:'Playfair Display',serif;font-size:20px;color:#F0EDE6;margin-bottom:6px">גישת SUPER ADMIN</div>
     <div style="font-size:13px;color:rgba(240,237,230,0.5);margin-bottom:22px;font-family:'DM Mono',monospace">הכנס סיסמת מנהל עליון</div>
     <input type="password" id="config-admin-pw" placeholder="••••••••" 
-      style="width:100%;text-align:center;letter-spacing:0.2em;font-size:18px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.25);color:#F0EDE6;border-radius:14px;padding:13px;font-family:'DM Mono',monospace;margin-bottom:10px;outline:none"
+      style="width:100%;text-align:center;letter-spacing:0.2em;font-size:18px;background:rgba(255,255,255,0.06);border:1px solid rgba(217,80,59,0.25);color:#F0EDE6;border-radius:14px;padding:13px;font-family:'DM Mono',monospace;margin-bottom:10px;outline:none"
       onkeydown="if(event.key==='Enter')checkConfigAdminPw()">
     <div id="config-admin-err" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ סיסמה שגויה</div>
     <div style="display:flex;gap:10px;margin-top:6px">
@@ -3019,9 +3027,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 <script>
 const AV_COLORS=[
   {bg:'rgba(108,99,255,0.2)',c:'#9B93FF'},
-  {bg:'rgba(45,212,164,0.15)',c:'#2DD4A4'},
-  {bg:'rgba(240,160,75,0.15)',c:'#F0A04B'},
-  {bg:'rgba(240,101,101,0.15)',c:'#F06565'},
+  {bg:'rgba(14,156,124,0.15)',c:'#2DD4A4'},
+  {bg:'rgba(184,113,15,0.15)',c:'#F0A04B'},
+  {bg:'rgba(196,59,54,0.15)',c:'#F06565'},
   {bg:'rgba(99,179,237,0.15)',c:'#63B3ED'},
   {bg:'rgba(246,114,182,0.15)',c:'#F672B6'},
 ];
@@ -3741,7 +3749,7 @@ function renderKnowledgeArticles(){
             const today=new Date().toISOString().slice(0,10);
             if(a.expiry_date){
               const isExpired=a.expiry_date<today;
-              return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${isExpired?'rgba(240,101,101,0.15)':'rgba(201,168,76,0.12)'};color:${isExpired?'#F06565':'#C9A84C'};border:1px solid ${isExpired?'rgba(240,101,101,0.3)':'rgba(201,168,76,0.3)'}">${isExpired?'⚠️ פג תוקף':'📅 תוקף עד'}: ${new Date(a.expiry_date).toLocaleDateString('he-IL')}</span>`;
+              return `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${isExpired?'rgba(196,59,54,0.15)':'rgba(217,80,59,0.12)'};color:${isExpired?'#F06565':'#C9A84C'};border:1px solid ${isExpired?'rgba(196,59,54,0.3)':'rgba(217,80,59,0.3)'}">${isExpired?'⚠️ פג תוקף':'📅 תוקף עד'}: ${new Date(a.expiry_date).toLocaleDateString('he-IL')}</span>`;
             }
             return '<span style="font-size:11px;color:var(--ice3);opacity:0.6">ללא תוקף</span>';
           })()}
@@ -4005,7 +4013,7 @@ function previewArticle(id){
     +'<style>'
     +'body{font-family:Sora,sans-serif;padding:36px;max-width:740px;margin:0 auto;background:#F5F4F0;color:#2A2520;direction:rtl}'
     +'h1{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:#1A1814;margin:0 0 8px;border-right:4px solid #C9A84C;padding-right:12px}'
-    +'.dept{display:inline-block;background:rgba(201,168,76,0.1);color:#C9A84C;border:1px solid rgba(201,168,76,0.3);border-radius:20px;padding:3px 12px;font-size:12px;margin-bottom:20px;font-family:"DM Mono",monospace}'
+    +'.dept{display:inline-block;background:rgba(217,80,59,0.1);color:#C9A84C;border:1px solid rgba(217,80,59,0.3);border-radius:20px;padding:3px 12px;font-size:12px;margin-bottom:20px;font-family:"DM Mono",monospace}'
     +'img{max-width:100%;border-radius:12px;margin:10px 0;display:block;box-shadow:0 4px 16px rgba(0,0,0,0.12)}'
     +'a{color:#C9A84C;font-weight:600;text-decoration:underline}'
     +'strong{color:#1A1814;font-weight:700}'
@@ -4069,7 +4077,7 @@ function renderKBBriefings(){
       ${qs.length?`<div>
         <div style="font-size:10px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">שאלות ותשובות</div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          ${qs.map((q,i)=>`<div style="background:#fff;border:1px solid rgba(184,134,42,0.1);border-radius:10px;padding:10px 12px">
+          ${qs.map((q,i)=>`<div style="background:#fff;border:1px solid rgba(217,80,59,0.1);border-radius:10px;padding:10px 12px">
             <div style="font-size:13px;font-weight:600;color:var(--ice);margin-bottom:4px">❓ ${q.q}</div>
             <div style="font-size:12px;color:var(--ok);font-weight:600">✓ ${(q.options||[])[q.correct]||'—'}</div>
           </div>`).join('')}
@@ -4232,7 +4240,7 @@ function selectFolder(id){
   if(children.length){
     html+=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${children.map(c=>{
       const cnt=S_knowledge.filter(a=>a.folder_id===c.id).length;
-      return`<div onclick="selectFolder('${c.id}')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(184,134,42,0.15);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(184,134,42,0.15)'">
+      return`<div onclick="selectFolder('${c.id}')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(217,80,59,0.15);border-radius:12px;padding:10px 14px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(217,80,59,0.15)'">
         <span style="font-size:20px">📁</span>
         <div><div style="font-size:13px;font-weight:700;color:var(--ice)">${c.name}</div><div style="font-size:11px;color:var(--ice3)">${cnt} מאמרים</div></div>
       </div>`;
@@ -4480,7 +4488,7 @@ function updateKbMessage(boxId,id,text){
 
       var btnX=document.createElement('button');
       btnX.innerHTML='❌ התשובה לא נכונה';
-      btnX.style.cssText='flex:1;padding:8px 12px;background:rgba(240,101,101,0.1);border:1.5px solid rgba(240,101,101,0.3);color:#F06565;border-radius:12px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:600';
+      btnX.style.cssText='flex:1;padding:8px 12px;background:rgba(196,59,54,0.1);border:1.5px solid rgba(196,59,54,0.3);color:#F06565;border-radius:12px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:600';
       btnX.dataset.msgId=id; btnX.dataset.correct='0';
       btnX.addEventListener('click',function(){ markAnswerCorrect(this.dataset.msgId,false); });
 
@@ -4527,7 +4535,7 @@ function updateKbMessage(boxId,id,text){
       }
       if(ctx2.expiredTitles && ctx2.expiredTitles.length){
         var warnDiv=document.createElement('div');
-        warnDiv.style.cssText='background:rgba(240,101,101,0.08);border:1.5px solid rgba(240,101,101,0.3);border-radius:10px;padding:8px 12px;margin-bottom:8px';
+        warnDiv.style.cssText='background:rgba(196,59,54,0.08);border:1.5px solid rgba(196,59,54,0.3);border-radius:10px;padding:8px 12px;margin-bottom:8px';
         warnDiv.innerHTML='<span style="color:#F06565;font-weight:700;font-size:12px">⚠️ שים לב:</span> <span style="color:#888;font-size:12px">מידע זה מגיע ממאמר שפג תוקפו ועשוי לא להיות רלוונטי</span>';
         bubble.appendChild(warnDiv);
       }
@@ -4556,7 +4564,7 @@ function showFullAnswer(el){
   modal.id='full-answer-modal';
   modal.style.cssText='position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
 
-  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(201,168,76,0.3);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(217,80,59,0.3);border-radius:20px;width:100%;max-width:620px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
     '<div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
       '<div style="font-size:16px;font-weight:700;color:#F0EDE6">🤖 תשובת AI מלאה</div>'+
       '<button onclick="document.getElementById(\'full-answer-modal\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);width:30px;height:30px;border-radius:50%;cursor:pointer;color:#F0EDE6;font-size:15px">✕</button>'+
@@ -4570,7 +4578,7 @@ function showFullAnswer(el){
       '<div style="font-size:14px;color:#E0DCD4;line-height:1.8;direction:rtl;white-space:pre-wrap">'+(r.answer||'')+'</div>'+
     '</div>'+
     '<div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0">'+
-      '<button onclick="document.getElementById(\'agent-questions-modal\') ? null : null; document.getElementById(\'full-answer-modal\').remove();" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;border-radius:12px;padding:8px 20px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif">← חזרה לרשימה</button>'+
+      '<button onclick="document.getElementById(\'agent-questions-modal\') ? null : null; document.getElementById(\'full-answer-modal\').remove();" style="background:rgba(217,80,59,0.15);border:1px solid rgba(217,80,59,0.3);color:#C9A84C;border-radius:12px;padding:8px 20px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif">← חזרה לרשימה</button>'+
     '</div>'+
   '</div>';
 
@@ -4744,7 +4752,7 @@ function renderAIFeedback(){
 
   var html=items.map(function(item){
     var stars='★'.repeat(item.rating||0)+'☆'.repeat(5-(item.rating||0));
-    var bgColor=item.rating<=2?'rgba(240,101,101,0.12)':item.rating<=3?'rgba(201,168,76,0.08)':'rgba(45,212,164,0.08)';
+    var bgColor=item.rating<=2?'rgba(196,59,54,0.12)':item.rating<=3?'rgba(217,80,59,0.08)':'rgba(14,156,124,0.08)';
     var borderColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
     var starColor=item.rating<=2?'#F06565':item.rating<=3?'#C9A84C':'#2dd4a4';
     var dateStr=item.created_at?new Date(item.created_at).toLocaleDateString('he-IL'):'';
@@ -4761,7 +4769,7 @@ function renderAIFeedback(){
     return '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:16px;padding:16px 18px;margin-bottom:12px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">' +
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-          '<div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,0.2);border:1.5px solid rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#C9A84C">'+(item.agent_name||'?').charAt(0)+'</div>' +
+          '<div style="width:32px;height:32px;border-radius:50%;background:rgba(217,80,59,0.2);border:1.5px solid rgba(217,80,59,0.4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#C9A84C">'+(item.agent_name||'?').charAt(0)+'</div>' +
           '<span style="font-size:14px;font-weight:700;color:#1A1814">'+(item.agent_name||'נציג')+'</span>' +
           '<span style="font-size:16px;color:'+starColor+'">'+stars+'</span>' +
           '<span style="font-size:12px;font-weight:700;color:'+starColor+'">'+(item.rating||0)+'/5</span>' +
@@ -4770,25 +4778,25 @@ function renderAIFeedback(){
           '<span style="font-size:11px;color:#555;font-family:monospace">'+dateStr+'</span>' +
           srcBtnHtml +
           (item.handled
-            ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(45,212,164,0.15);border:1px solid rgba(45,212,164,0.4);color:#2dd4a4;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ טופל</span>'
-            : '<button onclick="markAIFeedbackHandled(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(240,101,101,0.12);border:1.5px solid rgba(240,101,101,0.5);color:#F06565;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">🔴 לטיפול מנהל</button>'
+            ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,156,124,0.15);border:1px solid rgba(14,156,124,0.4);color:#2dd4a4;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ טופל</span>'
+            : '<button onclick="markAIFeedbackHandled(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(196,59,54,0.12);border:1.5px solid rgba(196,59,54,0.5);color:#F06565;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif">🔴 לטיפול מנהל</button>'
           ) +
-          '<button onclick="deleteAIFeedback(\'' + item.id + '\')" style="background:rgba(240,101,101,0.15);border:1px solid rgba(240,101,101,0.3);color:#F06565;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">🗑</button>' +
+          '<button onclick="deleteAIFeedback(\'' + item.id + '\')" style="background:rgba(196,59,54,0.15);border:1px solid rgba(196,59,54,0.3);color:#F06565;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">🗑</button>' +
         '</div>' +
       '</div>' +
       '<div style="background:rgba(255,255,255,0.6);border-radius:10px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(0,0,0,0.06)">' +
         '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">❓ שאלת הנציג</div>' +
         '<div style="font-size:14px;color:#1A1814;line-height:1.6">'+(item.question||'—')+'</div>' +
       '</div>' +
-      '<div style="background:'+(item.rating<=2?'rgba(240,101,101,0.06)':'rgba(255,255,255,0.4)')+';border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06);margin-bottom:'+(item.reason||item.agent_answer?'8px':'0')+'">' +
+      '<div style="background:'+(item.rating<=2?'rgba(196,59,54,0.06)':'rgba(255,255,255,0.4)')+';border-radius:10px;padding:10px 14px;border:1px solid rgba(0,0,0,0.06);margin-bottom:'+(item.reason||item.agent_answer?'8px':'0')+'">' +
         '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">🤖 תשובת AI</div>' +
         '<div style="font-size:13px;color:#2A2520;line-height:1.7">'+(item.answer||'—').slice(0,400)+(item.answer&&item.answer.length>400?'…':'')+'</div>' +
       '</div>' +
-      (item.reason ? '<div style="background:rgba(240,160,75,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(240,160,75,0.3);margin-bottom:8px">' +
+      (item.reason ? '<div style="background:rgba(184,113,15,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(184,113,15,0.3);margin-bottom:8px">' +
         '<div style="font-size:10px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">⚠️ סיבת הדירוג</div>' +
         '<div style="font-size:13px;color:#2A2520;line-height:1.7">'+item.reason+'</div>' +
       '</div>' : '') +
-      (item.agent_answer ? '<div style="background:rgba(45,212,164,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(45,212,164,0.3)">' +
+      (item.agent_answer ? '<div style="background:rgba(14,156,124,0.1);border-radius:10px;padding:10px 14px;border:1px solid rgba(14,156,124,0.3)">' +
         '<div style="font-size:10px;font-weight:700;color:#2dd4a4;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">✅ תשובת הנציג</div>' +
         '<div style="font-size:13px;color:#2A2520;line-height:1.7;font-weight:600">'+item.agent_answer+'</div>' +
       '</div>' : '') +
@@ -4825,7 +4833,7 @@ function openAgentKnowledgeChat(){
       if(deptLabel) deptLabel.textContent='ידע '+_agentKbDept;
       // Show welcome with dept selector
       const btns=agentDepts.map(d=>
-        `<button onclick="setAgentKbDept('${d}')" style="background:rgba(184,134,42,0.1);border:1px solid rgba(184,134,42,0.3);color:var(--ice);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;margin:2px">${d}</button>`
+        `<button onclick="setAgentKbDept('${d}')" style="background:rgba(217,80,59,0.1);border:1px solid rgba(217,80,59,0.3);color:var(--ice);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;margin:2px">${d}</button>`
       ).join('');
       appendKbMessage('agent-kb-messages','ai',
         'שלום '+S.agent.name.split(' ')[0]+'! 👋\n'+
@@ -4863,8 +4871,8 @@ function renderAgentDeptSwitcher(depts){
   sw.style.display='flex';
   sw.innerHTML=deptsWithContent.map(d=>`
     <button onclick="setAgentKbDept('${d}')" id="sw-btn-${d.replace(/[\s']/g,'_')}"
-      style="background:${d===_agentKbDept?'rgba(184,134,42,0.35)':'rgba(255,255,255,0.08)'};
-             border:1px solid ${d===_agentKbDept?'rgba(184,134,42,0.6)':'rgba(255,255,255,0.15)'};
+      style="background:${d===_agentKbDept?'rgba(217,80,59,0.35)':'rgba(255,255,255,0.08)'};
+             border:1px solid ${d===_agentKbDept?'rgba(217,80,59,0.6)':'rgba(255,255,255,0.15)'};
              color:${d===_agentKbDept?'#E8C97A':'rgba(240,237,230,0.6)'};
              border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;
              font-family:'Sora',sans-serif;font-weight:${d===_agentKbDept?'700':'400'};
@@ -4903,7 +4911,7 @@ function toggleKbChatFullscreen(){
     btn.title = 'צמצם';
   } else {
     modal.style.cssText = 'display:block;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:none';
-    inner.style.cssText = 'background:#fff;border:1.5px solid rgba(184,134,42,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;display:flex;flex-direction:column;max-height:520px';
+    inner.style.cssText = 'background:#fff;border:1.5px solid rgba(217,80,59,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;display:flex;flex-direction:column;max-height:520px';
     messages.style.maxHeight = '320px';
     btn.textContent = '⛶';
     btn.title = 'מסך מלא';
@@ -5274,7 +5282,7 @@ todo = מה צריך לעשות`;
       </div>`;
 
     contentEl.innerHTML=
-      section('💡','#B8862A','rgba(184,134,42,0.08)','מה הכי חשוב לדעת',parsed.important)+
+      section('💡','#B8862A','rgba(217,80,59,0.08)','מה הכי חשוב לדעת',parsed.important)+
       section('🚫','#D94040','rgba(217,64,64,0.07)','מה אסור להגיד',parsed.forbidden)+
       section('✅','#1A9E6E','rgba(26,158,110,0.07)','מה צריך לעשות',parsed.todo);
 
@@ -5282,7 +5290,7 @@ todo = מה צריך לעשות`;
     contentEl.innerHTML=`<div style="color:var(--danger);font-size:13px">שגיאה: ${e.message}</div>`;
   } finally{
     loading.style.display='none';
-    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(201,168,76,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(201,168,76,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">AI</span>';
+    btn.disabled=false; btn.innerHTML='<span style="font-size:18px;filter:drop-shadow(0 0 6px rgba(217,80,59,0.7))">✦</span><span>סיכום AI</span><span style="font-size:10px;background:rgba(217,80,59,0.15);border-radius:6px;padding:2px 6px;font-family:monospace">AI</span>';
   }
 }
 
@@ -5558,7 +5566,7 @@ function searchBriefings(q){
     while(i<str.length){
       const found=lower.indexOf(tl,i);
       if(found===-1){result+=str.slice(i);break;}
-      result+=str.slice(i,found)+'<mark style="background:rgba(201,168,76,0.3);color:var(--ice);border-radius:3px;padding:0 2px">'+str.slice(found,found+term.length)+'</mark>';
+      result+=str.slice(i,found)+'<mark style="background:rgba(217,80,59,0.3);color:var(--ice);border-radius:3px;padding:0 2px">'+str.slice(found,found+term.length)+'</mark>';
       i=found+term.length;
     }
     return result;
@@ -5621,7 +5629,7 @@ function showSearchDetail(id){
   const LETTERS=['א','ב','ג','ד'];
 
   const questionsHtml=(b.questions||[]).map((q,qi)=>`
-    <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:16px;margin-bottom:12px">
+    <div style="background:rgba(217,80,59,0.06);border:1px solid rgba(217,80,59,0.15);border-radius:14px;padding:16px;margin-bottom:12px">
       <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:12px;line-height:1.5">❓ ${q.q}</div>
       <div style="display:flex;flex-direction:column;gap:8px">
         ${(q.options||[]).map((opt,oi)=>{
@@ -5769,7 +5777,7 @@ function renderAgentBriefings(){
   }).length+1;
   const _welcomeStats=document.getElementById('agent-welcome-stats');
   if(_welcomeStats){
-    const statItem=(val,lbl,color='var(--gold)')=>`<div style="background:rgba(184,134,42,0.06);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(184,134,42,0.14)">
+    const statItem=(val,lbl,color='var(--gold)')=>`<div style="background:rgba(217,80,59,0.06);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(217,80,59,0.14)">
       <div style="font-size:22px;font-weight:700;color:${color};font-family:'Playfair Display',serif">${val}</div>
       <div style="font-size:10px;color:var(--ice3);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;font-family:'DM Mono',monospace">${lbl}</div>
     </div>`;
@@ -5830,7 +5838,7 @@ function renderAgentBriefings(){
     });
     if(featured){
       featuredEl.style.display='block';
-      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(184,134,42,0.2)">
+      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#2A1F00,#3D2E00);border:1.5px solid rgba(212,180,80,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(217,80,59,0.2)">
         <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.06;pointer-events:none">⭐</div>
         <div style="font-size:11px;color:rgba(212,180,80,0.7);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⭐ נוהל השבוע</div>
         <div style="font-size:18px;font-weight:800;color:#F7F3EC;margin-bottom:4px">${featured.title}</div>
@@ -6553,7 +6561,7 @@ async function renderTracking(){
     const donePills=done.map(b=>{
       const comp=b.completions[a.id]||b.completions[String(a.id)];
       const score=comp?comp.score:0;
-      return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(184,134,42,0.12);border-radius:12px;padding:8px 12px;margin-bottom:6px;gap:8px">
+      return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(217,80,59,0.12);border-radius:12px;padding:8px 12px;margin-bottom:6px;gap:8px">
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
           <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
@@ -6638,7 +6646,7 @@ function openAgentStats(agentId){
         datasets:[{
           data:scores,
           borderColor:'#C9A84C',
-          backgroundColor:'rgba(201,168,76,0.1)',
+          backgroundColor:'rgba(217,80,59,0.1)',
           borderWidth:2.5,
           pointBackgroundColor:'#C9A84C',
           pointRadius:5,
@@ -6748,7 +6756,7 @@ function renderExamAnswers() {
       const chosenOpt = a.options?.[a.chosen] ?? '—';
       const correctOpt = a.options?.[a.correct] ?? '—';
       return `
-      <div style="border:1.5px solid ${isCorrect?'rgba(45,212,164,0.25)':'rgba(240,101,101,0.25)'};border-radius:14px;padding:14px 16px;margin-bottom:12px;background:${isCorrect?'rgba(45,212,164,0.04)':'rgba(240,101,101,0.04)'}">
+      <div style="border:1.5px solid ${isCorrect?'rgba(14,156,124,0.25)':'rgba(196,59,54,0.25)'};border-radius:14px;padding:14px 16px;margin-bottom:12px;background:${isCorrect?'rgba(14,156,124,0.04)':'rgba(196,59,54,0.04)'}">
         <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
           <div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:${isCorrect?'var(--ok)':'var(--danger)'};display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700">${isCorrect?'✓':'✗'}</div>
           <div style="font-size:14px;font-weight:600;color:var(--ice);line-height:1.5">${i+1}. ${a.q}</div>
@@ -6756,11 +6764,11 @@ function renderExamAnswers() {
         <div style="margin-right:34px;display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;align-items:center;gap:8px;font-size:13px">
             <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ice3);min-width:60px">ענה:</span>
-            <span style="padding:4px 10px;border-radius:8px;background:${isCorrect?'rgba(45,212,164,0.12)':'rgba(240,101,101,0.12)'};color:${isCorrect?'var(--ok)':'var(--danger)'};font-weight:600">${chosenOpt}</span>
+            <span style="padding:4px 10px;border-radius:8px;background:${isCorrect?'rgba(14,156,124,0.12)':'rgba(196,59,54,0.12)'};color:${isCorrect?'var(--ok)':'var(--danger)'};font-weight:600">${chosenOpt}</span>
           </div>
           ${!isCorrect ? `<div style="display:flex;align-items:center;gap:8px;font-size:13px">
             <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ice3);min-width:60px">נכון:</span>
-            <span style="padding:4px 10px;border-radius:8px;background:rgba(45,212,164,0.12);color:var(--ok);font-weight:600">${correctOpt}</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(14,156,124,0.12);color:var(--ok);font-weight:600">${correctOpt}</span>
           </div>` : ''}
         </div>
       </div>`;
@@ -6817,7 +6825,7 @@ function openHistoryModal(){
       </div>`;
     }).join(''):'<div style="font-size:13px;color:var(--ice3);padding:1rem 0">אין נתוני שאלות לתדריך זה</div>';
 
-    return`<div style="border:1px solid rgba(184,134,42,0.15);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
+    return`<div style="border:1px solid rgba(217,80,59,0.15);border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
       <div style="background:${pct>=80?'rgba(26,158,110,0.08)':pct>=60?'rgba(212,130,10,0.08)':'rgba(217,64,64,0.08)'};padding:16px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleHistory('hb-${bi}')">
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--ice)">${b.title}</div>
@@ -6833,7 +6841,7 @@ function openHistoryModal(){
       </div>
       <div id="hb-${bi}" style="display:none;padding:16px 18px">
         ${questionsHtml}
-        <div style="background:rgba(184,134,42,0.06);border:1px solid rgba(184,134,42,0.15);border-radius:12px;padding:14px 16px;margin-top:4px">
+        <div style="background:rgba(217,80,59,0.06);border:1px solid rgba(217,80,59,0.15);border-radius:12px;padding:14px 16px;margin-top:4px">
           <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.06em;font-family:'DM Mono',monospace;margin-bottom:8px">סיכום תשובות</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <span style="font-size:13px;color:var(--ok);font-weight:600">✅ נכון: ${correct}</span>
@@ -7064,7 +7072,7 @@ function openWeakQuestionsPage(){
       </div>
       ${stats.length?rows:'<div style="text-align:center;padding:3rem;color:#888;font-size:16px">✓ אין שאלות בעייתיות — כל הנציגים מצטיינים!</div>'}
       <div style="text-align:center;margin-top:1.5rem">
-        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(184,134,42,0.3)">◀ חזור לדשבורד</button>
+        <button onclick="document.getElementById('weak-q-modal').style.display='none'" style="background:#B8862A;color:#fff;border:none;padding:13px 28px;border-radius:12px;font-size:15px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:700;box-shadow:0 4px 14px rgba(217,80,59,0.3)">◀ חזור לדשבורד</button>
       </div>
     </div>`;
 }
@@ -8308,7 +8316,7 @@ function downloadPDF(){
 
 <!-- SUPABASE AUTH LOGIN MODAL -->
 <div id="auth-modal" style="display:flex;position:fixed;inset:0;z-index:1000;background:var(--ink);align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid rgba(184,134,42,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+  <div style="background:#fff;border:1px solid rgba(217,80,59,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C97A,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:40px;margin-bottom:12px">📚</div>
@@ -8336,7 +8344,7 @@ function downloadPDF(){
 <div id="debrief-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:480px;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
+    <div style="background:linear-gradient(135deg,rgba(184,113,15,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:11px;color:var(--warn);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📝 תיעוד ישיבת משוב</div>
         <div style="font-size:16px;font-weight:700;color:var(--ice)" id="debrief-agent-name"></div>
@@ -9317,11 +9325,11 @@ function renderBriefingsHistoryPanel(){
     const pendingIds=pendingAgents.map(a=>a.id).join(',');
     const pendingNames=pendingAgents.map(a=>a.name).join('\n');
 
-    return `<div style="background:var(--ink3);border:1px solid ${b.is_active!==false?'var(--line2)':'rgba(240,101,101,0.2)'};border-radius:16px;padding:16px 18px;margin-bottom:10px;opacity:${b.is_active!==false?1:0.7}">
+    return `<div style="background:var(--ink3);border:1px solid ${b.is_active!==false?'var(--line2)':'rgba(196,59,54,0.2)'};border-radius:16px;padding:16px 18px;margin-bottom:10px;opacity:${b.is_active!==false?1:0.7}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
         <!-- RIGHT: title + tags -->
         <div style="flex:1;min-width:0;text-align:right">
-          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">${b.title}${b.is_active===false?' <span style="font-size:11px;background:rgba(240,101,101,0.1);color:var(--danger);border-radius:20px;padding:2px 8px;font-family:DM Mono,monospace">מושבת</span>':''}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">${b.title}${b.is_active===false?' <span style="font-size:11px;background:rgba(196,59,54,0.1);color:var(--danger);border-radius:20px;padding:2px 8px;font-family:DM Mono,monospace">מושבת</span>':''}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
             ${(b.targetDepts||[]).map(d=>`<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 8px">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">כל הנציגים</span>'}
             ${b.deadline?`<span style="font-size:11px;background:rgba(91,160,230,0.1);color:#5BA0E6;border-radius:20px;padding:2px 8px">📅 ${new Date(b.deadline).toLocaleDateString('he-IL')}</span>`:''}
@@ -9330,7 +9338,7 @@ function renderBriefingsHistoryPanel(){
         </div>
         <!-- LEFT: action buttons -->
         <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
-          <button onclick="toggleBriefingActive('${b.id}')" style="background:${b.is_active!==false?'rgba(45,212,164,0.1)':'rgba(240,101,101,0.1)'};border:1px solid ${b.is_active!==false?'rgba(45,212,164,0.3)':'rgba(240,101,101,0.3)'};color:${b.is_active!==false?'var(--ok)':'var(--danger)'};border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap">
+          <button onclick="toggleBriefingActive('${b.id}')" style="background:${b.is_active!==false?'rgba(14,156,124,0.1)':'rgba(196,59,54,0.1)'};border:1px solid ${b.is_active!==false?'rgba(14,156,124,0.3)':'rgba(196,59,54,0.3)'};color:${b.is_active!==false?'var(--ok)':'var(--danger)'};border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap">
             ${b.is_active!==false?'● פעיל':'○ לא פעיל'}
           </button>
           <button onclick="loadBriefingForEdit('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">✏️</button>
@@ -9758,7 +9766,7 @@ function renderControlsMonthly(){
         </div>
         <div style="display:flex;align-items:center;gap:14px">
           <!-- Average — highlighted -->
-          <div style="text-align:center;background:${avg==='—'?'var(--ink3)':avgColor==='var(--ok)'?'rgba(45,212,164,0.1)':avgColor==='var(--warn)'?'rgba(240,160,75,0.1)':'rgba(240,101,101,0.1)'};border:2px solid ${avg==='—'?'var(--line2)':avgColor};border-radius:14px;padding:10px 18px">
+          <div style="text-align:center;background:${avg==='—'?'var(--ink3)':avgColor==='var(--ok)'?'rgba(14,156,124,0.1)':avgColor==='var(--warn)'?'rgba(184,113,15,0.1)':'rgba(196,59,54,0.1)'};border:2px solid ${avg==='—'?'var(--line2)':avgColor};border-radius:14px;padding:10px 18px">
             <div style="font-size:32px;font-weight:900;color:${avgColor};font-family:'Playfair Display',serif;line-height:1">${avg}</div>
             <div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:4px">ממוצע חודשי</div>
           </div>
@@ -9790,7 +9798,7 @@ function renderControlsMonthly(){
       </div>
 
       <!-- Summary row -->
-      <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <div style="background:linear-gradient(135deg,rgba(217,80,59,0.08),transparent);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
         <div style="font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace">סיכום חודשי</div>
         <div style="font-size:12px;color:var(--ice3)">בוצעו: <strong style="color:var(--ice)">${agentControls.length}${isPrifit?'':'/4'}</strong></div>
         ${scores.map((s,i)=>`<div style="font-size:12px;color:var(--ice3)">בקרה ${i+1}: <strong style="color:${s>=0.8?'var(--ok)':s>=0.5?'var(--warn)':'var(--danger)'}">${s.toFixed(2)}</strong></div>`).join('')}
@@ -9809,13 +9817,13 @@ function renderControlsMonthly(){
             <button onclick="openDebriefModal('${a.id}','${month}')" style="background:none;border:1px solid var(--ok-line);color:var(--ok);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif">✏ ערוך</button>
           </div>`;
         } else {
-          return `<div style="margin-top:10px;background:rgba(240,160,75,0.08);border:1.5px solid rgba(240,160,75,0.3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+          return `<div style="margin-top:10px;background:rgba(184,113,15,0.08);border:1.5px solid rgba(184,113,15,0.3);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px">
             <span style="font-size:20px">⚠️</span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:700;color:var(--warn)">מנהל יקר — עליך לאשר שהנציג מושב על ידך</div>
               <div style="font-size:11px;color:var(--ice3);margin-top:2px">יש לתעד תאריך ושעת הישיבה עם הנציג</div>
             </div>
-            <button onclick="openDebriefModal('${a.id}','${month}')" style="background:var(--warn-bg);border:1px solid rgba(240,160,75,0.4);color:var(--warn);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📝 תעד ישיבה</button>
+            <button onclick="openDebriefModal('${a.id}','${month}')" style="background:var(--warn-bg);border:1px solid rgba(184,113,15,0.4);color:var(--warn);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📝 תעד ישיבה</button>
           </div>`;
         }
       })() : ''}
@@ -9892,11 +9900,11 @@ function renderControlsHistory(){
       // Summary row after agent's controls
       const avgScore = agControls.length ? (agControls.reduce((s,c)=>s+(c.score||0),0)/agControls.length) : 0;
       const avgColor = avgScore>=0.8?'var(--ok)':avgScore>=0.5?'var(--warn)':'var(--danger)';
-      rows += `<tr style="background:linear-gradient(135deg,rgba(201,168,76,0.08),transparent);border-bottom:2px solid var(--gold-line)">
+      rows += `<tr style="background:linear-gradient(135deg,rgba(217,80,59,0.08),transparent);border-bottom:2px solid var(--gold-line)">
         <td colspan="9" style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--gold);font-family:'DM Mono',monospace">
           סיכום — ${agControls[0]?.agent_name||''} · ${agControls.length} בקרות
         </td>
-        <td style="padding:8px 12px;text-align:center;font-size:16px;font-weight:800;color:${avgColor};background:rgba(201,168,76,0.05)">
+        <td style="padding:8px 12px;text-align:center;font-size:16px;font-weight:800;color:${avgColor};background:rgba(217,80,59,0.05)">
           ${avgScore.toFixed(2)}
         </td>
       </tr>`;
@@ -10164,7 +10172,7 @@ function renderControlsTable(){
             const debriefRecord = agentControls.find(c=>c.debriefed);
             const debriefBadge = debriefed
               ? `<span style="background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">✅ מושב</span>`
-              : `<span style="background:var(--warn-bg);color:var(--warn);border:1px solid rgba(240,160,75,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">❌ טרם מושב</span>`;
+              : `<span style="background:var(--warn-bg);color:var(--warn);border:1px solid rgba(184,113,15,0.3);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">❌ טרם מושב</span>`;
             return `<td style="padding:8px 12px;text-align:center;font-weight:800;color:${color}">${avg}</td><td style="padding:8px 12px;text-align:center">${statusBadge}</td><td style="padding:8px 12px;text-align:center">${debriefBadge}</td>`;
           }).join('')}
         </tr>`;
@@ -10482,7 +10490,7 @@ function renderBriefingQuestions(){
     div.innerHTML = '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<span style="color:var(--gold);font-weight:700;font-size:14px">'+(qi+1)+'.</span>' +
       '<input type="text" value="'+q.q+'" onchange="_newBriefingQuestions['+qi+'].q=this.value" style="flex:1;padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:14px;font-family:Sora,sans-serif;font-weight:600">' +
-      '<button onclick="_newBriefingQuestions.splice('+qi+',1);renderBriefingQuestions()" style="background:rgba(240,101,101,0.1);border:1px solid rgba(240,101,101,0.3);color:#F06565;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px">✕</button>' +
+      '<button onclick="_newBriefingQuestions.splice('+qi+',1);renderBriefingQuestions()" style="background:rgba(196,59,54,0.1);border:1px solid rgba(196,59,54,0.3);color:#F06565;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:12px">✕</button>' +
     '</div>' + optHtml +
     '<div style="margin-top:8px"><input type="text" value="'+(q.hint||'')+'" placeholder="הסבר (hint)" onchange="_newBriefingQuestions['+qi+'].hint=this.value" style="width:100%;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--ink2);color:var(--ice3);font-size:12px;font-family:Sora,sans-serif;box-sizing:border-box"></div>';
     list.appendChild(div);
@@ -10600,8 +10608,8 @@ async function loadBriefingsTab(){
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
-          '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">👁 סטטוס</button>' +
-          '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(240,101,101,0.08);border:1px solid rgba(240,101,101,0.2);color:#F06565;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px">🗑</button>' +
+          '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="background:rgba(217,80,59,0.12);border:1px solid rgba(217,80,59,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">👁 סטטוס</button>' +
+          '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(196,59,54,0.08);border:1px solid rgba(196,59,54,0.2);color:#F06565;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px">🗑</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -10684,7 +10692,7 @@ function renderAnswersReviewHtml(agentName, score, answers){
       var isChosen = oi === a.chosen;
       var bg = 'transparent', border = 'var(--line2)', color = 'var(--ice3)', icon = '';
       if(isCorrect){ bg = 'rgba(5,150,105,0.12)'; border = 'var(--ok)'; color = 'var(--ok)'; icon = ' ✓'; }
-      if(isChosen && !isCorrect){ bg = 'rgba(240,101,101,0.12)'; border = '#F06565'; color = '#F06565'; icon = ' ✗ (נבחר)'; }
+      if(isChosen && !isCorrect){ bg = 'rgba(196,59,54,0.12)'; border = '#F06565'; color = '#F06565'; icon = ' ✗ (נבחר)'; }
       if(isChosen && isCorrect){ icon = ' ✓ (נבחר בהצלחה)'; }
       html += '<div style="background:'+bg+';border:1px solid '+border+';color:'+color+';border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px">'+opt+icon+'</div>';
     });
@@ -10870,7 +10878,7 @@ function showAgentBriefingDocScreen(step){
     el.innerHTML = '<div style="max-width:500px;margin:0 auto;text-align:center">' +
       '<div style="font-size:64px;font-weight:900;color:'+color+';margin-bottom:8px">'+score+'%</div>' +
       '<div style="font-size:18px;color:var(--ice);margin-bottom:24px">'+doc.title+'</div>' +
-      '<div style="background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--ice2);direction:rtl">' +
+      '<div style="background:rgba(217,80,59,0.08);border:1.5px solid rgba(217,80,59,0.25);border-radius:14px;padding:16px;margin-bottom:20px;font-size:13px;color:var(--ice2);direction:rtl">' +
         'בלחיצה על "חתמתי והבנתי" אני מאשר/ת שקראתי את התדריך, ענیتי על השאלות ומתחייב/ת לפעול לפי ההנחיות.' +
       '</div>' +
       '<button onclick="signBriefingDoc()" class="btn btn-gold" style="width:100%;padding:14px;font-size:16px;margin-bottom:10px">✍️ חתמתי והבנתי את התוכן</button>' +
@@ -10977,12 +10985,12 @@ function showQuizReview(agentName, score, answers, questions){
       if(isRight) correctCount++;
       var chosenText = opts[chosen] !== undefined ? opts[chosen] : '—';
       var correctText = opts[correct] !== undefined ? opts[correct] : '—';
-      var bg = isRight ? 'rgba(5,150,105,0.06)' : 'rgba(240,101,101,0.06)';
-      var border = isRight ? 'rgba(5,150,105,0.2)' : 'rgba(240,101,101,0.2)';
+      var bg = isRight ? 'rgba(5,150,105,0.06)' : 'rgba(196,59,54,0.06)';
+      var border = isRight ? 'rgba(5,150,105,0.2)' : 'rgba(196,59,54,0.2)';
       return '<div style="background:'+bg+';border:1px solid '+border+';border-radius:10px;padding:12px 14px;margin-bottom:10px">' +
         '<div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:8px;direction:rtl">'+(i+1)+'. '+qText+'</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-          '<span style="font-size:12px;background:'+(isRight?'rgba(5,150,105,0.15)':'rgba(240,101,101,0.15)')+';color:'+(isRight?'var(--ok)':'#F06565')+';border-radius:8px;padding:4px 10px">'+(isRight?'✅':'❌')+' ענה: '+chosenText+'</span>' +
+          '<span style="font-size:12px;background:'+(isRight?'rgba(5,150,105,0.15)':'rgba(196,59,54,0.15)')+';color:'+(isRight?'var(--ok)':'#F06565')+';border-radius:8px;padding:4px 10px">'+(isRight?'✅':'❌')+' ענה: '+chosenText+'</span>' +
           (!isRight ? '<span style="font-size:12px;background:rgba(5,150,105,0.15);color:var(--ok);border-radius:8px;padding:4px 10px">✓ נכון: '+correctText+'</span>' : '') +
         '</div>' +
       '</div>';
@@ -11819,10 +11827,10 @@ async function showAgentQuestions(agentId){
     '</tr>';
   }).join('');
 
-  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(201,168,76,0.3);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
+  modal.innerHTML='<div style="background:#1A1814;border:1px solid rgba(217,80,59,0.3);border-radius:20px;width:100%;max-width:680px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'+
     '<div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">'+
       '<div>'+
-        '<div style="font-size:11px;color:rgba(201,168,76,0.7);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
+        '<div style="font-size:11px;color:rgba(217,80,59,0.7);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px">שיחות סוכן AI</div>'+
         '<div style="font-size:18px;font-weight:800;color:#F0EDE6;font-family:Playfair Display,serif">'+agentName+'</div>'+
         '<div style="font-size:12px;color:#888;margin-top:2px">'+agentUsage.length+' שאלות בתקופה</div>'+
       '</div>'+
@@ -12335,27 +12343,27 @@ function renderDisciplineSummary(){
       <div style="position:absolute;top:-20px;left:-20px;font-size:100px;opacity:0.05">⚖️</div>
       <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
         <div>
-          <div style="font-size:10px;font-weight:700;color:rgba(201,168,76,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">דוח משמעת</div>
+          <div style="font-size:10px;font-weight:700;color:rgba(217,80,59,0.7);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">דוח משמעת</div>
           <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#F0EDE6">${agent?.name||''}</div>
           <div style="font-size:12px;color:rgba(240,237,230,0.5);margin-top:4px">${(agent?.depts||[]).join(', ')||'—'}</div>
-          ${from||to?`<div style="font-size:11px;color:rgba(201,168,76,0.6);margin-top:6px;font-family:'DM Mono',monospace">${from||'תחילה'} ← ${to||'היום'}</div>`:''}
+          ${from||to?`<div style="font-size:11px;color:rgba(217,80,59,0.6);margin-top:6px;font-family:'DM Mono',monospace">${from||'תחילה'} ← ${to||'היום'}</div>`:''}
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <div style="text-align:center;background:rgba(240,101,101,0.15);border:1.5px solid rgba(240,101,101,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
+          <div style="text-align:center;background:rgba(196,59,54,0.15);border:1.5px solid rgba(196,59,54,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
             <div style="font-size:28px;font-weight:800;color:#F06565">${sevHigh}</div>
-            <div style="font-size:10px;color:rgba(240,101,101,0.7);font-family:'DM Mono',monospace">חמורים</div>
+            <div style="font-size:10px;color:rgba(196,59,54,0.7);font-family:'DM Mono',monospace">חמורים</div>
           </div>
-          <div style="text-align:center;background:rgba(240,160,75,0.15);border:1.5px solid rgba(240,160,75,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
+          <div style="text-align:center;background:rgba(184,113,15,0.15);border:1.5px solid rgba(184,113,15,0.3);border-radius:14px;padding:12px 16px;min-width:64px">
             <div style="font-size:28px;font-weight:800;color:#F0A04B">${sevMid}</div>
-            <div style="font-size:10px;color:rgba(240,160,75,0.7);font-family:'DM Mono',monospace">בינוניים</div>
+            <div style="font-size:10px;color:rgba(184,113,15,0.7);font-family:'DM Mono',monospace">בינוניים</div>
           </div>
-          <div style="text-align:center;background:rgba(45,212,164,0.12);border:1.5px solid rgba(45,212,164,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
+          <div style="text-align:center;background:rgba(14,156,124,0.12);border:1.5px solid rgba(14,156,124,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
             <div style="font-size:28px;font-weight:800;color:#2DD4A4">${sevLow}</div>
-            <div style="font-size:10px;color:rgba(45,212,164,0.6);font-family:'DM Mono',monospace">קלים</div>
+            <div style="font-size:10px;color:rgba(14,156,124,0.6);font-family:'DM Mono',monospace">קלים</div>
           </div>
-          <div style="text-align:center;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
+          <div style="text-align:center;background:rgba(217,80,59,0.12);border:1.5px solid rgba(217,80,59,0.25);border-radius:14px;padding:12px 16px;min-width:64px">
             <div style="font-size:28px;font-weight:800;color:var(--gold)">${items.length}</div>
-            <div style="font-size:10px;color:rgba(201,168,76,0.6);font-family:'DM Mono',monospace">סה"כ</div>
+            <div style="font-size:10px;color:rgba(217,80,59,0.6);font-family:'DM Mono',monospace">סה"כ</div>
           </div>
         </div>
       </div>
@@ -12380,16 +12388,16 @@ function renderDisciplineSummary(){
         const sev=DISC_SEV[i.severity]||DISC_SEV.medium;
         const isWarning = i.category==='שיחת אזהרה';
         const descEsc = (i.description||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        return`<div style="display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:flex-start;background:${isWarning?'rgba(240,160,75,0.04)':idx%2===0?'transparent':'var(--ink3)'}${isWarning?';border-right:3px solid rgba(240,160,75,0.5)':''}">
-          <div style="min-width:32px;height:32px;border-radius:50%;background:${isWarning?'rgba(240,160,75,0.15)':sev.color.includes('ok')?'rgba(45,212,164,0.15)':sev.color.includes('warn')?'rgba(240,160,75,0.15)':'rgba(240,101,101,0.15)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">${isWarning?'⚠️':DISC_CAT[i.category]||'📌'}</div>
+        return`<div style="display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:flex-start;background:${isWarning?'rgba(184,113,15,0.04)':idx%2===0?'transparent':'var(--ink3)'}${isWarning?';border-right:3px solid rgba(184,113,15,0.5)':''}">
+          <div style="min-width:32px;height:32px;border-radius:50%;background:${isWarning?'rgba(184,113,15,0.15)':sev.color.includes('ok')?'rgba(14,156,124,0.15)':sev.color.includes('warn')?'rgba(184,113,15,0.15)':'rgba(196,59,54,0.15)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">${isWarning?'⚠️':DISC_CAT[i.category]||'📌'}</div>
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
               <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${i.event_date}</span>
-              <span style="font-size:11px;font-weight:700;color:${sev.color};background:${sev.color.includes('ok')?'rgba(45,212,164,0.1)':sev.color.includes('warn')?'rgba(240,160,75,0.1)':'rgba(240,101,101,0.1)'};border-radius:20px;padding:2px 8px">${sev.label}</span>
-              <span style="font-size:12px;font-weight:${isWarning?'700':'400'};color:${isWarning?'var(--warn)':'var(--ice3)'}${isWarning?';background:rgba(240,160,75,0.1);border-radius:20px;padding:2px 10px':''}">${isWarning?'⚠️ ':''  }${i.category}</span>
+              <span style="font-size:11px;font-weight:700;color:${sev.color};background:${sev.color.includes('ok')?'rgba(14,156,124,0.1)':sev.color.includes('warn')?'rgba(184,113,15,0.1)':'rgba(196,59,54,0.1)'};border-radius:20px;padding:2px 8px">${sev.label}</span>
+              <span style="font-size:12px;font-weight:${isWarning?'700':'400'};color:${isWarning?'var(--warn)':'var(--ice3)'}${isWarning?';background:rgba(184,113,15,0.1);border-radius:20px;padding:2px 10px':''}">${isWarning?'⚠️ ':''  }${i.category}</span>
             </div>
             ${isWarning
-              ? `<div style="background:rgba(240,160,75,0.06);border-radius:10px;padding:12px;margin-bottom:8px">
+              ? `<div style="background:rgba(184,113,15,0.06);border-radius:10px;padding:12px;margin-bottom:8px">
                   ${(()=>{
                     const raw=i.description||'';
                     const lines=raw.split('\n').filter(l=>l.trim());
@@ -12403,7 +12411,7 @@ function renderDisciplineSummary(){
             ${isWarning?`<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
               <button onclick="viewWarningTemplate('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(91,160,230,0.1);border:1.5px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">👁 צפייה</button>
               <button onclick="editWarningTemplate('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:var(--ink3);border:1.5px solid var(--line2);color:var(--ice2);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif">✏ עריכה</button>
-              <button onclick="exportWarningFromText('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(240,160,75,0.1);border:1.5px solid rgba(240,160,75,0.35);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📄 PDF</button>
+              <button onclick="exportWarningFromText('${i.id}')" style="display:inline-flex;align-items:center;gap:5px;background:rgba(184,113,15,0.1);border:1.5px solid rgba(184,113,15,0.35);color:var(--warn);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📄 PDF</button>
             </div>`:''}
           </div>
         </div>`;
@@ -12419,7 +12427,7 @@ function renderDisciplineSummary(){
     const sevVal = {low:1, medium:2, high:3};
     const labels = items.map(i=>i.event_date);
     const data = items.map(i=>sevVal[i.severity||'medium']||1);
-    const colors = items.map(i=>i.severity==='high'?'rgba(240,101,101,0.8)':i.severity==='low'?'rgba(45,212,164,0.8)':'rgba(240,160,75,0.8)');
+    const colors = items.map(i=>i.severity==='high'?'rgba(196,59,54,0.8)':i.severity==='low'?'rgba(14,156,124,0.8)':'rgba(184,113,15,0.8)');
 
     if(window._discChart) window._discChart.destroy();
     window._discChart = new Chart(ctx, {
@@ -12602,11 +12610,11 @@ function renderManagersDiscipline(){
 
 <!-- AGENT KNOWLEDGE CHAT MODAL -->
 <div id="agent-knowledge-modal" style="display:none;position:fixed;bottom:80px;left:20px;z-index:350;width:380px;max-width:calc(100vw - 32px);direction:rtl;animation:slide-up 0.25s ease">
-  <div style="background:#fff;border:1.5px solid rgba(184,134,42,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(184,134,42,0.1);overflow:hidden;display:flex;flex-direction:column;max-height:520px">
+  <div style="background:#fff;border:1.5px solid rgba(217,80,59,0.2);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(217,80,59,0.1);overflow:hidden;display:flex;flex-direction:column;max-height:520px">
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(217,80,59,0.15);border:1px solid rgba(217,80,59,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
         <div>
           <div style="font-size:13px;font-weight:800;color:#F0EDE6" id="agent-kb-title">עוזר AI</div>
           <div style="font-size:10px;color:rgba(240,237,230,0.45);font-family:'DM Mono',monospace" id="agent-kb-dept-label"></div>
@@ -12622,8 +12630,8 @@ function renderManagersDiscipline(){
     <!-- Messages -->
     <div id="agent-kb-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:320px;background:#FAFAF8"></div>
     <!-- Input -->
-    <div style="padding:10px 14px;border-top:1px solid rgba(184,134,42,0.12);background:#fff;flex-shrink:0">
-      <div style="display:flex;gap:8px;align-items:flex-end;background:var(--ink3);border:1.5px solid rgba(184,134,42,0.15);border-radius:14px;padding:8px 12px">
+    <div style="padding:10px 14px;border-top:1px solid rgba(217,80,59,0.12);background:#fff;flex-shrink:0">
+      <div style="display:flex;gap:8px;align-items:flex-end;background:var(--ink3);border:1.5px solid rgba(217,80,59,0.15);border-radius:14px;padding:8px 12px">
         <textarea id="agent-kb-input" placeholder="שאל שאלה..." style="flex:1;background:transparent;border:none;color:var(--ice);font-size:14px;font-family:'Sora',sans-serif;line-height:1.5;resize:none;height:36px;max-height:80px;outline:none;direction:rtl" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendKnowledgeChat('agent');}" oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
         <button onclick="sendKnowledgeChat('agent')" style="background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;height:36px">שלח</button>
       </div>
@@ -12699,7 +12707,7 @@ function renderManagersDiscipline(){
         </label>
       </div>
       <div class="field" style="margin-top:16px">
-        <label style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
+        <label style="display:flex;align-items:center;gap:10px;background:rgba(217,80,59,0.08);border:1.5px solid rgba(217,80,59,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
           <input type="checkbox" id="k-edit-has-expiry" onchange="document.getElementById('k-edit-expiry-wrap').style.display=this.checked?'block':'none'" style="width:20px;height:20px;cursor:pointer;accent-color:#C9A84C">
           <div>
             <div style="font-size:14px;font-weight:700;color:var(--gold)">📅 תאריך תפוגה</div>
@@ -12789,9 +12797,9 @@ function renderManagersDiscipline(){
       <div style="font-size:14px;color:var(--ice2);line-height:1.8">הסבר לנציג חדש, <strong style="color:var(--ice)">במילים שלך</strong>, את עיקרי הנוהל שזה עתה קראת. ה-AI ינתח ויציין אותך.</div>
     </div>
     <!-- Textarea -->
-    <textarea id="reverse-briefing-text" placeholder="לדוגמה: בתדריך הזה למדתי ש..." style="width:100%;min-height:150px;font-size:15px;background:#fff;border:1.5px solid rgba(184,134,42,0.2);color:var(--ice);border-radius:16px;padding:14px 16px;font-family:'Sora',sans-serif;line-height:1.8;resize:vertical;box-shadow:inset 0 2px 6px rgba(0,0,0,0.04)"></textarea>
+    <textarea id="reverse-briefing-text" placeholder="לדוגמה: בתדריך הזה למדתי ש..." style="width:100%;min-height:150px;font-size:15px;background:#fff;border:1.5px solid rgba(217,80,59,0.2);color:var(--ice);border-radius:16px;padding:14px 16px;font-family:'Sora',sans-serif;line-height:1.8;resize:vertical;box-shadow:inset 0 2px 6px rgba(0,0,0,0.04)"></textarea>
     <!-- Analyze button -->
-    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(184,134,42,0.3)">
+    <button id="reverse-submit-btn" onclick="submitReverseBriefing()" style="margin-top:14px;background:linear-gradient(135deg,#B8862A,#E8C97A);border:none;color:#1A1714;border-radius:16px;padding:16px 20px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 18px rgba(217,80,59,0.3)">
       <span style="font-size:18px">✦</span> נתח את ההסבר שלי
     </button>
     <!-- Result -->
@@ -12833,8 +12841,8 @@ function renderManagersDiscipline(){
 
 <!-- HISTORY MODAL -->
 <div id="history-modal" style="display:none;position:fixed;inset:0;z-index:310;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
-  <div style="background:#FFFDF8;border:1px solid rgba(184,134,42,0.2);border-radius:24px;width:100%;max-width:600px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
-    <div style="position:sticky;top:0;background:#FFFDF8;border-bottom:1px solid rgba(184,134,42,0.15);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
+  <div style="background:#FFFDF8;border:1px solid rgba(217,80,59,0.2);border-radius:24px;width:100%;max-width:600px;margin:0 auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+    <div style="position:sticky;top:0;background:#FFFDF8;border-bottom:1px solid rgba(217,80,59,0.15);padding:18px 22px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center;z-index:1">
       <div>
         <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📖 היסטוריית מבחנים</div>
         <div style="font-size:16px;font-weight:700;color:var(--ice)" id="history-modal-name"></div>
@@ -13045,7 +13053,7 @@ function renderManagersDiscipline(){
 
 <!-- SUPABASE AUTH LOGIN MODAL -->
 <div id="auth-modal" style="display:flex;position:fixed;inset:0;z-index:1000;background:var(--ink);align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid rgba(184,134,42,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
+  <div style="background:#fff;border:1px solid rgba(217,80,59,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C97A,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:40px;margin-bottom:12px">📚</div>
@@ -13073,7 +13081,7 @@ function renderManagersDiscipline(){
 <div id="debrief-modal" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:480px;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
+    <div style="background:linear-gradient(135deg,rgba(184,113,15,0.12),transparent);border-bottom:1px solid var(--line);padding:20px 22px;display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:11px;color:var(--warn);font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">📝 תיעוד ישיבת משוב</div>
         <div style="font-size:16px;font-weight:700;color:var(--ice)" id="debrief-agent-name"></div>
@@ -13243,7 +13251,7 @@ function renderManagersDiscipline(){
   <div style="background:#F5F4F0;border-radius:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden">
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1A1814,#2A2420);padding:20px 24px">
-      <div style="font-size:10px;font-weight:700;color:rgba(201,168,76,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
+      <div style="font-size:10px;font-weight:700;color:rgba(217,80,59,0.7);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">משוב על תשובת AI</div>
       <div style="font-size:22px;color:#F0EDE6;font-family:Playfair Display,serif;font-weight:700">מה הייתה הבעיה?</div>
       <div id="rfm-stars" style="font-size:20px;color:#C9A84C;margin-top:6px">★★★★☆</div>
     </div>
@@ -13269,7 +13277,7 @@ function renderManagersDiscipline(){
 <div id="warning-template-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
   <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:24px;width:100%;max-width:680px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,rgba(240,160,75,0.1),transparent);border-bottom:1px solid var(--line);padding:20px 24px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center">
+    <div style="background:linear-gradient(135deg,rgba(184,113,15,0.1),transparent);border-bottom:1px solid var(--line);padding:20px 24px;border-radius:24px 24px 0 0;display:flex;justify-content:space-between;align-items:center">
       <div>
         <div style="font-size:10px;font-weight:700;color:var(--warn);font-family:'DM Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">⚠️ טמפלט</div>
         <div style="font-size:18px;font-weight:700;color:var(--ice)">סיכום שיחת אזהרה</div>
