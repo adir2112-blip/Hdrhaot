@@ -9201,38 +9201,31 @@ async function richImageUpload(areaId) {
     const ta = document.getElementById(areaId);
     if (!ta) return;
 
-    if(isImage && file.size < 2*1024*1024){
-      // Small image — embed as base64
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const pos = ta.selectionStart || ta.value.length;
-        const txt = '\n![' + file.name + '](' + e.target.result + ')\n';
-        ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
-        ta.focus();
-      };
-      reader.readAsDataURL(file);
+    // Always upload to Supabase Storage and insert a short link/image URL —
+    // never embed the file as base64 in the article text. A base64 image
+    // is tens of thousands of characters on one logical line, which wraps
+    // into dozens of visible lines in the textarea and bloats the saved
+    // article content.
+    if(file.size > 50*1024*1024){ alert('קובץ גדול מדי — מקסימום 50MB'); return; }
+    var origPlaceholder = ta.placeholder;
+    ta.placeholder = 'מעלה קובץ... אנא המתן ✋';
+    var ext = file.name.split('.').pop().toLowerCase();
+    var fname = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+    var {error} = await _sb.storage.from('knowledge-files').upload(fname, file, {contentType:file.type, upsert:false});
+    if(error){ alert('שגיאה בהעלאה: ' + error.message); ta.placeholder = origPlaceholder; return; }
+    var {data:urlData} = _sb.storage.from('knowledge-files').getPublicUrl(fname);
+    var publicUrl = urlData.publicUrl;
+    var icon = isImage?'🖼':ext==='pdf'?'📄':ext==='pptx'||ext==='ppt'?'📊':ext==='xlsx'||ext==='xls'?'📋':ext==='docx'||ext==='doc'?'📝':'📎';
+    var html;
+    if(isImage){
+      html = '\n!['+file.name+']('+publicUrl+')\n';
     } else {
-      // Large file or non-image — upload to Supabase Storage
-      if(file.size > 50*1024*1024){ alert('קובץ גדול מדי — מקסימום 50MB'); return; }
-      var origPlaceholder = ta.placeholder;
-      ta.placeholder = 'מעלה קובץ... אנא המתן ✋';
-      var ext = file.name.split('.').pop().toLowerCase();
-      var fname = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-var {data, error} = await _sb.from('briefing_docs').insert(row).select().single();
-  if(error){ alert('שגיאה בפרסום: ' + error.message); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }      var {data:urlData} = _sb.storage.from('knowledge-files').getPublicUrl(fname);
-      var publicUrl = urlData.publicUrl;
-      var icon = isImage?'🖼':ext==='pdf'?'📄':ext==='pptx'||ext==='ppt'?'📊':ext==='xlsx'||ext==='xls'?'📋':ext==='docx'||ext==='doc'?'📝':'📎';
-      var html;
-      if(isImage){
-        html = '\n!['+file.name+']('+publicUrl+')\n';
-      } else {
-        html = '\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
-      }
-      const pos = ta.selectionStart || ta.value.length;
-      ta.value = ta.value.slice(0,pos) + html + ta.value.slice(pos);
-      ta.placeholder = origPlaceholder;
-      ta.focus();
+      html = '\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
     }
+    const pos = ta.selectionStart || ta.value.length;
+    ta.value = ta.value.slice(0,pos) + html + ta.value.slice(pos);
+    ta.placeholder = origPlaceholder;
+    ta.focus();
   };
   inp.click();
 }
@@ -9251,22 +9244,26 @@ function initRichDragDrop(areaId) {
     ta.style.outline = '';
     ta.style.borderRadius = '';
   });
-  ta.addEventListener('drop', e => {
+  ta.addEventListener('drop', async e => {
     e.preventDefault();
     ta.style.outline = '';
     ta.style.borderRadius = '';
     const files = e.dataTransfer.files;
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const pos = ta.selectionStart || ta.value.length;
-        const txt = '\n![' + file.name + '](' + ev.target.result + ')\n';
-        ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
-        ta.selectionStart = ta.selectionEnd = pos + txt.length;
-        ta.focus();
-      };
-      reader.readAsDataURL(file);
+      if(file.size > 50*1024*1024){ alert('קובץ גדול מדי — מקסימום 50MB'); continue; }
+      const origPlaceholder = ta.placeholder;
+      ta.placeholder = 'מעלה תמונה... אנא המתן ✋';
+      const fname = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const {error} = await _sb.storage.from('knowledge-files').upload(fname, file, {contentType:file.type, upsert:false});
+      if(error){ alert('שגיאה בהעלאה: ' + error.message); ta.placeholder = origPlaceholder; continue; }
+      const {data:urlData} = _sb.storage.from('knowledge-files').getPublicUrl(fname);
+      const pos = ta.selectionStart || ta.value.length;
+      const txt = '\n![' + file.name + '](' + urlData.publicUrl + ')\n';
+      ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + txt.length;
+      ta.placeholder = origPlaceholder;
+      ta.focus();
     }
   });
 }
