@@ -11926,12 +11926,14 @@ function renderRepLoginsTable(){
   if(!rows.length){ el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים</div>'; return; }
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--ink3)">';
   var sa_n=sortArrow('name',_repLoginSort), sa_c=sortArrow('count',_repLoginSort), sa_l=sortArrow('last',_repLoginSort);
+  html+='<th style="padding:6px 8px;text-align:center;color:var(--ice3);width:26px">#</th>';
   html+='<th onclick="sortRepLogins(\'name\')" style="padding:6px 8px;text-align:right;color:var(--ice3);cursor:pointer">נציג'+sa_n+'</th>';
   html+='<th onclick="sortRepLogins(\'count\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">כניסות'+sa_c+'</th>';
   html+='<th onclick="sortRepLogins(\'last\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">כניסה אחרונה'+sa_l+'</th>';
   html+='</tr>';
   rows.forEach(function(r,i){
     html+='<tr style="border-bottom:1px solid var(--line);background:'+(i%2===0?'transparent':'var(--ink3)')+'">'+
+      '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(i+1)+'</td>'+
       '<td style="padding:6px 8px;color:var(--ice)">'+r.name+'</td>'+
       '<td style="padding:6px 8px;text-align:center;font-weight:700;color:var(--gold)">'+r.count+'</td>'+
       '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">'+(r.last?new Date(r.last).toLocaleDateString('he-IL'):'-')+'</td>'+
@@ -11953,6 +11955,7 @@ function renderRepUsageTable(){
   if(!rows.length){ el.innerHTML='<div style="color:var(--ice3);text-align:center;padding:1rem">אין נתונים עדיין</div>'; return; }
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--ink3)">';
   var su_n=sortArrow('name',_repUsageSort), su_c=sortArrow('count',_repUsageSort), su_l=sortArrow('last',_repUsageSort);
+  html+='<th style="padding:6px 8px;text-align:center;color:var(--ice3);width:26px">#</th>';
   html+='<th onclick="sortRepUsage(\'name\')" style="padding:6px 8px;text-align:right;color:var(--ice3);cursor:pointer">נציג'+su_n+'</th>';
   html+='<th onclick="sortRepUsage(\'count\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">שיחות AI'+su_c+'</th>';
   html+='<th onclick="sortRepUsage(\'last\')" style="padding:6px 8px;text-align:center;color:var(--ice3);cursor:pointer">אחרון'+su_l+'</th>';
@@ -11960,6 +11963,7 @@ function renderRepUsageTable(){
   html+='</tr>';
   rows.forEach(function(r,i){
     html+='<tr style="border-bottom:1px solid var(--line);background:'+(i%2===0?'transparent':'var(--ink3)')+'">'+
+      '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(i+1)+'</td>'+
       '<td style="padding:6px 8px;color:var(--ice)">'+r.name+'</td>'+
       '<td style="padding:6px 8px;text-align:center;font-weight:700;color:#5BA0E6">'+r.count+'</td>'+
       '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-size:11px">'+(r.last?new Date(r.last).toLocaleDateString('he-IL'):'-')+'</td>'+
