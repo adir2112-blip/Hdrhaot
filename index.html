@@ -8957,7 +8957,7 @@ function updateAgentSidebar(){
       bdNotif.innerHTML='<div style="background:rgba(184,113,15,0.1);border:1.5px solid rgba(184,113,15,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">'+
         '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+bdPending+' תדריכים לחתימה</div>'+
         '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>'+
-        '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>'+
+        '<button onclick="showAgentPanel(\'briefingdocs\')" style="padding:8px 16px;font-size:13px;background:var(--warn);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:\'Sora\',sans-serif">פתח ▶</button>'+
       '</div>';
     } else {
       bdNotif.style.display='none';
@@ -9070,6 +9070,20 @@ function richCmd(areaId, cmd) {
   }
   ta.focus();
 }
+
+// Ctrl+B / Ctrl+I / Ctrl+U keyboard shortcuts for the rich article editor
+// textareas (Cmd on Mac too). Scoped to just these two known editor
+// textareas rather than all textareas, so it can't surprise unrelated
+// plain-text fields elsewhere in the app.
+document.addEventListener('keydown', function(e){
+  if(!(e.ctrlKey||e.metaKey)) return;
+  var id = e.target && e.target.id;
+  if(id!=='k-content' && id!=='k-edit-content') return;
+  var key = e.key.toLowerCase();
+  if(key==='b'){ e.preventDefault(); richCmd(id,'bold'); }
+  else if(key==='i'){ e.preventDefault(); richCmd(id,'italic'); }
+  else if(key==='u'){ e.preventDefault(); richCmd(id,'underline'); }
+});
 
 function richHeader(areaId) {
   const ta = document.getElementById(areaId);
@@ -11052,7 +11066,7 @@ async function loadAgentBriefingDocs(){
       bdNotif.innerHTML = '<div style="background:rgba(184,113,15,0.1);border:1.5px solid rgba(184,113,15,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
         '<div><div style="font-size:13px;font-weight:700;color:var(--warn)">📄 יש לך '+pending.length+' תדריכים לחתימה</div>' +
         '<div style="font-size:12px;color:var(--ice3);margin-top:3px">יש לקרוא ולחתום לפני המשך העבודה</div></div>' +
-        '<button onclick="showAgentPanel(\'briefingdocs\')" class="btn btn-gold" style="padding:8px 16px;font-size:13px">פתח ▶</button>' +
+        '<button onclick="showAgentPanel(\'briefingdocs\')" style="padding:8px 16px;font-size:13px;background:var(--warn);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:\'Sora\',sans-serif">פתח ▶</button>' +
       '</div>';
     } else {
       bdNotif.style.display = 'none';
