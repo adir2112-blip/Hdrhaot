@@ -9050,12 +9050,25 @@ function richCmd(areaId, cmd) {
   if (!ta) return;
   const start = ta.selectionStart, end = ta.selectionEnd;
   const sel = ta.value.substring(start, end);
-  let wrap = '';
-  if (cmd === 'bold') wrap = '**';
-  if (cmd === 'italic') wrap = '_';
-  if (cmd === 'underline') { richInsert(areaId, '<u>' + sel + '</u>'); return; }
-  if (!sel) { richInsert(areaId, wrap + 'טקסט' + wrap); return; }
-  richInsert(areaId, wrap + sel + wrap);
+  let openTag = '', closeTag = '';
+  if (cmd === 'bold') { openTag = '**'; closeTag = '**'; }
+  else if (cmd === 'italic') { openTag = '_'; closeTag = '_'; }
+  else if (cmd === 'underline') { openTag = '<u>'; closeTag = '</u>'; }
+  else return;
+
+  const text = openTag + sel + closeTag;
+  ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+  if (sel) {
+    // Text was selected — keep the now-wrapped text selected, so it's
+    // clear what changed and the user can immediately type over it.
+    ta.selectionStart = start + openTag.length;
+    ta.selectionEnd = start + openTag.length + sel.length;
+  } else {
+    // Nothing selected — no placeholder text to type over/delete. Just
+    // place the cursor between the markers so typing starts right there.
+    ta.selectionStart = ta.selectionEnd = start + openTag.length;
+  }
+  ta.focus();
 }
 
 function richHeader(areaId) {
@@ -9190,6 +9203,43 @@ function richFontSize(areaId, size) {
   richInsert(areaId, '[size:' + size + ']' + sel + '[/size]');
 }
 
+// Size presets offered when inserting an image — {N} suffix on the
+// markdown (![alt](url){max-width:...}) is already supported by
+// processInline()'s image regex, this just gives the editor a UI for it.
+var IMAGE_SIZE_PRESETS = [
+  {label:'קטן מאוד', width:'120px'},
+  {label:'קטן', width:'250px'},
+  {label:'גדול', width:'450px'},
+  {label:'גדול מאוד', width:'600px'},
+  {label:'ענק', width:'100%'}
+];
+function pickImageSize(){
+  return new Promise(function(resolve){
+    var existing = document.getElementById('image-size-modal');
+    if(existing) existing.remove();
+    var modal = document.createElement('div');
+    modal.id = 'image-size-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:3100;background:rgba(36,31,61,0.35);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML =
+      '<div style="background:#fff;border-radius:20px;max-width:340px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(36,31,61,0.25);direction:rtl;text-align:center">'+
+        '<div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:16px">📐 באיזה גודל להציג את התמונה?</div>'+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+
+          IMAGE_SIZE_PRESETS.map(function(s,i){
+            return '<button data-i="'+i+'" style="background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:12px;padding:11px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:Sora,sans-serif">'+s.label+'</button>';
+          }).join('')+
+        '</div>'+
+        '<button id="image-size-cancel" style="margin-top:12px;background:none;border:none;color:var(--ice3);font-size:12px;cursor:pointer">ביטול</button>'+
+      '</div>';
+    document.body.appendChild(modal);
+    function finish(v){ modal.remove(); resolve(v); }
+    modal.addEventListener('click', function(e){ if(e.target===modal) finish(null); });
+    modal.querySelectorAll('button[data-i]').forEach(function(btn){
+      btn.onclick = function(){ finish(IMAGE_SIZE_PRESETS[+btn.dataset.i].width); };
+    });
+    document.getElementById('image-size-cancel').onclick = function(){ finish(null); };
+  });
+}
+
 async function richImageUpload(areaId) {
   const inp = document.createElement('input');
   inp.type = 'file';
@@ -9200,6 +9250,12 @@ async function richImageUpload(areaId) {
     const isImage = file.type.startsWith('image/');
     const ta = document.getElementById(areaId);
     if (!ta) return;
+
+    var imgWidth = null;
+    if(isImage){
+      imgWidth = await pickImageSize();
+      if(imgWidth===null) return; // user cancelled the size picker
+    }
 
     // Always upload to Supabase Storage and insert a short link/image URL —
     // never embed the file as base64 in the article text. A base64 image
@@ -9218,7 +9274,7 @@ async function richImageUpload(areaId) {
     var icon = isImage?'🖼':ext==='pdf'?'📄':ext==='pptx'||ext==='ppt'?'📊':ext==='xlsx'||ext==='xls'?'📋':ext==='docx'||ext==='doc'?'📝':'📎';
     var html;
     if(isImage){
-      html = '\n!['+file.name+']('+publicUrl+')\n';
+      html = '\n!['+file.name+']('+publicUrl+'){max-width:'+imgWidth+'}\n';
     } else {
       html = '\n[EMBED]<div style="margin:10px 0"><a href="'+publicUrl+'" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#fff;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;font-family:Sora,sans-serif">'+icon+' פתח / הורד: '+file.name+'</a></div>[/EMBED]\n';
     }
@@ -9252,6 +9308,8 @@ function initRichDragDrop(areaId) {
     for (const file of files) {
       if (!file.type.startsWith('image/')) continue;
       if(file.size > 50*1024*1024){ alert('קובץ גדול מדי — מקסימום 50MB'); continue; }
+      const imgWidth = await pickImageSize();
+      if(imgWidth===null) continue; // user cancelled the size picker
       const origPlaceholder = ta.placeholder;
       ta.placeholder = 'מעלה תמונה... אנא המתן ✋';
       const fname = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
@@ -9259,7 +9317,7 @@ function initRichDragDrop(areaId) {
       if(error){ alert('שגיאה בהעלאה: ' + error.message); ta.placeholder = origPlaceholder; continue; }
       const {data:urlData} = _sb.storage.from('knowledge-files').getPublicUrl(fname);
       const pos = ta.selectionStart || ta.value.length;
-      const txt = '\n![' + file.name + '](' + urlData.publicUrl + ')\n';
+      const txt = '\n![' + file.name + '](' + urlData.publicUrl + '){max-width:'+imgWidth+'}\n';
       ta.value = ta.value.slice(0, pos) + txt + ta.value.slice(pos);
       ta.selectionStart = ta.selectionEnd = pos + txt.length;
       ta.placeholder = origPlaceholder;
