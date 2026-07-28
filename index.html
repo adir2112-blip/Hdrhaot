@@ -9556,6 +9556,7 @@ function showBriefingStatusFromMemory(briefingId){
     var comp = completions[String(a.id)];
     if(comp) doneAgents.push({agent:a, comp:comp}); else pendingAgents.push(a);
   });
+  doneAgents.sort(function(x,y){ return (y.comp.score||0) - (x.comp.score||0); });
   window._briefingHistoryDoneAgents = doneAgents;
 
   var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
@@ -10960,6 +10961,7 @@ async function showBriefingStatus(el){
     if(comp && comp.signed_at) doneAgents.push({agent:a, comp:comp});
     else pendingAgents.push(a);
   });
+  doneAgents.sort(function(x,y){ return (y.comp.score||0) - (x.comp.score||0); });
 
   var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
     '<div class="card" style="text-align:center;padding:12px"><div style="font-size:24px;font-weight:800;color:var(--ok)">'+doneAgents.length+'</div><div style="font-size:11px;color:var(--ice3)">חתמו</div></div>' +
