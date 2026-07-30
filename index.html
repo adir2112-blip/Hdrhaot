@@ -3250,6 +3250,21 @@ function col(id){return AV_COLORS[(id-1)%AV_COLORS.length];}
 function now(){const n=new Date();return`${n.getDate()}/${n.getMonth()+1}/${n.getFullYear()} ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// AI-generated MCQs tend to place the correct option first; shuffle so its
+// position is actually random, keeping .correct pointed at the right text.
+function shuffleQuestionOptions(q){
+  if(!q || !Array.isArray(q.options)) return q;
+  var correctText = q.options[q.correct];
+  var arr = q.options.slice();
+  for(var i=arr.length-1;i>0;i--){
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+  }
+  q.options = arr;
+  q.correct = arr.indexOf(correctText);
+  return q;
+}
+
 /* ══ TOAST NOTIFICATIONS — styled replacement for window.alert ══ */
 (function(){
   var stack;
@@ -5375,6 +5390,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
     const raw=(data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(raw);
     S.eq=JSON.parse(JSON.stringify(parsed.questions));
+    S.eq.forEach(shuffleQuestionOptions);
     S.cur={title,content};
     document.getElementById('preview-title').textContent=title;
     renderEQ();
@@ -10739,6 +10755,7 @@ async function generateBriefingQuestions(){
     var raw = data.choices[0].message.content.trim();
     raw = raw.replace(/```json|```/g,'').trim();
     _newBriefingQuestions = JSON.parse(raw);
+    _newBriefingQuestions.forEach(shuffleQuestionOptions);
     renderBriefingQuestions();
   } catch(e) {
     alert('שגיאה ביצירת שאלות: ' + e.message);
