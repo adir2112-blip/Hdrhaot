@@ -3199,7 +3199,7 @@ let S={
 // database level, and this shared list is loaded for everyone. Admin
 // screens that need it fetch it on demand instead (openEditIdNumber).
 async function dbAgents(){
-  const {data,error}=await _sb.from('agents').select('id,name,depts,pin,last_login,active,phone,is_active').order('id');
+  const {data,error}=await _sb.from('agents').select('id,name,depts,has_pin,last_login,active,phone,is_active').order('id');
   if(error){console.error('agents load',error);return[];}
   return (data||[]).map(a=>{
     try{
@@ -5023,7 +5023,7 @@ function showPinModal(id){
   const sid=String(id);
   const a=S.agents.find(x=>String(x.id)===sid);
   if(!a){console.error('showPinModal: agent not found, id=',id,'agents=',S.agents.map(x=>x.id));return;}
-  if(!a.pin){selectAgent(sid);return;}
+  if(!a.has_pin){selectAgent(sid);return;}
   _pinAgentId=id;_pinVal='';
   document.getElementById('pin-agent-name').textContent=a.name;
   document.getElementById('pin-error').style.display='none';
@@ -5066,16 +5066,24 @@ function updatePinDots(){
     if(d){d.style.background=i<_pinVal.length?'var(--gold)':'transparent';d.style.borderColor=i<_pinVal.length?'var(--gold)':'var(--line2)';}
   }
 }
-function pinConfirm(){
+var _pinConfirming=false;
+async function pinConfirm(){
+  if(_pinConfirming)return;
   const sid=String(_pinAgentId);
   const a=S.agents.find(x=>String(x.id)===sid);
   if(!a)return;
-  if(_pinVal===String(a.pin)){
-    closePinModal();
-    selectAgent(sid);
-  } else {
-    document.getElementById('pin-error').style.display='block';
-    _pinVal='';updatePinDots();
+  _pinConfirming=true;
+  try{
+    const {data:ok,error}=await _sb.rpc('verify_agent_pin',{p_agent_id:a.id,p_pin:_pinVal});
+    if(!error && ok){
+      closePinModal();
+      selectAgent(sid);
+    } else {
+      document.getElementById('pin-error').style.display='block';
+      _pinVal='';updatePinDots();
+    }
+  } finally {
+    _pinConfirming=false;
   }
 }
 
@@ -5175,7 +5183,7 @@ function renderSettings(){
           <div class="av" style="width:36px;height:36px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
-            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.pin?`קוד: ****`:'ללא קוד'} ${a.phone?`· 📱 ${a.phone}`:''}</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.has_pin?`קוד: ****`:'ללא קוד'} ${a.phone?`· 📱 ${a.phone}`:''}</div>
             ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
           </div>
         </div>
@@ -5550,7 +5558,7 @@ async function selectAgent(id){
   // Save last login timestamp
   const loginTs=now();
   S.agent.last_login=loginTs;
-  await _sb.from('agents').update({last_login:loginTs}).eq('id',S.agent.id);
+  await _sb.rpc('mark_agent_login',{p_agent_id:S.agent.id,p_login_ts:loginTs});
   // Track login history + daily activity pulse
   recordAgentActivity();
   S.briefings=await dbBriefings();
@@ -8023,12 +8031,17 @@ async function resetSingleCompletion(briefingId,agentId){
 
 /* ── EDIT PIN ─────────────────────────────────────── */
 let _editPinId=null;
-function openEditPin(id){
+async function openEditPin(id){
   const a=S.agents.find(x=>x.id===id);if(!a)return;
   _editPinId=id;
   document.getElementById('edit-pin-agent-label').textContent=a.name;
-  document.getElementById('edit-pin-input').value=a.pin||'';
+  document.getElementById('edit-pin-input').value='...';
   document.getElementById('edit-pin-modal').style.display='flex';
+  // pin isn't in the shared S.agents cache anymore (excluded at the DB
+  // level for anon) — fetch it here specifically, as an authenticated admin.
+  const {data}=await _sb.from('agents').select('pin').eq('id',id).single();
+  a.pin=data?.pin||'';
+  document.getElementById('edit-pin-input').value=a.pin;
   setTimeout(()=>document.getElementById('edit-pin-input').focus(),100);
 }
 function closeEditPin(){
