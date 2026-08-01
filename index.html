@@ -1120,6 +1120,21 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   [id$="-modal"], [id$="Modal"] { align-items:flex-end!important; padding:0!important; }
 }
 
+/* ══ SKELETON LOADING ══════════════════════════════ */
+@keyframes skel-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.skel-card {
+  background:var(--ink2); border:1px solid var(--line); border-radius:var(--r2);
+  padding:18px 22px; margin-bottom:10px;
+}
+.skel-line {
+  height:12px; border-radius:6px; margin-bottom:8px;
+  background:linear-gradient(90deg, var(--ink3) 25%, var(--ink4) 50%, var(--ink3) 75%);
+  background-size:200% 100%;
+  animation:skel-shimmer 1.4s ease-in-out infinite;
+}
+.skel-line:last-child{margin-bottom:0}
+@media (prefers-reduced-motion: reduce){ .skel-line{ animation:none; } }
+
 /* ══ RICH EDITOR TOOLBAR ══════════════════════════════ */
 .rich-toolbar {
   display:flex; flex-wrap:wrap; gap:3px;
@@ -1730,6 +1745,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <!-- KPI row -->
     <div id="rep-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"></div>
 
+    <!-- Activity chart -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px">📈 פעילות לפי יום</div>
+      <div style="height:220px;position:relative"><canvas id="rep-chart"></canvas></div>
+    </div>
+
     <!-- Two tables side by side -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
@@ -1929,6 +1950,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             </div>
           </div>
           <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+          <div id="agent-trend-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid rgba(116,105,166,0.12)">
+            <div style="font-size:10px;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:8px">מגמת הציונים שלך</div>
+            <div style="height:90px;position:relative"><canvas id="agent-trend-chart"></canvas></div>
+          </div>
         </div>
       </div>
 
@@ -2610,7 +2635,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <option value="סחר">סחר</option>
         </select>
       </div>
-      <div id="briefings-tab-list"><div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div></div>
+      <div id="briefings-tab-list">
+        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+      </div>
     </div>
   </div>
 
@@ -3268,6 +3297,68 @@ function shuffleQuestionOptions(q){
   q.options = arr;
   q.correct = arr.indexOf(correctText);
   return q;
+}
+
+// Shimmering placeholder cards shown instead of plain "טוען..." text
+// while a list is loading.
+function skeletonCards(n, linesPerCard){
+  n = n||3; linesPerCard = linesPerCard||2;
+  var card = '<div class="skel-card">' +
+    '<div class="skel-line" style="width:45%"></div>' +
+    (linesPerCard>1 ? '<div class="skel-line" style="width:70%"></div>' : '') +
+    (linesPerCard>2 ? '<div class="skel-line" style="width:30%"></div>' : '') +
+  '</div>';
+  return new Array(n).fill(card).join('');
+}
+
+// Lightweight canvas confetti burst for high quiz scores — no external
+// library, self-removing, respects prefers-reduced-motion.
+function fireConfetti(){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;inset:0;z-index:9999;pointer-events:none;width:100%;height:100%';
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  document.body.appendChild(canvas);
+  var ctx=canvas.getContext('2d');
+  var colors=['#7469A6','#9085C8','#17A99C','#0E9C7C','#D4AF37','#B8710F'];
+  var particles=[];
+  for(var i=0;i<110;i++){
+    particles.push({
+      x: canvas.width/2+(Math.random()-0.5)*140,
+      y: canvas.height*0.35,
+      vx: (Math.random()-0.5)*10,
+      vy: -Math.random()*10-4,
+      size: Math.random()*6+4,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*360,
+      vr: (Math.random()-0.5)*12,
+      shape: Math.random()<0.5?'rect':'circle',
+      life: 1
+    });
+  }
+  var gravity=0.28, start=performance.now();
+  function frame(t){
+    var elapsed=t-start;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var alive=false;
+    particles.forEach(function(p){
+      p.vy+=gravity; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=0.008;
+      if(p.life>0 && p.y<canvas.height+40){
+        alive=true;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot*Math.PI/180);
+        ctx.globalAlpha=Math.max(p.life,0);
+        ctx.fillStyle=p.color;
+        if(p.shape==='rect') ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+        else { ctx.beginPath(); ctx.arc(0,0,p.size/2,0,Math.PI*2); ctx.fill(); }
+        ctx.restore();
+      }
+    });
+    if(alive && elapsed<3500) requestAnimationFrame(frame);
+    else canvas.remove();
+  }
+  requestAnimationFrame(frame);
 }
 
 /* ══ TOAST NOTIFICATIONS — styled replacement for window.alert ══ */
@@ -5085,6 +5176,9 @@ async function pinConfirm(){
       selectAgent(sid);
     } else {
       document.getElementById('pin-error').style.display='block';
+      const dotsEl=document.getElementById('pin-dots');
+      dotsEl.classList.remove('pin-shake'); void dotsEl.offsetWidth; dotsEl.classList.add('pin-shake');
+      setTimeout(()=>dotsEl.classList.remove('pin-shake'), 420);
       _pinVal='';updatePinDots();
     }
   } finally {
@@ -5845,6 +5939,45 @@ function deadlineChip(dl){
   return `<span class="chip chip-muted" style="font-size:11px">📅 עד ${new Date(dl).toLocaleDateString('he-IL')}</span>`;
 }
 
+let _agentTrendChartInstance=null;
+function _parseTsToDate(ts){
+  if(!ts) return new Date(0);
+  var parts=String(ts).split(' ');
+  var dp=(parts[0]||'').split('/');
+  if(dp.length<3) return new Date(0);
+  var tp=(parts[1]||'00:00').split(':');
+  return new Date(+dp[2],+dp[1]-1,+dp[0],+tp[0]||0,+tp[1]||0);
+}
+function renderAgentTrendChart(done, agId){
+  const wrapEl=document.getElementById('agent-trend-wrap');
+  const canvasEl=document.getElementById('agent-trend-chart');
+  if(!wrapEl||!canvasEl) return;
+  if(_agentTrendChartInstance){ _agentTrendChartInstance.destroy(); _agentTrendChartInstance=null; }
+  if(!done || done.length<2){ wrapEl.style.display='none'; return; }
+  wrapEl.style.display='block';
+
+  const sorted=[...done].sort((a,b)=>_parseTsToDate(a.completions[agId].ts)-_parseTsToDate(b.completions[agId].ts));
+  const labels=sorted.map(b=>b.title.length>10?b.title.slice(0,10)+'…':b.title);
+  const scores=sorted.map(b=>b.completions[agId].score);
+
+  const ctx=canvasEl.getContext('2d');
+  _agentTrendChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{ labels, datasets:[{
+      data:scores, borderColor:'#7469A6', backgroundColor:'rgba(116,105,166,0.12)',
+      borderWidth:2.5, pointBackgroundColor:'#7469A6', pointRadius:3, pointHoverRadius:5,
+      tension:0.35, fill:true
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.raw+'%' } } },
+      scales:{
+        y:{ min:0, max:100, ticks:{ display:false }, grid:{ display:false } },
+        x:{ ticks:{ color:'#888', font:{size:9}, maxRotation:0, autoSkip:true, maxTicksLimit:6 }, grid:{ display:false } }
+      }
+    }
+  });
+}
 function renderAgentBriefings(){
   const el=document.getElementById('agent-briefing-list');
   if(!S.agent){console.warn('renderAgentBriefings: no agent');return;}
@@ -5868,6 +6001,7 @@ function renderAgentBriefings(){
       statItem(_avg!==null?_avg+'%':'—','ממוצע',_avg!==null?(_avg>=80?'var(--ok)':_avg>=60?'var(--warn)':'var(--danger)'):'var(--ice3)')+
       statItem('#'+_rank,'דירוג','var(--gold2)');
   }
+  renderAgentTrendChart(_done, _agId);
   console.log('=== AGENT BRIEFINGS DEBUG ===');
   console.log('Agent:', S.agent.name, 'id:', S.agent.id);
   console.log('Agent depts raw:', S.agent.depts);
@@ -6107,6 +6241,7 @@ async function submitQuiz(){
   big.className='score-num '+(S.score>=80?'s-great':S.score>=60?'s-mid':'s-low');
   document.getElementById('score-label').textContent=`${c} מתוך ${qs.length} תשובות נכונות`;
   goStep('sign');
+  if(S.score>=80) setTimeout(fireConfetti,150);
   // שמירה אוטומטית — עם הגנה מפני race condition (קריאה טרייה מה-DB לפני כתיבה)
   try{
     const ts=now();
@@ -6510,11 +6645,16 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
       const rankLabel=s.count===0?'—':medals[i]||`#${i+1}`;
       const isTopRank=s.count>0&&i<3;
       const isMe=highlightId&&String(s.a.id)===String(highlightId);
-      return`<div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);${isMe?'background:var(--accent-bg);border-right:3px solid var(--gold);':isTopRank?'background:var(--gold-bg)':''}">
-        <div style="width:28px;text-align:center;font-size:${isTopRank?18:13}px;flex-shrink:0;opacity:${s.count===0?0.4:1}">${rankLabel}</div>
-        <div class="av" style="width:32px;height:32px;background:${c.bg};color:${c.c};font-size:11px;flex-shrink:0;opacity:${s.count===0?0.5:1}">${ini(s.a.name)}</div>
+      const medalColors=['#D4AF37','#B8C0C8','#CD7F32'];
+      const medalGlow=['rgba(212,175,55,0.35)','rgba(184,192,200,0.3)','rgba(205,127,50,0.28)'];
+      const ringColor=isTopRank?medalColors[i]:null;
+      const avSize=isTopRank?(i===0?42:36):32;
+      const avFont=isTopRank?(i===0?14:12):11;
+      return`<div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);${isMe?'background:var(--accent-bg);border-right:3px solid var(--gold);':isTopRank?`background:linear-gradient(90deg, ${medalGlow[i]} 0%, transparent 70%)`:''}">
+        <div style="width:28px;text-align:center;font-size:${isTopRank?(i===0?22:18):13}px;flex-shrink:0;opacity:${s.count===0?0.4:1};${i===0&&s.count>0?'filter:drop-shadow(0 0 6px rgba(212,175,55,0.6))':''}">${rankLabel}</div>
+        <div class="av" style="width:${avSize}px;height:${avSize}px;background:${c.bg};color:${c.c};font-size:${avFont}px;flex-shrink:0;opacity:${s.count===0?0.5:1};transition:all 0.2s;${ringColor?`box-shadow:0 0 0 2.5px ${ringColor}, 0 0 14px ${medalGlow[i]};`:''}">${ini(s.a.name)}</div>
         <div style="flex:1;min-width:0;opacity:${s.count===0?0.5:1}">
-          <div style="font-size:14px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.a.name}</div>
+          <div style="font-size:${i===0&&s.count>0?15:14}px;font-weight:${i===0&&s.count>0?800:600};color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.a.name}</div>
           <div style="font-size:11px;color:var(--ice3);margin-top:1px">${s.count?s.count+' תדריכים הושלמו':'טרם השלים תדריך'}</div>
         </div>
         <div style="text-align:center;flex-shrink:0">
@@ -10931,7 +11071,7 @@ async function viewBriefingDoc(el){
   var modal = document.getElementById('briefing-status-modal');
   modal.style.display = 'flex';
   document.getElementById('bsm-title').textContent = '📖 צפייה בתדריך';
-  document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+  document.getElementById('bsm-content').innerHTML = skeletonCards(3,2);
 
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
   if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
@@ -10975,7 +11115,7 @@ async function showBriefingStatus(el){
   _lastBriefingStatusId = briefingId;
   var modal = document.getElementById('briefing-status-modal');
   modal.style.display = 'flex';
-  document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
+  document.getElementById('bsm-content').innerHTML = skeletonCards(3,2);
 
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
   if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
@@ -11236,6 +11376,7 @@ function showAgentBriefingDocScreen(step){
       '<button onclick="signBriefingDoc()" class="btn btn-gold" style="width:100%;padding:14px;font-size:16px;margin-bottom:10px">✍️ חתמתי והבנתי את התוכן</button>' +
       '<button onclick="closeAgentBriefingDocScreen()" style="width:100%;padding:10px;background:none;border:1px solid var(--line2);border-radius:12px;color:var(--ice3);cursor:pointer;font-family:Sora,sans-serif">חזרה</button>' +
     '</div>';
+    if(score>=80) setTimeout(fireConfetti,150);
   }
 }
 
@@ -12274,6 +12415,53 @@ async function loadReports(){
 
   renderRepLoginsTable();
   renderRepUsageTable();
+  renderRepChart(loginArr, usageArr);
+}
+
+let _repChartInstance=null;
+function renderRepChart(loginArr, usageArr){
+  const canvasEl=document.getElementById('rep-chart');
+  if(!canvasEl) return;
+  if(_repChartInstance){ _repChartInstance.destroy(); _repChartInstance=null; }
+
+  const dayKey=iso=>{ const d=new Date(iso); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  const dayLabel=iso=>{ const d=new Date(iso); return d.getDate()+'/'+(d.getMonth()+1); };
+
+  const loginsByDay={}, usageByDay={};
+  loginArr.forEach(r=>{ const k=dayKey(r.login_at); loginsByDay[k]=(loginsByDay[k]||0)+1; });
+  usageArr.forEach(r=>{ const k=dayKey(r.created_at); usageByDay[k]=(usageByDay[k]||0)+1; });
+
+  const allKeys=[...new Set([...Object.keys(loginsByDay), ...Object.keys(usageByDay)])].sort();
+  const ctx=canvasEl.getContext('2d');
+
+  if(!allKeys.length){
+    ctx.clearRect(0,0,canvasEl.width,canvasEl.height);
+    ctx.fillStyle='#888'; ctx.font='13px Sora'; ctx.textAlign='center';
+    ctx.fillText('אין נתונים לתקופה זו', canvasEl.width/2, 100);
+    return;
+  }
+
+  const keysCapped=allKeys.length>31?allKeys.slice(-31):allKeys;
+  const labels=keysCapped.map(k=>dayLabel(k+'T00:00:00'));
+
+  _repChartInstance=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'כניסות', data:keysCapped.map(k=>loginsByDay[k]||0), backgroundColor:'rgba(116,105,166,0.65)', borderRadius:4, maxBarThickness:22 },
+        { label:'שיחות AI', data:keysCapped.map(k=>usageByDay[k]||0), backgroundColor:'rgba(23,169,156,0.6)', borderRadius:4, maxBarThickness:22 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ color:'#756F92', font:{size:11}, boxWidth:12, usePointStyle:true } } },
+      scales:{
+        y:{ beginAtZero:true, ticks:{ color:'#888', font:{size:10}, precision:0 }, grid:{ color:'rgba(36,31,61,0.06)' } },
+        x:{ ticks:{ color:'#888', font:{size:10}, maxRotation:0 }, grid:{ display:false } }
+      }
+    }
+  });
 }
 
 function exportReportExcel(type){
@@ -13117,6 +13305,10 @@ function renderManagersDiscipline(){
 .pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:12px;padding:14px;font-size:20px;font-weight:600;color:var(--ice);cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.1s;}
 .pin-key:hover{background:var(--ink4);border-color:var(--gold-line);}
 .pin-key:active{transform:scale(0.93);}
+@keyframes pin-shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+#pin-dots.pin-shake{animation:pin-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;}
+#pin-dots.pin-shake > div{border-color:var(--danger)!important;background:var(--danger-bg)!important;}
+@media (prefers-reduced-motion: reduce){#pin-dots.pin-shake{animation:none;}}
 </style>
 
 <!-- EDIT PIN MODAL -->
