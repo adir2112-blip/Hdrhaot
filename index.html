@@ -3299,6 +3299,28 @@ function shuffleQuestionOptions(q){
   return q;
 }
 
+// Friendly empty-state block: icon + title + optional subtitle, used
+// instead of a bare line of grey text when a list has nothing to show.
+function emptyState(icon, title, sub){
+  return '<div style="text-align:center;padding:2.5rem 1rem;color:var(--ice3)">' +
+    '<div style="font-size:34px;margin-bottom:10px;opacity:0.7">'+icon+'</div>' +
+    '<div style="font-size:14px;font-weight:600;color:var(--ice2)">'+title+'</div>' +
+    (sub ? '<div style="font-size:12px;color:var(--ice3);margin-top:4px">'+sub+'</div>' : '') +
+  '</div>';
+}
+
+// Rough reading-time estimate for a knowledge article (strips markdown-ish
+// syntax and embed/image tags before counting words).
+function estimateReadingTime(content){
+  var text = String(content||'')
+    .replace(/\[EMBED\][\s\S]*?\[\/EMBED\]/g,' ')
+    .replace(/!\[[^\]]*\]\([^)]+\)(\{[^}]+\})?/g,' ')
+    .replace(/\[[^\]]*\]\([^)]+\)/g,' ')
+    .replace(/[*_#`]/g,' ');
+  var words = text.split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words/200));
+}
+
 // Shimmering placeholder cards shown instead of plain "טוען..." text
 // while a list is loading.
 function skeletonCards(n, linesPerCard){
@@ -3743,7 +3765,7 @@ function renderSettingsAgents(){
     const grp=GROUPS.find(g=>g.key===filterVal);
     if(grp) filtered=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
   }
-  if(!filtered.length){ el.innerHTML='<div style="color:var(--ice3);font-size:14px">אין נציגים בסינון זה.</div>'; return; }
+  if(!filtered.length){ el.innerHTML=emptyState('🔍','לא נמצאו נציגים','נסה לשנות את הסינון'); return; }
   el.innerHTML = filtered.map(a=>{
     const c=col(a.id);
     return`<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px">
@@ -3917,6 +3939,7 @@ function renderKnowledgeArticles(){
         <div style="font-size:13px;color:var(--ice3);line-height:1.6;max-height:60px;overflow:hidden">${(a.content||'').slice(0,150)}${(a.content||'').length>150?'…':''}</div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
           <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--ice3)">${a.created_at?new Date(a.created_at).toLocaleDateString('he-IL'):''}</span>
+          <span style="font-size:12px;color:var(--ice3)">⏱ ${estimateReadingTime(a.content)} דק' קריאה</span>
           <span style="font-size:12px;color:var(--ice3)">👁 ${a.view_count||0} צפיות</span>
           <span style="font-size:12px;color:var(--ice3)">📅 ${a.week_views||0} השבוע</span>
           ${a.avg_rating?`<span style="font-size:12px;color:${starColor}" title="${(+a.avg_rating).toFixed(1)}/5">${stars} (${a.rating_count||0})</span>`:''}
@@ -4233,7 +4256,7 @@ function renderKBBriefings(){
   if(q) briefs=briefs.filter(b=>(b.title||'').toLowerCase().includes(q)||(b.content||'').toLowerCase().includes(q));
 
   if(!briefs.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין תדריכים לסינון זה.</div>';
+    el.innerHTML=emptyState('📄','אין תדריכים לסינון זה','נסה לבחור סינון אחר');
     return;
   }
 
@@ -5265,7 +5288,7 @@ function renderSettings(){
     if(grp) filtered=S.agents.filter(a=>(a.depts||[]).some(d=>grp.depts.includes(d)));
   }
   if(!filtered.length){
-    el.innerHTML='<div style="font-size:14px;color:var(--ice3);padding:1rem 0">אין נציגים בסינון זה.</div>';
+    el.innerHTML=emptyState('🔍','לא נמצאו נציגים','נסה לשנות את הסינון');
     // still render new-agent depts
     const nd=document.getElementById('new-agent-depts');
     if(nd) nd.innerHTML=DEPTS.map((d,i)=>`<button class="dept-cb" id="ncbl-${i}" onclick="toggleNewDept(${i},this)" data-checked="0"><span id="ncbx-${i}" style="width:13px;height:13px;border-radius:3px;border:1px solid var(--line2);background:transparent;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px"></span> ${d}</button>`).join('');
@@ -6578,6 +6601,26 @@ function getWeek(){
   const m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));m.setHours(0,0,0,0);
   return S.briefings.filter(b=>b.is_active!==false&&new Date(b.weekDate)>=m);
 }
+function getWeekRange(offsetWeeks){
+  const n=new Date(),d=n.getDay();
+  const thisMon=new Date(n); thisMon.setDate(n.getDate()-(d===0?6:d-1)); thisMon.setHours(0,0,0,0);
+  const start=new Date(thisMon); start.setDate(thisMon.getDate()+7*offsetWeeks);
+  const end=new Date(start); end.setDate(start.getDate()+7);
+  return {start,end};
+}
+function getLastWeek(){
+  const {start,end}=getWeekRange(-1);
+  return S.briefings.filter(b=>b.is_active!==false&&new Date(b.weekDate)>=start&&new Date(b.weekDate)<end);
+}
+// Small ↑/↓ badge comparing this week's value to last week's, used on
+// dashboard KPI cards.
+function kpiTrend(curr, prev){
+  if(prev===0 && curr===0) return '';
+  const diff=curr-prev;
+  if(diff===0) return '<span style="font-size:10px;color:var(--ice3);font-weight:600">— ללא שינוי</span>';
+  const up=diff>0;
+  return '<span style="font-size:10px;color:'+(up?'var(--ok)':'var(--danger)')+';font-weight:700">'+(up?'↑':'↓')+' '+Math.abs(diff)+' משבוע שעבר</span>';
+}
 function filterAgents(){
   const active=S.agents.filter(a=>a.active!==false);
   if(S.filterDept==='all') return active;
@@ -6632,7 +6675,7 @@ function renderLeaderboard(targetEl, highlightId, agentFilter){
     return y.avg-x.avg||y.count-x.count;
   });
 
-  if(!stats.length){el.innerHTML='<div style="font-size:13px;color:var(--ice3);padding:1rem 0">אין נציגים עדיין.</div>';return;}
+  if(!stats.length){el.innerHTML=emptyState('🏆','עדיין אין כאן כלום','ברגע שנציגים ישלימו תדריכים, לוח התחרות יתמלא');return;}
 
   const medals=['🥇','🥈','🥉'];
   el.innerHTML=`<div class="card" style="padding:0;overflow:hidden">
@@ -6683,11 +6726,17 @@ async function renderTracking(){
   const exp=wb.length*tot;
   const done=wb.reduce((s,b)=>s+filteredAgents.filter(a=>b.completions[a.id]).length,0);
   const pct=exp?Math.round(done/exp*100):0;
+
+  const lwb=getLastWeek();
+  const lwExp=lwb.length*tot;
+  const lwDone=lwb.reduce((s,b)=>s+filteredAgents.filter(a=>b.completions[a.id]).length,0);
+  const lwPct=lwExp?Math.round(lwDone/lwExp*100):0;
+
   document.getElementById('week-stats').innerHTML=`
-    <div class="kpi"><div class="kpi-val">${wb.length}</div><div class="kpi-label">תדריכים השבוע</div></div>
+    <div class="kpi"><div class="kpi-val">${wb.length}</div><div class="kpi-label">תדריכים השבוע</div><div style="margin-top:6px">${kpiTrend(wb.length,lwb.length)}</div></div>
     <div class="kpi"><div class="kpi-val">${tot}</div><div class="kpi-label">נציגים${S.filterDept!=='all'?' (מסונן)':''}</div></div>
-    <div class="kpi"><div class="kpi-val">${done}</div><div class="kpi-label">השלמות</div></div>
-    <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז עמידה</div></div>`;
+    <div class="kpi"><div class="kpi-val">${done}</div><div class="kpi-label">השלמות</div><div style="margin-top:6px">${kpiTrend(done,lwDone)}</div></div>
+    <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז עמידה</div><div style="margin-top:6px">${kpiTrend(pct,lwPct)}</div></div>`;
   const bwEl=document.getElementById('briefings-week-list');
   const allBriefings=[...S.briefings].filter(b=>b.is_active!==false).reverse();
   // Filter briefings relevant to selected group
@@ -9015,6 +9064,7 @@ async function showAgentArticle(article){
       '<div style="font-size:18px;font-weight:800;color:var(--ice);margin-bottom:6px">'+article.title+'</div>' +
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">' +
         '<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 10px">'+( article.dept||'כללי')+'</span>' +
+        '<span style="font-size:12px;color:var(--ice3)">⏱ '+estimateReadingTime(article.content)+' דק\' קריאה</span>' +
         '<span style="font-size:12px;color:var(--ice3)">👁 '+(article.view_count||0)+' צפיות</span>' +
         (avgRating ? '<span style="font-size:12px;color:var(--gold)">★ '+avgRating+' ('+article.rating_count+')</span>' : '') +
         '<span style="font-size:12px;color:var(--ice3)">💬 '+articleComments.length+'</span>' +
@@ -10254,7 +10304,7 @@ function renderControlsHistory(){
   if(dept!=='all')  filtered = filtered.filter(c=>c.dept===dept||(!c.dept&&dept==='all'));
 
   if(!filtered.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין בקרות לסינון זה</div>';
+    el.innerHTML=emptyState('📋','אין בקרות לסינון זה','נסה לבחור תקופה או מחלקה אחרת');
     return;
   }
 
@@ -11023,7 +11073,7 @@ async function loadBriefingsTab(){
   var {data:briefings, error} = await q;
   if(error){ el.innerHTML = '<div style="color:var(--danger)">שגיאה: '+error.message+'</div>'; return; }
   if(!briefings || !briefings.length){
-    el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">אין תדריכים. לחץ "תדריך חדש" כדי להתחיל.</div>';
+    el.innerHTML = emptyState('✨','עדיין אין תדריכים כאן','לחץ על "תדריך חדש" כדי להתחיל');
     return;
   }
 
