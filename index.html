@@ -2764,7 +2764,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <div class="sec" id="tab-settings">
     <div id="settings-lock" class="lock-scene" style="display:flex">
       <div class="lock-box">
-        <div class="lock-ico" style="display:flex;justify-content:center"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="lock-ico">🔐</div>
         <div class="lock-title">Manager Access</div>
         <div class="lock-sub">הכנס סיסמת מנהל להמשך</div>
         <div class="field">
@@ -2772,7 +2772,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <div id="admin-pw-error" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-family:'DM Mono',monospace">✗ יש להתחבר דרך מסך הכניסה</div>
         <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="checkPw()">כניסה</button>
-        <button class="btn btn-outline" style="width:100%;margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px" onclick="showAuthModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> מסך כניסה ראשי</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="showAuthModal()">🔐 מסך כניסה ראשי</button>
       </div>
     </div>
     <div id="settings-content" style="display:none">
@@ -2781,28 +2781,28 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <!-- SETTINGS SIDEBAR -->
         <div style="width:180px;flex-shrink:0;position:sticky;top:80px">
           <div style="background:var(--ink3);border:1px solid var(--line2);border-radius:18px;padding:14px 12px">
-            <div style="display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> ניהול</div>
+            <div style="font-size:9px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding:0 4px">⚙️ ניהול</div>
           <button onclick="showSettingsPanel('main')" id="ssb-main" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);font-weight:700;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span><span>ראשי</span>
+            <span style="font-size:18px">🏠</span><span>ראשי</span>
           </button>
           <button onclick="showSettingsPanel('agents')" id="ssb-agents" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span>נציגים</span>
+            <span style="font-size:18px">👥</span><span>נציגים</span>
           </button>
           <button onclick="showSettingsPanel('import')" id="ssb-import" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span>ייבוא מאקסל</span>
+            <span style="font-size:18px">📥</span><span>ייבוא מאקסל</span>
           </button>
           <button onclick="showSettingsPanel('delete')" id="ssb-delete" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span>מחיקת נתונים</span>
+            <span style="font-size:18px">🗑</span><span>מחיקת נתונים</span>
           </button>
           <button onclick="showSettingsPanel('stats')" id="ssb-stats" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>סטטיסטיקות</span>
+            <span style="font-size:18px">📊</span><span>סטטיסטיקות</span>
           </button>
           <button onclick="showSettingsPanel('config')" id="ssb-config" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
-            <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>הגדרות</span>
+            <span style="font-size:18px">⚙️</span><span>הגדרות</span>
           </button>
             <div style="height:1px;background:var(--line);margin:8px 4px"></div>
             <button onclick="lockSettings()" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
-              <span class="sb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span>נעל</span>
+              <span style="font-size:18px">🔒</span><span>נעל</span>
             </button>
           </div>
         </div>
@@ -2834,12 +2834,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             style="letter-spacing:0.3em;font-family:'DM Mono',monospace;font-size:18px;text-align:center">
         </div>
         <div class="field">
-          <label class="field-label" style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> מספר טלפון (לוואטסאפ)</label>
+          <label class="field-label">📱 מספר טלפון (לוואטסאפ)</label>
           <input type="text" id="new-agent-phone" placeholder="0501234567" inputmode="tel"
             style="direction:ltr;font-family:'DM Mono',monospace">
         </div>
         <div class="field">
-          <label class="field-label" style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="12" r="1.5"/><path d="M13 10h6M13 14h4"/></svg> תעודת זהות מלאה</label>
+          <label class="field-label">🪪 תעודת זהות מלאה</label>
           <input type="text" id="new-agent-idnumber" placeholder="123456789" inputmode="numeric" maxlength="9"
             style="direction:ltr;font-family:'DM Mono',monospace">
         </div>
@@ -2881,11 +2881,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                   <input type="text" id="new-agent-pin2" placeholder="1234" maxlength="4" inputmode="numeric" style="width:100%;letter-spacing:0.2em;font-family:'DM Mono',monospace;text-align:center">
                 </div>
                 <div style="flex:1;min-width:120px">
-                  <label class="field-label" style="margin-bottom:6px;display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> טלפון</label>
+                  <label class="field-label" style="margin-bottom:6px;display:block">📱 טלפון</label>
                   <input type="text" id="new-agent-phone2" placeholder="0501234567" inputmode="tel" style="width:100%;direction:ltr;font-family:'DM Mono',monospace">
                 </div>
                 <div style="flex:1;min-width:100px">
-                  <label class="field-label" style="margin-bottom:6px;display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="12" r="1.5"/><path d="M13 10h6M13 14h4"/></svg> ת"ז</label>
+                  <label class="field-label" style="margin-bottom:6px;display:block">🪪 ת"ז</label>
                   <input type="text" id="new-agent-idnumber2" placeholder="123456789" inputmode="numeric" maxlength="9" style="width:100%;direction:ltr;font-family:'DM Mono',monospace">
                 </div>
                 <button class="btn btn-gold btn-sm" onclick="addAgentFromPanel()" style="flex-shrink:0;align-self:flex-end">+ הוסף</button>
@@ -2921,18 +2921,18 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                 <span style="font-family:'DM Mono',monospace;background:var(--ink3);padding:2px 8px;border-radius:6px;font-size:12px">שם מלא | מחלקה | 4 ספרות ת"ז</span>
               </div>
               <div style="background:var(--gold-bg);border:1.5px dashed var(--gold-line);border-radius:14px;padding:2rem;text-align:center;margin-bottom:16px">
-                <div style="display:flex;justify-content:center;margin-bottom:12px;color:var(--gold)"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div style="font-size:36px;margin-bottom:12px">📥</div>
                 <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">גרור קובץ Excel לכאן</div>
                 <div style="font-size:12px;color:var(--ice3);margin-bottom:16px">או לחץ לבחירה</div>
                 <label style="cursor:pointer">
                   <input type="file" id="excel-upload2" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
-                  <span class="btn btn-gold btn-sm" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg> בחר קובץ</span>
+                  <span class="btn btn-gold btn-sm">📂 בחר קובץ</span>
                 </label>
               </div>
-              <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;line-height:1.9">
-                <span style="display:inline-flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> נציגים קיימים לא יושכפלו</span><br>
-                <span style="display:inline-flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> PIN אופציונלי — 4 ספרות בלבד</span><br>
-                <span style="display:inline-flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> מחלקה חייבת להתאים לשמות המדויקים במערכת</span>
+              <div style="font-size:12px;color:var(--ice3);font-family:'DM Mono',monospace;line-height:1.7">
+                ✓ נציגים קיימים לא יושכפלו<br>
+                ✓ PIN אופציונלי — 4 ספרות בלבד<br>
+                ✓ מחלקה חייבת להתאים לשמות המדויקים במערכת
               </div>
             </div>
           </div><!-- /sp-import -->
@@ -2991,15 +2991,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <!-- PANEL: CONFIG -->
           <div id="sp-config" style="display:none">
             <div class="card" style="margin-bottom:14px">
-              <div class="card-label" style="display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> שימוש ב-AI היום</div>
+              <div class="card-label">📊 שימוש ב-AI היום</div>
               <div id="config-ai-usage" style="margin-top:8px"></div>
               <div style="font-size:11px;color:var(--ice3);margin-top:8px;font-family:'DM Mono',monospace">מתאפס בחצות בכל יום · מכסה יומית ~1500 בקשות</div>
             </div>
             <div class="card">
-              <div class="card-label" style="display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> הגדרות מערכת</div>
+              <div class="card-label">⚙️ הגדרות מערכת</div>
               <div class="field">
                 <label class="field-label">מפתח OpenAI API</label>
-                <div style="display:flex;align-items:flex-start;gap:6px;font-size:12px;color:var(--ice3);background:var(--ink3);border-radius:10px;padding:10px 12px;line-height:1.6"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>מנוהל כעת ב-Supabase Edge Function secrets ולא דרך המסך הזה — כדי לעדכן, הרץ <code style="font-family:'DM Mono',monospace">supabase secrets set OPENAI_API_KEY=...</code></span></div>
+                <div style="font-size:12px;color:var(--ice3);background:var(--ink3);border-radius:10px;padding:10px 12px;line-height:1.6">🔒 מנוהל כעת ב-Supabase Edge Function secrets ולא דרך המסך הזה — כדי לעדכן, הרץ <code style="font-family:'DM Mono',monospace">supabase secrets set OPENAI_API_KEY=...</code></div>
               </div>
               <div class="field" style="margin-top:16px">
                 <label class="field-label">שינוי סיסמת מנהל</label>
@@ -3022,7 +3022,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 <div id="admin-config-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);align-items:center;justify-content:center">
   <div style="background:linear-gradient(145deg,#1E1830,#2C2540);border:1px solid rgba(116,105,166,0.3);border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;text-align:center;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5)">
     <div style="position:absolute;top:0;right:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:24px 24px 0 0"></div>
-    <div style="display:flex;justify-content:center;margin-bottom:14px;color:var(--gold2);filter:drop-shadow(0 0 16px rgba(116,105,166,0.5))"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
+    <div style="font-size:40px;margin-bottom:14px;filter:drop-shadow(0 0 16px rgba(116,105,166,0.5))">🔑</div>
     <div style="font-family:'Playfair Display',serif;font-size:20px;color:#F0EDE6;margin-bottom:6px">גישת SUPER ADMIN</div>
     <div style="font-size:13px;color:rgba(240,237,230,0.5);margin-bottom:22px;font-family:'DM Mono',monospace">הכנס סיסמת מנהל עליון</div>
     <input type="password" id="config-admin-pw" placeholder="••••••••" 
@@ -5186,7 +5186,7 @@ function renderSettings(){
           <div class="av" style="width:36px;height:36px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
-            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.has_pin?`קוד: ****`:'ללא קוד'} ${a.phone?`· ${a.phone}`:''}</div>
+            <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.has_pin?`קוד: ****`:'ללא קוד'} ${a.phone?`· 📱 ${a.phone}`:''}</div>
             ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
           </div>
         </div>
@@ -5195,8 +5195,8 @@ function renderSettings(){
             ${a.active!==false?'● פעיל':'○ לא פעיל'}
           </button>
           <button class="btn btn-outline btn-sm" onclick="openEditPin(${a.id})" style="font-size:11px;padding:5px 10px">✏ PIN</button>
-          <button class="btn btn-outline btn-sm" onclick="openEditPhone(${a.id})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 10px;color:#25D366;border-color:rgba(37,211,102,0.3)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> טלפון</button>
-          <button class="btn btn-outline btn-sm" onclick="openEditIdNumber(${a.id})" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 10px;color:#6B8EDD;border-color:rgba(107,142,221,0.3)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="12" r="1.5"/><path d="M13 10h6M13 14h4"/></svg> ת"ז</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditPhone(${a.id})" style="font-size:11px;padding:5px 10px;color:#25D366;border-color:rgba(37,211,102,0.3)">📱 טלפון</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditIdNumber(${a.id})" style="font-size:11px;padding:5px 10px;color:#6B8EDD;border-color:rgba(107,142,221,0.3)">🪪 ת"ז</button>
           <button class="btn btn-outline btn-sm" onclick="openExamReview(${a.id})" style="font-size:11px;padding:5px 10px;color:var(--gold);border-color:var(--gold-line)">📋 מבחנים</button>
           <button class="btn btn-danger-soft" onclick="removeAgent(${a.id})">מחק</button>
         </div>
