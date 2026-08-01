@@ -2597,7 +2597,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="briefings-manager-view">
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">
-          <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> תדריך חדש</span>
+          ➕ תדריך חדש
         </button>
         <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
           <option value="all">כל המחלקות</option>
@@ -2616,7 +2616,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <div id="new-briefing-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
     <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div style="font-size:20px;font-weight:800;color:var(--ice);display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg> תדריך חדש</div>
+        <div style="font-size:20px;font-weight:800;color:var(--ice)">📄 תדריך חדש</div>
         <button onclick="closeNewBriefingModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
       </div>
 
@@ -2639,7 +2639,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <label class="field-label">מספר שאלות (2–10)</label>
         <input type="number" id="nb-q-count" min="2" max="10" value="5" style="width:120px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
         <button onclick="generateBriefingQuestions()" class="btn btn-gold" style="margin-right:12px;padding:9px 18px">
-          <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z"/></svg> צור שאלות AI</span>
+          🤖 צור שאלות AI
         </button>
       </div>
 
@@ -2649,11 +2649,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <button onclick="addManualQuestion()" style="margin-top:8px;background:rgba(255,255,255,0.06);border:1px solid var(--line2);color:var(--ice3);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;font-family:'Sora',sans-serif">+ הוסף שאלה ידנית</button>
       </div>
 
-      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z"/></svg> יוצר שאלות...</span></div>
+      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)">🤖 יוצר שאלות...</div>
 
       <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
         <button onclick="closeNewBriefingModal()" style="padding:10px 20px;border-radius:12px;border:1px solid var(--line2);background:none;color:var(--ice3);cursor:pointer;font-family:'Sora',sans-serif">ביטול</button>
-<button id="publish-briefing-btn" onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> פרסם תדריך</span></button>      </div>
+<button id="publish-briefing-btn" onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px">📢 פרסם תדריך</button>      </div>
     </div>
   </div>
 
@@ -2679,7 +2679,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <div style="font-size:13px;color:var(--ice2);line-height:1.7"><strong style="color:var(--warn)">מנהל, שים לב!</strong> תדריך שנבנה במערכת יועבר באופן אוטומטי למערכת ה-CRM. לאחר שהנציג ימלא אותו שם, תוכל לצפות כאן בציון.</div>
     </div>
     <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> תדריך חדש</span></button>
+      <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">➕ תדריך חדש</button>
       <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
         <option value="all">כל המחלקות</option>
         <option value="מובמנט">מובמנט</option>
@@ -2696,7 +2696,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   <div id="new-briefing-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
     <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;padding:24px;direction:rtl">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div style="font-size:20px;font-weight:800;color:var(--ice);display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg> תדריך חדש</div>
+        <div style="font-size:20px;font-weight:800;color:var(--ice)">📄 תדריך חדש</div>
         <button onclick="closeNewBriefingModal()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>
       </div>
       <div class="field" style="margin-bottom:14px">
@@ -2714,9 +2714,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <div class="field" style="margin-bottom:14px;display:flex;align-items:center;gap:12px">
         <label class="field-label" style="margin-bottom:0">מספר שאלות (2-10):</label>
         <input type="number" id="nb-q-count" min="2" max="10" value="5" style="width:80px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:14px;font-family:'Sora',sans-serif">
-        <button onclick="generateBriefingQuestions()" class="btn btn-gold" style="padding:9px 18px"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z"/></svg> צור שאלות AI</span></button>
+        <button onclick="generateBriefingQuestions()" class="btn btn-gold" style="padding:9px 18px">🤖 צור שאלות AI</button>
       </div>
-      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z"/></svg> יוצר שאלות...</span></div>
+      <div id="nb-generating" style="display:none;text-align:center;padding:16px;color:var(--ice3)">🤖 יוצר שאלות...</div>
       <div id="nb-questions-area" style="display:none">
         <div style="font-size:14px;font-weight:700;color:var(--ice);margin-bottom:10px">שאלות (ניתן לערוך):</div>
         <div id="nb-questions-list"></div>
@@ -2724,7 +2724,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
         <button onclick="closeNewBriefingModal()" style="padding:10px 20px;border-radius:12px;border:1px solid var(--line2);background:none;color:var(--ice3);cursor:pointer;font-family:'Sora',sans-serif">ביטול</button>
-<button id="publish-briefing-btn" onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> פרסם תדריך</span></button>      </div>
+<button id="publish-briefing-btn" onclick="publishNewBriefing()" class="btn btn-gold" style="padding:10px 24px">📢 פרסם תדריך</button>      </div>
     </div>
   </div>
 
@@ -9575,7 +9575,7 @@ function showBriefingStatusFromMemory(briefingId){
   _lastBriefingHistoryId = briefingId;
   var modal = document.getElementById('briefing-status-modal');
   modal.style.display = 'flex';
-  document.getElementById('bsm-title').textContent = b.title;
+  document.getElementById('bsm-title').textContent = '📄 ' + b.title;
 
   var completions = b.completions || {};
   var targetDepts = (b.targetDepts && b.targetDepts.length) ? b.targetDepts : [];
@@ -9597,7 +9597,7 @@ function showBriefingStatusFromMemory(briefingId){
   '</div>';
 
   if(doneAgents.length){
-    html += '<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> השלימו:</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ השלימו:</div>';
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך</th></tr>';
     doneAgents.forEach(function(item,idx){
@@ -9609,7 +9609,7 @@ function showBriefingStatusFromMemory(briefingId){
     html += '</table></div>';
   }
   if(pendingAgents.length){
-    html += '<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> ממתינים:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">⏳ ממתינים:</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
     pendingAgents.forEach(function(a){
       html += '<span style="background:rgba(184,113,15,0.1);border:1px solid rgba(184,113,15,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
     });
@@ -10811,16 +10811,16 @@ function addManualQuestion(){
 // ── Publish Briefing ─────────────────────────────────
 async function publishNewBriefing(){
   var pubBtns = document.querySelectorAll('#publish-briefing-btn');
-  var pubBtnsOrigText = '<span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg> פרסם תדריך</span>';
+  var pubBtnsOrigText = '📢 פרסם תדריך';
   pubBtns.forEach(function(b){ b.disabled = true; b.textContent = '⏳ שולח תדריך, נא להמתין...'; b.style.opacity = '0.7'; b.style.cursor = 'not-allowed'; });
 
   var title = document.getElementById('nb-title').value.trim();
   var selectedDepts = Array.from(document.querySelectorAll('.nb-dept-cb:checked')).map(function(cb){ return cb.value; });
   var content = document.getElementById('nb-content').value.trim();
-if(!title){ alert('יש להזין כותרת'); pubBtns.forEach(function(b){ b.disabled=false; b.innerHTML=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
-if(!content){ alert('יש להזין תוכן'); pubBtns.forEach(function(b){ b.disabled=false; b.innerHTML=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
-if(!selectedDepts.length){ alert('יש לבחור לפחות מחלקה אחת'); pubBtns.forEach(function(b){ b.disabled=false; b.innerHTML=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
-if(!_newBriefingQuestions.length){ alert('יש לצור שאלות קודם'); pubBtns.forEach(function(b){ b.disabled=false; b.innerHTML=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
+if(!title){ alert('יש להזין כותרת'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
+if(!content){ alert('יש להזין תוכן'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
+if(!selectedDepts.length){ alert('יש לבחור לפחות מחלקה אחת'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
+if(!_newBriefingQuestions.length){ alert('יש לצור שאלות קודם'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
 
   var dept = selectedDepts.includes('כולם') ? 'all' : selectedDepts.join(',');
 
@@ -10863,7 +10863,7 @@ for(var ai=0; ai<relevantAgents.length; ai++){
     });
   }
 
-pubBtns.forEach(function(b){ b.disabled=false; b.innerHTML=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; });
+pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; });
   closeNewBriefingModal();
   loadBriefingsTab();
   alert('✅ התדריך פורסם בהצלחה!');
@@ -10907,15 +10907,15 @@ async function loadBriefingsTab(){
           '<div style="font-size:16px;font-weight:700;color:var(--ice);margin-bottom:4px">'+b.title+'</div>' +
           '<div style="font-size:12px;color:var(--ice3)">'+b.dept+' · '+pubDate+' · '+b.manager_email+'</div>' +
           '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' +
-            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> '+doneCount+' חתמו</span>' +
-            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:rgba(184,113,15,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> '+pending+' ממתינים</span>' +
+            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם">✅ '+doneCount+' חתמו</span>' +
+            '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(184,113,15,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
             '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
-          '<button onclick="viewBriefingDoc(this)" data-id="'+b.id+'" style="display:inline-flex;align-items:center;gap:6px;background:rgba(23,169,156,0.1);border:1px solid rgba(23,169,156,0.3);color:var(--accent2);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg> צפייה</button>' +
-          '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="display:inline-flex;align-items:center;gap:6px;background:rgba(116,105,166,0.12);border:1px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> סטטוס</button>' +
-          '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="display:inline-flex;align-items:center;background:rgba(196,59,54,0.08);border:1px solid rgba(196,59,54,0.2);color:#C43B36;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+          '<button onclick="viewBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(23,169,156,0.1);border:1px solid rgba(23,169,156,0.3);color:var(--accent2);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">📖 צפייה</button>' +
+          '<button onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="background:rgba(116,105,166,0.12);border:1px solid rgba(116,105,166,0.3);color:var(--gold);border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:Sora,sans-serif;font-weight:700">👁 סטטוס</button>' +
+          '<button onclick="deleteBriefingDoc(this)" data-id="'+b.id+'" style="background:rgba(196,59,54,0.08);border:1px solid rgba(196,59,54,0.2);color:#C43B36;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px">🗑</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -10928,7 +10928,7 @@ async function viewBriefingDoc(el){
   var briefingId = el && el.dataset ? el.dataset.id : el;
   var modal = document.getElementById('briefing-status-modal');
   modal.style.display = 'flex';
-  document.getElementById('bsm-title').textContent = 'צפייה בתדריך';
+  document.getElementById('bsm-title').textContent = '📖 צפייה בתדריך';
   document.getElementById('bsm-content').innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
 
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
@@ -10978,7 +10978,7 @@ async function showBriefingStatus(el){
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
   if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
 
-  document.getElementById('bsm-title').textContent = b.title;
+  document.getElementById('bsm-title').textContent = '📄 ' + b.title;
 
   var completions = {};
   try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
@@ -11002,7 +11002,7 @@ async function showBriefingStatus(el){
   '</div>';
 
   if(doneAgents.length){
-    html += '<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> חתמו:</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--ok);margin-bottom:8px">✅ חתמו:</div>';
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<tr style="background:var(--ink3)"><th style="padding:7px 12px;text-align:right;color:var(--ice3)">שם</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">ציון</th><th style="padding:7px 12px;text-align:center;color:var(--ice3)">תאריך חתימה</th></tr>';
     window._briefingStatusDoneAgents = doneAgents;
@@ -11017,7 +11017,7 @@ async function showBriefingStatus(el){
   }
 
   if(pendingAgents.length){
-    html += '<div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> ממתינים:</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px">⏳ ממתינים:</div>';
     html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
     pendingAgents.forEach(function(a){
       html += '<span style="background:rgba(184,113,15,0.1);border:1px solid rgba(184,113,15,0.3);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px">'+a.name+'</span>';
