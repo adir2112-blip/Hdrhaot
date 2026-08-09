@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   }
 
   // ─── Init Supabase with service_role ───
-  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_ROLE_KEY')!);
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   // ─── Find agent by phone ───
   const { data: agent, error: agentErr } = await supabase.from('agents').select('id, name').eq('phone', phone).single();
