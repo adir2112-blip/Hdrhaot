@@ -7343,14 +7343,33 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
   // card in this grid stays consistent with the top filter dropdown.
   const deptRelevantBriefings=allBriefings.filter(briefingMatchesDeptFilter);
 
-  let overdueCount=0, pendingThisWeek=0;
+  let pendingThisWeek=0;
   wb.forEach(b=>{
     const rel=relevantAgentsFor(b);
     const pending=rel.filter(a=>!b.completions[String(a.id)]);
     pendingThisWeek+=pending.length;
-    const days=deadlineDays(b.deadline);
-    if(days!==null && days<0) overdueCount+=pending.length;
   });
+
+  // High-priority alert: agents who haven't completed a briefing/test more
+  // than STALE_DAYS after it was published — regardless of whether it has
+  // an explicit deadline (most briefings don't set one, which is why this
+  // used to always show 0). Click-through list lets a manager see exactly
+  // who to reach out to.
+  const STALE_DAYS=5;
+  const nowTs=Date.now();
+  const staleList=[];
+  deptRelevantBriefings.forEach(b=>{
+    const publishedTs=_parseTsToDate(b.publishedAt).getTime();
+    if(!publishedTs) return;
+    const daysSincePublish=Math.floor((nowTs-publishedTs)/(1000*60*60*24));
+    if(daysSincePublish<STALE_DAYS) return;
+    relevantAgentsFor(b).forEach(a=>{
+      if(!b.completions[String(a.id)]) staleList.push({agent:a, briefing:b, days:daysSincePublish});
+    });
+  });
+  staleList.sort((x,y)=>y.days-x.days);
+  window._staleCompletionsList=staleList;
+  const overdueCount=staleList.length;
 
   const withDeadline=deptRelevantBriefings.filter(b=>b.deadline).map(b=>({b,days:deadlineDays(b.deadline)})).sort((x,y)=>x.days-y.days);
   const expiring=withDeadline.filter(x=>x.days<=2).slice(0,3);
@@ -7403,19 +7422,19 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
   }).join(''):'<div style="font-size:12.5px;color:var(--ok)">אין תדריכים עם דדליין קרוב 🎉</div>';
 
   const alertRows = [
-    ['נציגים שלא השלימו תדריך שעבר הדדליין שלו', overdueCount],
     ['השלמות ממתינות השבוע', pendingThisWeek],
     ['שאלות בעייתיות שזוהו', wq.length],
   ];
 
   el.innerHTML = `
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:16px">
-    <div style="background:var(--ink2);border:1px solid var(--danger-line);border-radius:var(--r2);padding:18px;background-image:linear-gradient(180deg, var(--danger-bg), var(--ink2) 55%)">
+    <div onclick="openStaleCompletionsList()" style="cursor:pointer;background:var(--ink2);border:1px solid var(--danger-line);border-radius:var(--r2);padding:18px;background-image:linear-gradient(180deg, var(--danger-bg), var(--ink2) 55%)">
       <div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
         <span>🚨 התראת עדיפות גבוהה</span>
         <span style="font-size:10px;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:20px;font-weight:700;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line)">דחוף</span>
       </div>
-      <div style="font-size:40px;font-weight:800;color:var(--danger);line-height:1">${overdueCount}</div>
+      <div style="font-size:40px;font-weight:800;color:var(--danger);line-height:1;text-decoration:underline dotted">${overdueCount}</div>
+      <div style="font-size:11px;color:var(--ice3);margin-top:4px">נציגים שלא ביצעו תדריך/מבחן ${STALE_DAYS}+ ימים מפרסומו — לחץ לרשימה ופנייה יזומה</div>
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
         ${alertRows.map(([label,n])=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ice2)"><span><span style="width:6px;height:6px;border-radius:50%;background:var(--danger);display:inline-block;margin-left:6px"></span>${label}</span><b style="color:var(--ice);font-family:'DM Mono',monospace">${n}</b></div>`).join('')}
       </div>
@@ -7615,6 +7634,37 @@ function wqToggle(i){
 // Used by the "תדריכים אחרונים" dashboard card — jumps to and opens the
 // same done/pending list already rendered per-briefing further down the
 // page (בriefings-week-list), instead of duplicating that table.
+// "🚨 התראת עדיפות גבוהה" card — shows exactly which agent hasn't done
+// which briefing/test, with their phone, so a manager can reach out
+// directly instead of just seeing a bare count.
+function openStaleCompletionsList(){
+  const list=window._staleCompletionsList||[];
+  const modal=document.getElementById('briefing-status-modal');
+  if(!modal) return;
+  modal.style.display='flex';
+  document.getElementById('bsm-title').textContent='🚨 נציגים שלא ביצעו תדריך/מבחן';
+  const el=document.getElementById('bsm-content');
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ok)">✓ אין נציגים שממתינים מעל 5 ימים</div>';
+    return;
+  }
+  el.innerHTML='<div class="card" style="padding:0;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
+    '<tr style="background:var(--ink3)">'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">נציג</th>'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">טלפון</th>'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">תדריך/מבחן</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ימים ללא ביצוע</th>'+
+    '</tr>'+
+    list.map(function(x){
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agent.name+'</td>'+
+        '<td style="padding:8px 12px;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(x.agent.phone||'—')+'</td>'+
+        '<td style="padding:8px 12px;color:var(--ice2)">'+x.briefing.title+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.days+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</table></div>';
+}
 function openBriefingDetailFromDashboard(bid, which){
   const id='bd-'+which+'-'+bid;
   const el=document.getElementById(id);
