@@ -2078,7 +2078,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- /abp-main -->
 
       <!-- PANEL: BRIEFINGS (מבחנים) -->
-      <div id="abp-briefings" style="display:none;width:100%"><div id="abp-briefings-content"></div></div>
+      <div id="abp-briefings" style="display:none;width:100%">
+        <div class="sec-eyebrow" style="margin-bottom:6px">מבחנים</div>
+        <div class="sec-title" style="margin-bottom:16px">תדריכים <em>ממתינים</em></div>
+        <div id="abp-briefings-content"></div>
+      </div>
 
       <!-- PANEL: BRIEFING DOCS (תדריכים) -->
       <div id="abp-briefingdocs-panel" style="display:none;width:100%;padding:8px 0">
@@ -9458,11 +9462,17 @@ function renderAgentBriefingsPanel(){
       var dl=b.deadline?new Date(b.deadline):null;
       var daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
       var urgent=daysLeft!==null&&daysLeft<=2;
-      return '<div style="background:'+(urgent?'linear-gradient(135deg,#FBEAE9,#F8DCDA)':'linear-gradient(135deg,#0B4A3C,#0E9C7C)')+';border-radius:20px;padding:22px;margin-bottom:12px">'+
-        '<div style="color:'+(urgent?'var(--ice)':'#fff')+';font-size:17px;font-weight:800;margin-bottom:8px;text-align:right">'+b.title+'</div>'+
-        (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'rgba(255,255,255,0.8)')+';margin-bottom:12px;text-align:right">⏰ '+daysLeft+' ימים לסיום</div>':'')+
-        '<button onclick="openBriefing(this.dataset.id)" data-id="'+b.id+'" style="width:100%;background:'+(urgent?'var(--gold)':'rgba(255,255,255,0.15)')+';border:'+(urgent?'none':'1.5px solid rgba(255,255,255,0.3)')+';color:'+(urgent?'#fff':'#fff')+';border-radius:14px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Sora,sans-serif">▶ התחל תדריך</button>'+
-        '</div>';
+      return '<div class="brief-row" onclick="openBriefing('+b.id+')" style="'+(urgent?'border-color:var(--warn-line);background:var(--warn-bg);':'')+'">'+
+        '<div style="flex:1">'+
+          (urgent?'<span class="chip chip-warn" style="margin-bottom:7px;display:inline-block">⚡ דחוף</span><br>':'')+
+          '<div style="font-size:16px;font-weight:700;color:var(--ice)">'+b.title+'</div>'+
+          (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'var(--ice3)')+';margin-top:7px">⏰ '+daysLeft+' ימים לסיום</div>':'')+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-right:4px">'+
+          '<span class="chip chip-warn">ממתין</span>'+
+          '<span style="font-size:11px;color:var(--ice3);font-family:\'DM Mono\',monospace">▶ התחל</span>'+
+        '</div>'+
+      '</div>';
     }).join('');
 }
 
