@@ -2628,7 +2628,14 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div id="tracking-alert-banner" style="display:none;margin-bottom:1.5rem"></div>
     <div id="weak-questions-badge" style="margin-bottom:1.5rem"></div>
     <div class="kpi-grid" id="week-stats"></div>
-    <div class="section-divider"><div class="section-divider-inner">📋 מבחנים</div></div>
+    <div class="section-divider" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="section-divider-inner">📋 מבחנים</div>
+      <select id="bw-active-filter" onchange="renderTracking()" style="font-size:12.5px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:'Sora',sans-serif;direction:rtl;cursor:pointer">
+        <option value="active" selected>פעילים</option>
+        <option value="inactive">לא פעילים</option>
+        <option value="anystatus">הכל (פעיל+לא פעיל)</option>
+      </select>
+    </div>
     <div id="briefings-week-list"></div>
     <div class="div"></div>
     <div class="dept-filter-bar" id="dept-filter-bar"></div>
@@ -6836,7 +6843,12 @@ async function renderTracking(){
     <div class="kpi"><div class="kpi-val">${done}</div><div class="kpi-label">השלמות</div><div style="margin-top:6px">${kpiTrend(done,lwDone)}</div></div>
     <div class="kpi"><div class="kpi-val">${pct}%</div><div class="kpi-label">אחוז עמידה</div><div style="margin-top:6px">${kpiTrend(pct,lwPct)}</div></div>`;
   const bwEl=document.getElementById('briefings-week-list');
-  const allBriefings=[...S.briefings].filter(b=>b.is_active!==false).reverse();
+  const bwActiveFilter=document.getElementById('bw-active-filter')?.value||'active';
+  const allBriefings=[...S.briefings].filter(b=>{
+    if(bwActiveFilter==='active') return b.is_active!==false;
+    if(bwActiveFilter==='inactive') return b.is_active===false;
+    return true; // anystatus
+  }).reverse();
   // Filter briefings relevant to selected group
   const visibleBriefings=allBriefings.filter(briefingMatchesDeptFilter);
   bwEl.innerHTML=!visibleBriefings.length
@@ -7658,6 +7670,11 @@ const PANEL_FILTERS = {
       <option value="all">הכל</option>
       <option value="pending">ממתינים</option>
       <option value="completed">הושלמו</option>
+    </select>
+    <select id="bh-active-filter" onchange="renderBriefingsHistoryPanel()" style="font-size:13px;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-family:Sora,sans-serif;direction:rtl;cursor:pointer">
+      <option value="active" selected>פעילים</option>
+      <option value="inactive">לא פעילים</option>
+      <option value="anystatus">הכל (פעיל+לא פעיל)</option>
     </select>`,
 };
 
@@ -9917,8 +9934,13 @@ function renderBriefingsHistoryPanel(){
 
   const deptFilter=document.getElementById('bh-dept-filter')?.value||'all';
   const statusFilter=document.getElementById('bh-status-filter')?.value||'all';
+  const activeFilter=document.getElementById('bh-active-filter')?.value||'active';
 
   let briefs=[...S.briefings];
+
+  if(activeFilter==='active') briefs=briefs.filter(b=>b.is_active!==false);
+  else if(activeFilter==='inactive') briefs=briefs.filter(b=>b.is_active===false);
+  // 'anystatus' — no filtering, show both
 
   if(deptFilter!=='all'){
     const grp=GROUPS.find(g=>g.key===deptFilter);
