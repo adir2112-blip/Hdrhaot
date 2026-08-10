@@ -7398,6 +7398,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
   // תדריך (briefing_docs) with a score under 75%, newest first.
   const FAIL_THRESHOLD=75;
   const failedList=[];
+  const debriefedList=[];
   briefingDocs.forEach(doc=>{
     const rel=relevantAgentsForDoc(doc, filteredAgents);
     const relIds=new Set(rel.map(a=>String(a.id)));
@@ -7405,8 +7406,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
       if(!relIds.has(String(agentId))) return;
       if(comp==null||comp.score===undefined||comp.score===null) return;
       if(comp.score>=FAIL_THRESHOLD) return;
-      if(comp.reviewed_by) return; // already sat with a manager — drop off this list
-      failedList.push({
+      const entry={
         agentId: String(agentId),
         agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
         briefingId: doc.id,
@@ -7414,11 +7414,22 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
         date: comp.signed_at || '',
         score: comp.score,
         answers: comp.answers || []
-      });
+      };
+      if(comp.reviewed_by){
+        // already sat with a manager — drops off the failed list, shows up
+        // in the "עברו מועד ב'" list instead
+        entry.reviewedBy=comp.reviewed_by;
+        entry.reviewedAt=comp.reviewed_at||null;
+        debriefedList.push(entry);
+      } else {
+        failedList.push(entry);
+      }
     });
   });
   failedList.sort((x,y)=> new Date(y.date||0) - new Date(x.date||0));
+  debriefedList.sort((x,y)=> new Date(y.reviewedAt||0) - new Date(x.reviewedAt||0));
   window._failedBriefingDocsList=failedList;
+  window._debriefedAgentsList=debriefedList;
   const failedPreview=failedList.slice(0,3);
   const failedHtml=failedPreview.length?failedPreview.map(x=>{
     const dateStr=x.date?new Date(x.date).toLocaleDateString('he-IL'):'—';
@@ -7489,6 +7500,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
     <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px;cursor:pointer" onclick="openFailedBriefingDocsList()">
       <div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:14px">😞 עובדים שנכשלו בתדריך</div>
       ${failedHtml}
+      <div onclick="event.stopPropagation();openDebriefedAgentsList('all')" style="margin-top:10px;text-align:center;font-size:12px;font-weight:700;color:var(--ok);cursor:pointer;text-decoration:underline dotted">✅ ${debriefedList.length} עברו מועד ב' — לצפייה ברשימה</div>
     </div>
 
     <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px;cursor:pointer" onclick="openWeakQuestionsPage()">
@@ -7780,12 +7792,19 @@ async function markAgentDebriefed(idx){
 
   // The agent is debriefed now — drop them off both the currently-open list
   // and the per-briefing badge list, so the count on the ניהול תדריכים
-  // card stays in sync without needing a reload.
+  // card stays in sync without needing a reload, and add them to the
+  // "עברו מועד ב'" list so they're visible somewhere.
   window._failedBriefingDocsList=(window._failedBriefingDocsList||[]).filter(function(item){ return item!==x; });
   const cardList=(window._briefingCardFailedLists||{})[x.briefingId];
   if(cardList){
     window._briefingCardFailedLists[x.briefingId]=cardList.filter(function(item){ return !(item.agentId===x.agentId && item.briefingId===x.briefingId); });
   }
+  x.reviewedBy=managerName;
+  x.reviewedAt=nowIso;
+  if(!window._debriefedAgentsList) window._debriefedAgentsList=[];
+  window._debriefedAgentsList.unshift(x);
+  const cardDebriefedList=(window._briefingCardDebriefedLists||{})[x.briefingId];
+  if(cardDebriefedList) cardDebriefedList.unshift(x);
   openFailedBriefingDocsList();
 }
 // Manager's display name for the "נציג מושב" mark. Supabase Auth doesn't
@@ -7816,6 +7835,73 @@ async function getManagerDisplayName(session){
 function openFailedListForBriefingCard(briefingId){
   window._failedBriefingDocsList = (window._briefingCardFailedLists||{})[briefingId] || [];
   openFailedBriefingDocsList();
+}
+// Centralized "✅ עברו מועד ב'" view — every agent a manager already sat
+// with, across all תדריכים by default, or scoped to one via filterBriefingId
+// (passed as the specific briefing's id from a ניהול תדריכים card, or 'all'
+// from the dashboard link). Includes a dropdown so a manager can also switch
+// the filter freely once the list is open.
+function openDebriefedAgentsList(filterBriefingId){
+  window._debriefedListFilter = (filterBriefingId===undefined || filterBriefingId===null) ? 'all' : String(filterBriefingId);
+  renderDebriefedAgentsList();
+}
+function renderDebriefedAgentsList(){
+  const modal=document.getElementById('briefing-status-modal');
+  if(!modal) return;
+  modal.style.display='flex';
+  const list=window._debriefedAgentsList||[];
+  const filter=window._debriefedListFilter||'all';
+  const filtered = filter==='all' ? list : list.filter(x=>String(x.briefingId)===filter);
+  document.getElementById('bsm-title').textContent='✅ עברו מועד ב׳';
+
+  const briefingOptsMap=new Map();
+  list.forEach(x=>{ if(!briefingOptsMap.has(String(x.briefingId))) briefingOptsMap.set(String(x.briefingId), x.briefingTitle); });
+  const filterHtml='<div style="margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+    '<span style="font-size:12px;color:var(--ice3)">סינון לפי תדריך:</span>'+
+    '<select onchange="openDebriefedAgentsList(this.value)" style="padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:12.5px;font-family:\'Sora\',sans-serif">'+
+      '<option value="all"'+(filter==='all'?' selected':'')+'>כל התדריכים ('+list.length+')</option>'+
+      [...briefingOptsMap.entries()].map(function(entry){
+        var id=entry[0], title=entry[1];
+        var cnt=list.filter(function(x){ return String(x.briefingId)===id; }).length;
+        return '<option value="'+id+'"'+(filter===id?' selected':'')+'>'+title+' ('+cnt+')</option>';
+      }).join('')+
+    '</select>'+
+  '</div>';
+
+  const el=document.getElementById('bsm-content');
+  if(!filtered.length){
+    el.innerHTML=filterHtml+'<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נציגים שעברו מועד ב׳ בסינון זה</div>';
+    window._debriefedListFiltered=[];
+    return;
+  }
+  window._debriefedListFiltered=filtered;
+  el.innerHTML=filterHtml+'<div class="card" style="padding:0;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
+    '<tr style="background:var(--ink3)">'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם נציג</th>'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם תדריך</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון מקורי</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">סומן ע"י</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">בתאריך</th>'+
+    '</tr>'+
+    filtered.map(function(x,idx){
+      const dt=x.reviewedAt?new Date(x.reviewedAt).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agentName+'</td>'+
+        '<td style="padding:8px 12px;color:var(--gold);cursor:pointer;text-decoration:underline dotted" onclick="openDebriefedAgentAnswers('+idx+')" title="לחץ לצפייה בתשובות הנכונות">'+x.briefingTitle+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.score+'%</td>'+
+        '<td style="padding:8px 12px;text-align:center;color:var(--ok);font-weight:700">'+x.reviewedBy+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+dt+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</table></div>';
+}
+function openDebriefedAgentAnswers(idx){
+  const x=(window._debriefedListFiltered||[])[idx];
+  if(!x) return;
+  document.getElementById('bsm-title').textContent='📝 תשובות — '+x.briefingTitle;
+  document.getElementById('bsm-content').innerHTML=
+    '<button onclick="renderDebriefedAgentsList()" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>'+
+    renderAnswersReviewHtml(x.agentName, x.score, x.answers);
 }
 function openBriefingDetailFromDashboard(bid, which){
   const id='bd-'+which+'-'+bid;
@@ -11591,6 +11677,7 @@ async function loadBriefingsTab(){
 
   var html = '';
   window._briefingCardFailedLists = {};
+  window._briefingCardDebriefedLists = {};
   briefings.forEach(function(b){
     var completions = {};
     try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
@@ -11610,13 +11697,13 @@ async function loadBriefingsTab(){
     // openFailedListForBriefingCard).
     var expectedIds = new Set(expectedAgents.map(function(a){ return String(a.id); }));
     var failedForThis = [];
+    var debriefedForThis = [];
     Object.entries(completions).forEach(function(entry){
       var agentId = entry[0], comp = entry[1];
       if(!expectedIds.has(String(agentId))) return;
       if(comp==null || comp.score===undefined || comp.score===null) return;
       if(comp.score >= 75) return;
-      if(comp.reviewed_by) return; // already sat with a manager — drop off this list
-      failedForThis.push({
+      var item = {
         agentId: String(agentId),
         agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
         briefingId: b.id,
@@ -11624,10 +11711,19 @@ async function loadBriefingsTab(){
         date: comp.signed_at || '',
         score: comp.score,
         answers: comp.answers || []
-      });
+      };
+      if(comp.reviewed_by){
+        item.reviewedBy = comp.reviewed_by;
+        item.reviewedAt = comp.reviewed_at || null;
+        debriefedForThis.push(item);
+      } else {
+        failedForThis.push(item);
+      }
     });
     failedForThis.sort(function(x,y){ return new Date(y.date||0) - new Date(x.date||0); });
+    debriefedForThis.sort(function(x,y){ return new Date(y.reviewedAt||0) - new Date(x.reviewedAt||0); });
     window._briefingCardFailedLists[b.id] = failedForThis;
+    window._briefingCardDebriefedLists[b.id] = debriefedForThis;
 
     var pubDate = b.published_at ? new Date(b.published_at).toLocaleDateString('he-IL') : '';
     html += '<div class="card" style="margin-bottom:14px">' +
@@ -11642,6 +11738,9 @@ async function loadBriefingsTab(){
             (failedForThis.length
               ? '<span onclick="openFailedListForBriefingCard('+b.id+')" style="cursor:pointer;background:var(--danger-bg);color:var(--danger);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה בעובדים שנכשלו">😞 '+failedForThis.length+' נכשלו</span>'
               : '<span style="background:var(--ok-bg);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">😞 0 נכשלו</span>') +
+            (debriefedForThis.length
+              ? '<span onclick="openDebriefedAgentsList('+b.id+')" style="cursor:pointer;background:var(--ok-bg);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי עבר מועד ב\'">✅ '+debriefedForThis.length+' עברו מועד ב\'</span>'
+              : '') +
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
@@ -11653,6 +11752,9 @@ async function loadBriefingsTab(){
     '</div>';
   });
   el.innerHTML = html;
+  // Keep the aggregated "✅ עברו מועד ב'" list fresh from whichever tab
+  // (דשבורד or ניהול תדריכים) last loaded — both write the same shape.
+  window._debriefedAgentsList = Object.values(window._briefingCardDebriefedLists).flat();
 }
 
 // ── View Briefing (content + quiz) ────────────────────
