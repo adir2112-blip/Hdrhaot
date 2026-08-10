@@ -7406,10 +7406,15 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
       if(comp==null||comp.score===undefined||comp.score===null) return;
       if(comp.score>=FAIL_THRESHOLD) return;
       failedList.push({
+        agentId: String(agentId),
         agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
+        briefingId: doc.id,
         briefingTitle: doc.title,
         date: comp.signed_at || '',
-        score: comp.score
+        score: comp.score,
+        answers: comp.answers || [],
+        reviewedBy: comp.reviewed_by || null,
+        reviewedAt: comp.reviewed_at || null
       });
     });
   });
@@ -7727,17 +7732,69 @@ function openFailedBriefingDocsList(){
       '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם תדריך</th>'+
       '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">תאריך תדריך</th>'+
       '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">נציג מושב</th>'+
     '</tr>'+
-    list.map(function(x){
+    list.map(function(x,idx){
       const dateStr=x.date?new Date(x.date).toLocaleDateString('he-IL'):'—';
+      const debriefCell = x.reviewedBy
+        ? '<span style="font-size:11px;color:var(--ok);font-weight:700">✅ עבר מועד ב\'</span><br><span style="font-size:10px;color:var(--ice3)">'+x.reviewedBy+' · '+new Date(x.reviewedAt).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</span>'
+        : '<button onclick="markAgentDebriefed('+idx+')" style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Sora\',sans-serif">☑ נציג מושב</button>';
       return '<tr style="border-bottom:1px solid var(--line)">'+
         '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agentName+'</td>'+
-        '<td style="padding:8px 12px;color:var(--ice2)">'+x.briefingTitle+'</td>'+
+        '<td style="padding:8px 12px;color:var(--gold);cursor:pointer;text-decoration:underline dotted" onclick="openFailedBriefingAnswers('+idx+')" title="לחץ לצפייה בתשובות הנכונות">'+x.briefingTitle+'</td>'+
         '<td style="padding:8px 12px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+dateStr+'</td>'+
         '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.score+'%</td>'+
+        '<td style="padding:8px 12px;text-align:center">'+debriefCell+'</td>'+
       '</tr>';
     }).join('')+
   '</table></div>';
+}
+// Click on a failed briefing's title — review the questions with correct
+// answers highlighted, same component used for regular quiz review, so a
+// manager can go over it with the agent on the phone.
+function openFailedBriefingAnswers(idx){
+  const x=(window._failedBriefingDocsList||[])[idx];
+  if(!x) return;
+  document.getElementById('bsm-title').textContent='📝 תשובות — '+x.briefingTitle;
+  document.getElementById('bsm-content').innerHTML=
+    '<button onclick="openFailedBriefingDocsList()" style="margin-bottom:12px;background:var(--ink3);border:1px solid var(--line2);color:var(--ice);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px">← חזרה לרשימה</button>'+
+    renderAnswersReviewHtml(x.agentName, x.score, x.answers);
+}
+// Mark that a manager sat with the agent and went over the failed
+// briefing. Written directly onto that agent's completion record on the
+// briefing_docs row (fetch-fresh-then-update, same race-safe pattern used
+// elsewhere for completions), so it persists and shows up on reload too.
+async function markAgentDebriefed(idx){
+  const x=(window._failedBriefingDocsList||[])[idx];
+  if(!x) return;
+  const {data:{session}}=await _sb.auth.getSession();
+  const managerName=session?.user?.email||'מנהל לא ידוע';
+  const nowIso=new Date().toISOString();
+
+  const {data:freshRow,error:fetchErr}=await _sb.from('briefing_docs').select('completions').eq('id',x.briefingId).single();
+  if(fetchErr){ alert('שגיאה: '+fetchErr.message); return; }
+  let freshCompletions={};
+  try{ freshCompletions=typeof freshRow.completions==='string'?JSON.parse(freshRow.completions):(freshRow.completions||{}); }catch(e){}
+  if(!freshCompletions[x.agentId]) return;
+  freshCompletions[x.agentId].reviewed_by=managerName;
+  freshCompletions[x.agentId].reviewed_at=nowIso;
+  const {error:updateErr}=await _sb.from('briefing_docs').update({completions:JSON.stringify(freshCompletions)}).eq('id',x.briefingId);
+  if(updateErr){ alert('שגיאה בשמירה: '+updateErr.message); return; }
+
+  x.reviewedBy=managerName;
+  x.reviewedAt=nowIso;
+  openFailedBriefingDocsList();
+}
+// Same exact "עובדים שנכשלו בתדריך" window, opened from a single briefing's
+// card in ניהול תדריכים — scoped to just that briefing's failed completions.
+// Reuses window._failedBriefingDocsList + openFailedBriefingDocsList() so
+// markAgentDebriefed()/openFailedBriefingAnswers() work unmodified, and since
+// both this view and the dashboard card read reviewed_by/reviewed_at off the
+// same briefing_docs.completions row, a mark made in either place is visible
+// in both the next time each is opened (re-fetched fresh from the DB).
+function openFailedListForBriefingCard(briefingId){
+  window._failedBriefingDocsList = (window._briefingCardFailedLists||{})[briefingId] || [];
+  openFailedBriefingDocsList();
 }
 function openBriefingDetailFromDashboard(bid, which){
   const id='bd-'+which+'-'+bid;
@@ -11512,6 +11569,7 @@ async function loadBriefingsTab(){
   }
 
   var html = '';
+  window._briefingCardFailedLists = {};
   briefings.forEach(function(b){
     var completions = {};
     try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
@@ -11526,6 +11584,31 @@ async function loadBriefingsTab(){
     var pending = totalExpected - doneCount;
     var pct = totalExpected ? Math.round(doneCount/totalExpected*100) : 0;
 
+    // "תדריך נכשלו" — same score<75% list as the dashboard card, scoped to
+    // this one briefing, opened via the exact same modal (see
+    // openFailedListForBriefingCard).
+    var expectedIds = new Set(expectedAgents.map(function(a){ return String(a.id); }));
+    var failedForThis = [];
+    Object.entries(completions).forEach(function(entry){
+      var agentId = entry[0], comp = entry[1];
+      if(!expectedIds.has(String(agentId))) return;
+      if(comp==null || comp.score===undefined || comp.score===null) return;
+      if(comp.score >= 75) return;
+      failedForThis.push({
+        agentId: String(agentId),
+        agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
+        briefingId: b.id,
+        briefingTitle: b.title,
+        date: comp.signed_at || '',
+        score: comp.score,
+        answers: comp.answers || [],
+        reviewedBy: comp.reviewed_by || null,
+        reviewedAt: comp.reviewed_at || null
+      });
+    });
+    failedForThis.sort(function(x,y){ return new Date(y.date||0) - new Date(x.date||0); });
+    window._briefingCardFailedLists[b.id] = failedForThis;
+
     var pubDate = b.published_at ? new Date(b.published_at).toLocaleDateString('he-IL') : '';
     html += '<div class="card" style="margin-bottom:14px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">' +
@@ -11536,6 +11619,9 @@ async function loadBriefingsTab(){
             '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם">✅ '+doneCount+' חתמו</span>' +
             '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(184,113,15,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
             '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
+            (failedForThis.length
+              ? '<span onclick="openFailedListForBriefingCard('+b.id+')" style="cursor:pointer;background:var(--danger-bg);color:var(--danger);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה בעובדים שנכשלו">😞 '+failedForThis.length+' נכשלו</span>'
+              : '<span style="background:var(--ok-bg);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">😞 0 נכשלו</span>') +
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
