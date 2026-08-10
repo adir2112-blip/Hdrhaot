@@ -7329,9 +7329,32 @@ function renderWeakBadge(agentPool){
 // New overview card grid at the top of the manager dashboard — reuses the
 // same real data already computed elsewhere (deadlineDays, calcWeakQuestions,
 // per-briefing completions) instead of introducing any new data source.
-function renderDashboardOverview(filteredAgents, wb, allBriefings){
+// dept relevance check for briefing_docs (תדריכים) — dept is a comma-
+// separated string or 'all' there, unlike briefings' targetDepts array.
+function briefingDocMatchesDeptFilter(doc){
+  const set=selectedDeptSet();
+  if(!set) return true;
+  if(!doc.dept||doc.dept==='all') return true;
+  const docDepts=doc.dept.split(',').map(d=>d.trim().toLowerCase());
+  return docDepts.some(d=>set.includes(d));
+}
+function relevantAgentsForDoc(doc, agentPool){
+  if(!doc.dept||doc.dept==='all') return agentPool;
+  const docDepts=doc.dept.split(',').map(d=>d.trim());
+  return agentPool.filter(a=>(a.depts||[]).some(d=>docDepts.includes(d)));
+}
+async function renderDashboardOverview(filteredAgents, wb, allBriefings){
   const el=document.getElementById('dash-overview-cards');
   if(!el) return;
+
+  // תדריכים (briefing_docs) — separate system from מבחנים (S.briefings).
+  // Fetched fresh here since it isn't cached anywhere shared on the
+  // manager dashboard.
+  const {data:briefingDocsRaw}=await _sb.from('briefing_docs').select('*').eq('is_active',true).order('published_at',{ascending:false});
+  const briefingDocs=(briefingDocsRaw||[]).map(d=>{
+    try{ d.completions=typeof d.completions==='string'?JSON.parse(d.completions):(d.completions||{}); }catch(e){ d.completions={}; }
+    return d;
+  }).filter(briefingDocMatchesDeptFilter);
 
   const relevantAgentsFor=(b)=>{
     if(!b.targetDepts||!b.targetDepts.length) return filteredAgents;
@@ -7371,8 +7394,35 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
   window._staleCompletionsList=staleList;
   const overdueCount=staleList.length;
 
-  const withDeadline=deptRelevantBriefings.filter(b=>b.deadline).map(b=>({b,days:deadlineDays(b.deadline)})).sort((x,y)=>x.days-y.days);
-  const expiring=withDeadline.filter(x=>x.days<=2).slice(0,3);
+  // "עובדים שנכשלו בתדריך" — every completion on a relevant, active
+  // תדריך (briefing_docs) with a score under 75%, newest first.
+  const FAIL_THRESHOLD=75;
+  const failedList=[];
+  briefingDocs.forEach(doc=>{
+    const rel=relevantAgentsForDoc(doc, filteredAgents);
+    const relIds=new Set(rel.map(a=>String(a.id)));
+    Object.entries(doc.completions||{}).forEach(([agentId,comp])=>{
+      if(!relIds.has(String(agentId))) return;
+      if(comp==null||comp.score===undefined||comp.score===null) return;
+      if(comp.score>=FAIL_THRESHOLD) return;
+      failedList.push({
+        agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
+        briefingTitle: doc.title,
+        date: comp.signed_at || '',
+        score: comp.score
+      });
+    });
+  });
+  failedList.sort((x,y)=> new Date(y.date||0) - new Date(x.date||0));
+  window._failedBriefingDocsList=failedList;
+  const failedPreview=failedList.slice(0,3);
+  const failedHtml=failedPreview.length?failedPreview.map(x=>{
+    const dateStr=x.date?new Date(x.date).toLocaleDateString('he-IL'):'—';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--ink3);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px">
+      <span style="color:var(--ice);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.agentName} · ${x.briefingTitle}</span>
+      <span style="font-size:10px;font-family:'DM Mono',monospace;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;margin-right:8px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line)">${x.score}% · ${dateStr}</span>
+    </div>`;
+  }).join(''):'<div style="font-size:12.5px;color:var(--ok)">אין עובדים שנכשלו 🎉</div>';
 
   const wq=calcWeakQuestions(filteredAgents);
   const worstPct=wq.length?wq[0].pct:0;
@@ -7392,34 +7442,26 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
   }).filter(Boolean).sort((x,y)=>y.pend-x.pend).slice(0,6);
   const maxPend=Math.max(1,...deptRows.map(r=>r.pend));
 
-  const recentBriefings=deptRelevantBriefings.slice(0,3).map(b=>{
-    const rel=relevantAgentsFor(b);
-    const done=rel.filter(a=>b.completions[String(a.id)]).length;
+  // "תדריכים אחרונים" — the 3 newest תדריכים (briefing_docs), NOT מבחנים.
+  const recentBriefings=briefingDocs.slice(0,3).map(doc=>{
+    const rel=relevantAgentsForDoc(doc, filteredAgents);
+    const done=rel.filter(a=>doc.completions[String(a.id)]).length;
     const total=rel.length;
-    return {b, done, pending:total-done, total};
+    return {doc, done, pending:total-done, total};
   });
   const recentHtml=recentBriefings.length?recentBriefings.map(r=>{
     const pct=r.total?Math.round(r.done/r.total*100):0;
     return `<div style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px">
-        <span style="font-size:12.5px;color:var(--ice);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.b.title}</span>
+        <span style="font-size:12.5px;color:var(--ice);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.doc.title}</span>
         <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;flex-shrink:0">
-          <span onclick="openBriefingDetailFromDashboard(${r.b.id},'done')" style="color:var(--ok);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.done} בוצעו</span> ·
-          <span onclick="openBriefingDetailFromDashboard(${r.b.id},'pend')" style="color:var(--warn);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.pending} לא בוצעו</span>
+          <span onclick="showBriefingStatus(${r.doc.id})" style="color:var(--ok);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.done} בוצעו</span> ·
+          <span onclick="showBriefingStatus(${r.doc.id})" style="color:var(--warn);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.pending} לא בוצעו</span>
         </span>
       </div>
       <div style="height:8px;border-radius:20px;background:var(--ink3);overflow:hidden"><div style="height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent2),var(--ok));width:${pct}%"></div></div>
     </div>`;
   }).join(''):'<div style="font-size:12.5px;color:var(--ice3)">אין תדריכים עדיין</div>';
-
-  const expiringHtml=expiring.length?expiring.map(x=>{
-    const badge = x.days<0?`פג תוקף לפני ${Math.abs(x.days)} ימים`:x.days===0?'היום האחרון!':`נותרו ${x.days} ימים`;
-    const hot = x.days<=0;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--ink3);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px">
-      <span style="color:var(--ice);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.b.title}</span>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;margin-right:8px;background:${hot?'var(--danger-bg)':'var(--warn-bg)'};color:${hot?'var(--danger)':'var(--warn)'};border:1px solid ${hot?'var(--danger-line)':'var(--warn-line)'}">${badge}</span>
-    </div>`;
-  }).join(''):'<div style="font-size:12.5px;color:var(--ok)">אין תדריכים עם דדליין קרוב 🎉</div>';
 
   const alertRows = [
     ['השלמות ממתינות השבוע', pendingThisWeek],
@@ -7440,9 +7482,9 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
       </div>
     </div>
 
-    <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px">
-      <div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:14px">⏰ דדליינים קרובים</div>
-      ${expiringHtml}
+    <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px;cursor:pointer" onclick="openFailedBriefingDocsList()">
+      <div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:14px">😞 עובדים שנכשלו בתדריך</div>
+      ${failedHtml}
     </div>
 
     <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px;cursor:pointer" onclick="openWeakQuestionsPage()">
@@ -7661,6 +7703,38 @@ function openStaleCompletionsList(){
         '<td style="padding:8px 12px;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(x.agent.phone||'—')+'</td>'+
         '<td style="padding:8px 12px;color:var(--ice2)">'+x.briefing.title+'</td>'+
         '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.days+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</table></div>';
+}
+// "😞 עובדים שנכשלו בתדריך" card — full list of every completion under
+// 75% on a תדריך (briefing_docs), newest first. Columns right-to-left:
+// שם נציג, שם תדריך, תאריך תדריך, ציון.
+function openFailedBriefingDocsList(){
+  const list=window._failedBriefingDocsList||[];
+  const modal=document.getElementById('briefing-status-modal');
+  if(!modal) return;
+  modal.style.display='flex';
+  document.getElementById('bsm-title').textContent='😞 עובדים שנכשלו בתדריך (ציון מתחת ל-75%)';
+  const el=document.getElementById('bsm-content');
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ok)">✓ אין עובדים שנכשלו</div>';
+    return;
+  }
+  el.innerHTML='<div class="card" style="padding:0;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
+    '<tr style="background:var(--ink3)">'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם נציג</th>'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם תדריך</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">תאריך תדריך</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון</th>'+
+    '</tr>'+
+    list.map(function(x){
+      const dateStr=x.date?new Date(x.date).toLocaleDateString('he-IL'):'—';
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agentName+'</td>'+
+        '<td style="padding:8px 12px;color:var(--ice2)">'+x.briefingTitle+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+dateStr+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.score+'%</td>'+
       '</tr>';
     }).join('')+
   '</table></div>';
