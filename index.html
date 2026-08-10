@@ -1762,6 +1762,30 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div id="rep-usage-table"></div>
       </div>
     </div>
+
+    <!-- Stale logins table -->
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--ice3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">⏰ נציגים שלא התחברו למערכת</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="rep-stale-dept" onchange="renderRepStaleLoginsTable()" style="padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:12.5px;font-family:'Sora',sans-serif">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option>
+            <option value="פריפיט">פריפיט</option>
+            <option value="סחר">סחר</option>
+            <option value="מאוחדת">מאוחדת</option>
+            <option value="אלן קאר">אלן קאר</option>
+          </select>
+          <select id="rep-stale-days" onchange="renderRepStaleLoginsTable()" style="padding:7px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:12.5px;font-family:'Sora',sans-serif">
+            <option value="5">מעל 5 ימים</option>
+            <option value="10">מעל 10 ימים</option>
+            <option value="15">מעל 15 יום</option>
+            <option value="20">מעל 20 יום</option>
+          </select>
+        </div>
+      </div>
+      <div id="rep-stale-logins-table"></div>
+    </div>
   </div>
 
   <!-- CONTROLS -->
@@ -7313,6 +7337,13 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
     const td=b.targetDepts.map(d=>d.trim().toLowerCase());
     return filteredAgents.filter(a=>(a.depts||[]).some(d=>td.includes(d.trim().toLowerCase())));
   };
+  // Only briefings relevant to the currently selected department filter —
+  // same relevance check used for the briefings-week-list below, so every
+  // card in this grid stays consistent with the top filter dropdown.
+  const deptRelevantBriefings=allBriefings.filter(b=>{
+    if(!b.targetDepts||!b.targetDepts.length) return true;
+    return filteredAgents.some(a=>(a.depts||[]).some(d=>b.targetDepts.map(x=>x.trim().toLowerCase()).includes(d.trim().toLowerCase())));
+  });
 
   let overdueCount=0, pendingThisWeek=0;
   wb.forEach(b=>{
@@ -7323,7 +7354,7 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
     if(days!==null && days<0) overdueCount+=pending.length;
   });
 
-  const withDeadline=allBriefings.filter(b=>b.deadline).map(b=>({b,days:deadlineDays(b.deadline)})).sort((x,y)=>x.days-y.days);
+  const withDeadline=deptRelevantBriefings.filter(b=>b.deadline).map(b=>({b,days:deadlineDays(b.deadline)})).sort((x,y)=>x.days-y.days);
   const expiring=withDeadline.filter(x=>x.days<=2).slice(0,3);
 
   const wq=calcWeakQuestions(filteredAgents);
@@ -7343,6 +7374,26 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
     return {dept:d, pend};
   }).filter(Boolean).sort((x,y)=>y.pend-x.pend).slice(0,6);
   const maxPend=Math.max(1,...deptRows.map(r=>r.pend));
+
+  const recentBriefings=deptRelevantBriefings.slice(0,3).map(b=>{
+    const rel=relevantAgentsFor(b);
+    const done=rel.filter(a=>b.completions[String(a.id)]).length;
+    const total=rel.length;
+    return {b, done, pending:total-done, total};
+  });
+  const recentHtml=recentBriefings.length?recentBriefings.map(r=>{
+    const pct=r.total?Math.round(r.done/r.total*100):0;
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px">
+        <span style="font-size:12.5px;color:var(--ice);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.b.title}</span>
+        <span style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;flex-shrink:0">
+          <span onclick="openBriefingDetailFromDashboard(${r.b.id},'done')" style="color:var(--ok);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.done} בוצעו</span> ·
+          <span onclick="openBriefingDetailFromDashboard(${r.b.id},'pend')" style="color:var(--warn);font-weight:700;cursor:pointer;text-decoration:underline dotted" title="לחץ לרשימה">${r.pending} לא בוצעו</span>
+        </span>
+      </div>
+      <div style="height:8px;border-radius:20px;background:var(--ink3);overflow:hidden"><div style="height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent2),var(--ok));width:${pct}%"></div></div>
+    </div>`;
+  }).join(''):'<div style="font-size:12.5px;color:var(--ice3)">אין תדריכים עדיין</div>';
 
   const expiringHtml=expiring.length?expiring.map(x=>{
     const badge = x.days<0?`פג תוקף לפני ${Math.abs(x.days)} ימים`:x.days===0?'היום האחרון!':`נותרו ${x.days} ימים`;
@@ -7389,6 +7440,11 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
           <div style="font-size:11.5px;color:var(--ice3);margin-top:4px">שאלות בעייתיות זוהו${wq.length?'<br>הגרוע ביותר: '+worstPct+'% טעו':''}</div>
         </div>
       </div>
+    </div>
+
+    <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--ice);margin-bottom:14px">📋 תדריכים אחרונים</div>
+      ${recentHtml}
     </div>
   </div>
 
@@ -7558,6 +7614,16 @@ function wqToggle(i){
   if(d) d.style.display=d.style.display==='none'?'flex':'none';
 }
 
+// Used by the "תדריכים אחרונים" dashboard card — jumps to and opens the
+// same done/pending list already rendered per-briefing further down the
+// page (בriefings-week-list), instead of duplicating that table.
+function openBriefingDetailFromDashboard(bid, which){
+  const id='bd-'+which+'-'+bid;
+  const el=document.getElementById(id);
+  if(!el) return;
+  if(el.style.display!=='block') toggleBriefingDetails(id);
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
 function toggleBriefingDetails(id){
   const el=document.getElementById(id);
   if(!el) return;
@@ -12609,6 +12675,55 @@ async function loadReports(){
   renderRepLoginsTable();
   renderRepUsageTable();
   renderRepChart(loginArr, usageArr);
+  renderRepStaleLoginsTable();
+}
+
+// Agents who haven't logged in for more than N days (or never). Reads
+// login_history directly (same source of truth as the "דוח כניסות" table
+// above) instead of agents.last_login — that cached field can drift out of
+// sync with reality, which showed up as disagreeing dates between the two
+// tables for the same agent.
+async function renderRepStaleLoginsTable(){
+  const el = document.getElementById('rep-stale-logins-table');
+  if(!el) return;
+  const dept = document.getElementById('rep-stale-dept')?.value||'all';
+  const days = parseInt(document.getElementById('rep-stale-days')?.value||'5', 10);
+  const cutoff = Date.now() - days*24*60*60*1000;
+
+  el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:1rem">טוען...</div>';
+
+  const {data:logins} = await _sb.from('login_history').select('agent_id,login_at').order('login_at',{ascending:false});
+  const lastLoginMap = {};
+  (logins||[]).forEach(r=>{ if(!(r.agent_id in lastLoginMap)) lastLoginMap[r.agent_id]=r.login_at; });
+
+  let agents = S.agents.filter(a=>a.active!==false);
+  if(dept!=='all') agents = agents.filter(a=>agentGroup(a)===dept);
+  let stale = agents.map(a=>({a, last:lastLoginMap[a.id]||null}))
+    .filter(x=>!x.last || new Date(x.last).getTime() < cutoff);
+  stale.sort((x,y)=> new Date(x.last||0) - new Date(y.last||0));
+
+  if(!stale.length){
+    el.innerHTML='<div style="color:var(--ok);text-align:center;padding:1rem">✓ כל הנציגים התחברו בטווח הזמן הזה</div>';
+    return;
+  }
+  let html='<table style="width:100%;border-collapse:collapse;font-size:12px"><tr style="background:var(--ink3)">'+
+    '<th style="padding:6px 8px;text-align:center;color:var(--ice3);width:26px">#</th>'+
+    '<th style="padding:6px 8px;text-align:right;color:var(--ice3)">נציג</th>'+
+    '<th style="padding:6px 8px;text-align:right;color:var(--ice3)">מחלקה</th>'+
+    '<th style="padding:6px 8px;text-align:center;color:var(--ice3)">כניסה אחרונה</th>'+
+    '</tr>';
+  stale.forEach((x,i)=>{
+    const a=x.a;
+    const lastStr = x.last ? new Date(x.last).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'מעולם לא התחבר';
+    html+='<tr style="border-bottom:1px solid var(--line);background:'+(i%2===0?'transparent':'var(--ink3)')+'">'+
+      '<td style="padding:6px 8px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(i+1)+'</td>'+
+      '<td style="padding:6px 8px;color:var(--ice)">'+a.name+'</td>'+
+      '<td style="padding:6px 8px;color:var(--ice3)">'+((a.depts||[])[0]||'—')+'</td>'+
+      '<td style="padding:6px 8px;text-align:center;color:'+(x.last?'var(--warn)':'var(--danger)')+';font-size:11px;font-family:\'DM Mono\',monospace">'+lastStr+'</td>'+
+    '</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
 }
 
 let _repChartInstance=null;
