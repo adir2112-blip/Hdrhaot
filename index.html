@@ -5923,7 +5923,7 @@ function showSearchDetail(id){
 
     ${b.content?`<div class="card" style="margin-bottom:1rem">
       <div class="card-label">תוכן הנוהל</div>
-      <div style="font-size:15px;line-height:1.9;color:var(--ice2);white-space:pre-wrap">${b.content}</div>
+      <div style="font-size:15px;line-height:1.9;color:var(--ice2)">${formatContent(b.content)}</div>
     </div>`:''}
 
     ${questionsHtml?`<div class="eyebrow" style="margin-bottom:12px">שאלות ותשובות</div>${questionsHtml}`:''}
@@ -9557,8 +9557,10 @@ function formatContent(raw){
       html+='<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0">';
     } else if(l.startsWith('• ')){
       html+='<div style="display:flex;gap:8px;margin:3px 0;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.slice(2))+'</span></div>';
-    } else if(/^-\s+/.test(l)){
-      html+='<div style="display:flex;gap:8px;margin:3px '+(indentLevel*20)+'px;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.replace(/^-\s+/,''))+'</span></div>';
+    } else if(/^(-\s+|\*(?!\*)\s*)/.test(l)){
+      // "- item" or a lone leading "*item" (not **bold**) — both used as
+      // bullet markers in real content.
+      html+='<div style="display:flex;gap:8px;margin:3px '+(indentLevel*20)+'px;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.replace(/^(-\s+|\*(?!\*)\s*)/,''))+'</span></div>';
     } else if(leadSpaces>=2){
       html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px '+((indentLevel||1)*20)+'px">'+processInline(l)+'</div>';
     } else {
@@ -9975,7 +9977,7 @@ function renderBriefingsHistoryPanel(){
             ${b.is_active!==false?'● פעיל':'○ לא פעיל'}
           </button>
           <button onclick="loadBriefingForEdit('${b.id}')" style="background:rgba(91,160,230,0.1);border:1px solid rgba(91,160,230,0.3);color:#5BA0E6;border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">✏️</button>
-          <button onclick="deleteBriefing('${b.id}')" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:var(--danger);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">🗑</button>
+          <button onclick="deleteBriefingFromDashboard(${b.id})" style="background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);color:var(--danger);border-radius:8px;padding:5px 9px;font-size:12px;cursor:pointer">🗑</button>
         </div>
       </div>
 
@@ -10011,7 +10013,7 @@ function viewBriefingFromMemory(briefingId){
 
   var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+deptChips+'</div>';
   if(b.content){
-    html += '<div style="font-size:13px;color:var(--ice2);white-space:pre-wrap;line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+esc(b.content)+'</div>';
+    html += '<div style="font-size:13px;color:var(--ice2);line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+formatContent(b.content)+'</div>';
   }
   var questions = b.questions||[];
   if(questions.length){
@@ -11420,7 +11422,7 @@ async function viewBriefingDoc(el){
     : b.dept.split(',').map(function(d){ return '<span class="chip chip-gold">'+d.trim()+'</span>'; }).join(' ');
 
   var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+deptChips+'</div>'+
-    '<div style="font-size:13px;color:var(--ice2);white-space:pre-wrap;line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+esc(b.content||'')+'</div>';
+    '<div style="font-size:13px;color:var(--ice2);line-height:1.8;background:var(--ink3);border-radius:12px;padding:14px 16px;margin-bottom:18px">'+formatContent(b.content||'')+'</div>';
 
   if(questions.length){
     html += '<div style="font-size:11px;font-weight:700;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-family:\'DM Mono\',monospace">שאלות המבחן ('+questions.length+')</div>';
