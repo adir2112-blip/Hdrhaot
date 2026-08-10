@@ -3223,6 +3223,28 @@ setInterval(()=>{
   if(loginTs && Date.now()-loginTs > AUTH_SESSION_MAX_MS) signOut();
 }, 5*60*1000);
 
+// Idle (inactivity) auto-logout — applies to both manager and agent
+// sessions, independent of the 12h absolute session cap above. Tracks the
+// last real user interaction and force-logs-out after IDLE_TIMEOUT_MS of
+// no activity at all.
+const IDLE_TIMEOUT_MS = 4*60*60*1000;
+let _lastActivityTs = Date.now();
+['mousedown','keydown','touchstart','scroll'].forEach(evt=>{
+  window.addEventListener(evt, ()=>{ _lastActivityTs = Date.now(); }, {passive:true});
+});
+setInterval(()=>{
+  if(Date.now()-_lastActivityTs < IDLE_TIMEOUT_MS) return;
+  _lastActivityTs = Date.now();
+  const idleMsg = '👋 ניתקנו אותך אוטומטית בעקבות חוסר שימוש במערכת. פשוט התחברו מחדש כדי להמשיך :)';
+  if(_adminUnlocked){
+    showToast(idleMsg, 'warn');
+    signOut();
+  } else if(S.agent){
+    showToast(idleMsg, 'warn');
+    logoutAgent();
+  }
+}, 60*1000);
+
 let S={
   agents:[],
   briefings:[],
