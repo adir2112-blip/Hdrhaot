@@ -10408,7 +10408,12 @@ function renderControlsHistory(){
 
   let filtered = S_controls;
   if(month!=='all') filtered = filtered.filter(c=>c.month===month);
-  if(dept!=='all')  filtered = filtered.filter(c=>c.dept===dept||(!c.dept&&dept==='all'));
+  if(dept==='מובמנט'){
+    const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','לאומית FIT'];
+    filtered = filtered.filter(c=>c.dept==='מובמנט'||MOVMENT_DEPTS.includes(c.dept));
+  } else if(dept!=='all'){
+    filtered = filtered.filter(c=>c.dept===dept);
+  }
 
   if(!filtered.length){
     el.innerHTML=emptyState('📋','אין בקרות לסינון זה','נסה לבחור תקופה או מחלקה אחרת');
@@ -10578,7 +10583,13 @@ function openControlModal(controlId, presetAgentId){
 function fillAgentDept(){
   const agentId = document.getElementById('ctrl-agent').value;
   const agent = S.agents.find(a=>String(a.id)===String(agentId));
-  document.getElementById('ctrl-dept').value = agent ? (agent.depts||[])[0]||'' : '';
+  const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','לאומית FIT'];
+  let dept = '';
+  if(agent){
+    const depts = agent.depts||[];
+    dept = depts.some(d=>MOVMENT_DEPTS.includes(d)) ? 'מובמנט' : (depts[0]||'');
+  }
+  document.getElementById('ctrl-dept').value = dept;
 }
 
 function filterModalAgents(){
