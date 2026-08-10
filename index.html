@@ -2634,8 +2634,6 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <div class="dept-filter-bar" id="dept-filter-bar"></div>
     <div class="section-divider"><div class="section-divider-inner">🏆 לוח תחרות</div></div>
     <div id="leaderboard-list" style="margin-bottom:1.5rem"></div>
-    <div class="section-divider"><div class="section-divider-inner">👥 סטטוס נציגים</div></div>
-    <div id="tracking-agents-list"></div>
 
         </div><!-- /dashboard-main -->
       </div><!-- /main content -->
@@ -5638,6 +5636,7 @@ async function publishBriefing(){
   const deadlineVal=document.getElementById('briefing-deadline').value||null;
   const featuredVal=document.getElementById('briefing-featured').value==='1';
   const reverseVal=document.getElementById('briefing-reverse').value==='1';
+  const {data:{session:pubSession}}=await _sb.auth.getSession();
   const row={
     title:S.cur.title, content:S.cur.content,
     questions:JSON.stringify(S.eq),
@@ -5646,7 +5645,8 @@ async function publishBriefing(){
     deadline:deadlineVal,
     featured:featuredVal||false,
     reverse_mode:reverseVal||false,
-    completions:JSON.stringify({})
+    completions:JSON.stringify({}),
+    manager_email:pubSession?.user?.email||'לא ידוע'
   };
   const {data,error}=await _sb.from('briefings').insert(row).select().single();
   if(error){alert('שגיאה בפרסום: '+error.message);return;}
@@ -6895,63 +6895,6 @@ async function renderTracking(){
   renderLeaderboard('leaderboard-list', null, filteredAgents.length<S.agents.length?filteredAgents:null);
   renderWeakBadge(filteredAgents);
   renderDashboardOverview(filteredAgents, wb, allBriefings);
-  document.getElementById('tracking-agents-list').innerHTML=filteredAgents.map(a=>{
-    const c=col(a.id);
-    const agDepts=(a.depts||[]).map(d=>d.trim().toLowerCase());
-    const relevantBriefings=S.briefings.filter(b=>{
-      if(b.is_active===false) return false;
-      if(!b.targetDepts||b.targetDepts.length===0) return true;
-      return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>agDepts.includes(d));
-    });
-    const done=relevantBriefings.filter(b=>b.completions[a.id]||b.completions[String(a.id)]);
-    const pend=relevantBriefings.filter(b=>!b.completions[a.id]&&!b.completions[String(a.id)]).length;
-    const depts=(a.depts||[]);
-    const avg=done.length?Math.round(done.reduce((s,b)=>s+(b.completions[a.id]||b.completions[String(a.id)]).score,0)/done.length):null;
-    const donePills=done.map(b=>{
-      const comp=b.completions[a.id]||b.completions[String(a.id)];
-      const score=comp?comp.score:0;
-      return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid rgba(116,105,166,0.12);border-radius:12px;padding:8px 12px;margin-bottom:6px;gap:8px">
-        <div style="min-width:0;flex:1">
-          <div style="font-size:13px;font-weight:600;color:var(--ice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
-          <div style="font-size:11px;font-family:'DM Mono',monospace;color:${score>=80?'var(--ok)':score>=60?'var(--warn)':'var(--danger)'};margin-top:2px">ציון: ${score}%${comp?` · ${comp.ts}`:''}</div>
-        </div>
-        <button onclick="event.stopPropagation();retakeConfirm('${a.id}','${b.id}','${a.name.replace(/'/g,"\\'")}','${b.title.replace(/'/g,"\\'")}')"
-          style="background:rgba(212,130,10,0.1);border:1.5px solid rgba(212,130,10,0.3);color:var(--warn);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Sora',sans-serif;flex-shrink:0">
-          🔄 מבחן חוזר
-        </button>
-      </div>`;
-    }).join('');
-
-    return`<div class="track-row" style="margin-bottom:12px">
-      <div class="between" style="margin-bottom:${done.length?'12px':'0'};cursor:pointer" onclick="openAgentStats('${a.id}')">
-        <div class="row">
-          <div class="av" style="width:38px;height:38px;background:${c.bg};color:${c.c};font-size:12px">${ini(a.name)}</div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;align-items:center">
-              ${depts.map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:10px;color:var(--ice3)">—</span>'}
-              ${a.last_login
-                ?`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:2px">
-                    <span style="width:6px;height:6px;border-radius:50%;background:var(--ok);flex-shrink:0"></span>
-                    ${a.last_login}
-                  </span>`
-                :`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:2px">
-                    <span style="width:6px;height:6px;border-radius:50%;background:var(--line2);flex-shrink:0"></span>
-                    טרם התחבר
-                  </span>`
-              }
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          ${avg!==null?`<span style="font-size:16px;font-weight:700;color:${avg>=80?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)'}">${avg}%</span>`:''}
-          <span class="chip chip-ok">${done.length} ✓</span>
-          ${pend?`<span class="chip chip-warn">${pend} ממתינים</span>`:''}
-        </div>
-      </div>
-      ${donePills}
-    </div>`;
-  }).join('');
 }
 
 /* ── AGENT STATS MODAL ─────────────────────────── */
@@ -9447,33 +9390,100 @@ function renderAgentBriefingsPanel(){
   const el=document.getElementById('abp-briefings-content');
   if(!el||!S.agent) return;
   const agId=String(S.agent.id);
-  const pending=S.briefings.filter(b=>{
+
+  // Same pending logic as the main-screen list (including refresh-due
+  // briefings), so both places agree on what counts as "pending".
+  const pending=S.briefings.filter(function(b){
     if(b.is_active===false) return false;
-    if(b.completions[agId]) return false;
+    const comp=b.completions[agId];
+    if(comp&&b.refresh_requested){
+      const compDate=new Date(comp.ts.split(' ').reverse().join('T').replace(/(\d+)\/(\d+)\/(\d+)/,'$3-$2-$1')||0);
+      const refreshDate=new Date(b.refresh_requested);
+      if(refreshDate>compDate){ b._needsRefresh=true; } else { b._needsRefresh=false; return false; }
+    } else if(comp){ b._needsRefresh=false; return false; }
+    else { b._needsRefresh=false; }
     if(!b.targetDepts||!b.targetDepts.length) return true;
     return (S.agent.depts||[]).some(d=>b.targetDepts.map(x=>x.toLowerCase()).includes(d.toLowerCase()));
   });
+
   if(!pending.length){
     el.innerHTML='<div style="text-align:center;padding:3rem 1rem;background:var(--ok-bg);border-radius:20px;border:1.5px solid var(--ok-line)"><div style="font-size:48px;margin-bottom:14px">🎉</div><div style="font-size:20px;font-weight:800;color:var(--ok);margin-bottom:6px">כל הכבוד!</div><div style="font-size:15px;color:var(--ice3)">אין תדריכים ממתינים כרגע</div></div>';
     return;
   }
-  el.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--ice3);margin-bottom:14px">'+pending.length+' תדריכים ממתינים</div>'+
-    pending.map(function(b){
-      var dl=b.deadline?new Date(b.deadline):null;
-      var daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
-      var urgent=daysLeft!==null&&daysLeft<=2;
-      return '<div class="brief-row" onclick="openBriefing('+b.id+')" style="'+(urgent?'border-color:var(--warn-line);background:var(--warn-bg);':'')+'">'+
-        '<div style="flex:1">'+
-          (urgent?'<span class="chip chip-warn" style="margin-bottom:7px;display:inline-block">⚡ דחוף</span><br>':'')+
-          '<div style="font-size:16px;font-weight:700;color:var(--ice)">'+b.title+'</div>'+
-          (daysLeft!==null?'<div style="font-size:12px;color:'+(urgent?'var(--danger)':'var(--ice3)')+';margin-top:7px">⏰ '+daysLeft+' ימים לסיום</div>':'')+
-        '</div>'+
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;padding-right:4px">'+
-          '<span class="chip chip-warn">ממתין</span>'+
-          '<span style="font-size:11px;color:var(--ice3);font-family:\'DM Mono\',monospace">▶ התחל</span>'+
-        '</div>'+
-      '</div>';
-    }).join('');
+
+  const done=S.briefings.filter(b=>b.completions[agId]);
+  const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[agId].score,0)/done.length):null;
+
+  const items=pending.map(function(b){
+    const dl=b.deadline?new Date(b.deadline):null;
+    const daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
+    return {b:b, daysLeft:daysLeft, urgent:daysLeft!==null&&daysLeft<=2, refresh:!!b._needsRefresh, noDeadline:!b.deadline};
+  });
+  window._testsItems=items;
+
+  const total=items.length;
+  const urgentCount=items.filter(x=>x.urgent).length;
+  const noDeadlineCount=items.filter(x=>x.noDeadline).length;
+  const filter=window._testsFilter||'all';
+
+  function statTile(val,lbl,color){
+    return '<div style="background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:16px;text-align:center">'+
+      '<div style="font-size:24px;font-weight:800;font-family:\'DM Mono\',monospace;color:'+color+'">'+val+'</div>'+
+      '<div style="font-size:11px;color:var(--ice3);margin-top:4px">'+lbl+'</div></div>';
+  }
+  function pillHtml(key,label){
+    const isActive=filter===key;
+    return '<span onclick="setTestsFilter(\''+key+'\')" style="border-radius:20px;padding:7px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:\'Sora\',sans-serif;border:1.5px solid '+(isActive?'var(--gold)':'var(--line2)')+';background:'+(isActive?'var(--gold)':'var(--ink2)')+';color:'+(isActive?'#fff':'var(--ice2)')+'">'+label+'</span>';
+  }
+
+  el.innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">'+
+      statTile(total,'סה"כ ממתינים','var(--gold)')+
+      statTile(urgentCount,'דחוף (≤2 ימים)','var(--danger)')+
+      statTile(avg!==null?avg+'%':'—','הציון הממוצע שלך','var(--ok)')+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">'+
+      pillHtml('all','הכל ('+total+')')+
+      pillHtml('urgent','דחופים ('+urgentCount+')')+
+      pillHtml('nodeadline','ללא דדליין ('+noDeadlineCount+')')+
+    '</div>'+
+    '<div id="tests-list"></div>';
+
+  renderTestsList();
+}
+function setTestsFilter(key){
+  window._testsFilter=key;
+  renderAgentBriefingsPanel();
+}
+function renderTestsList(){
+  const el=document.getElementById('tests-list');
+  if(!el) return;
+  const filter=window._testsFilter||'all';
+  let items=window._testsItems||[];
+  if(filter==='urgent') items=items.filter(x=>x.urgent);
+  else if(filter==='nodeadline') items=items.filter(x=>x.noDeadline);
+  el.innerHTML=items.map(function(x){
+    const b=x.b;
+    const icon=x.refresh?'🔄':x.urgent?'⚡':'📋';
+    const iconStyle=x.urgent?'background:var(--danger-bg);color:var(--danger)':x.refresh?'background:#e7f0fb;color:#3A8FD4':'background:var(--gold-bg);color:var(--gold)';
+    let tag;
+    if(x.refresh) tag='<span class="chip" style="background:#e7f0fb;color:#3A8FD4;border:1px solid #cfe0f5">🔄 רענון נדרש</span>';
+    else if(x.urgent) tag='<span class="chip chip-danger">⏰ '+(x.daysLeft===0?'יום אחרון!':'נותרו '+x.daysLeft+' ימים')+'</span>';
+    else if(b.deadline) tag='<span class="chip chip-muted">📅 עד '+new Date(b.deadline).toLocaleDateString('he-IL')+'</span>';
+    else tag='';
+    const deptTags=(b.targetDepts||[]).map(d=>'<span class="chip chip-muted">'+d+'</span>').join('');
+    return '<div class="test-card'+(x.urgent?' urgent':'')+'" onclick="openBriefing('+b.id+')" style="background:var(--ink2);border:1px solid '+(x.urgent?'var(--danger-line)':'var(--line)')+';'+(x.urgent?'background-image:linear-gradient(180deg, var(--danger-bg), var(--ink2) 60%);':'')+'border-radius:var(--r2);padding:18px 20px;display:flex;align-items:center;gap:16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 2px rgba(36,31,61,0.04)">'+
+      '<div style="width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;'+iconStyle+'">'+icon+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:15.5px;font-weight:700;color:var(--ice);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+b.title+'</div>'+
+        '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+tag+deptTags+'</div>'+
+      '</div>'+
+      '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">'+
+        '<span class="chip chip-warn">ממתין</span>'+
+        '<span style="font-size:11px;color:var(--gold);font-family:\'DM Mono\',monospace;font-weight:700">▶ התחל</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 function formatContent(raw){
@@ -9921,7 +9931,8 @@ function renderBriefingsHistoryPanel(){
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
         <!-- RIGHT: title + tags -->
         <div style="flex:1;min-width:0;text-align:right">
-          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:6px">${b.title}${b.is_active===false?' <span style="font-size:11px;background:rgba(196,59,54,0.1);color:var(--danger);border-radius:20px;padding:2px 8px;font-family:DM Mono,monospace">מושבת</span>':''}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:4px">${b.title}${b.is_active===false?' <span style="font-size:11px;background:rgba(196,59,54,0.1);color:var(--danger);border-radius:20px;padding:2px 8px;font-family:DM Mono,monospace">מושבת</span>':''}</div>
+          <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-bottom:8px">${b.publishedAt?'פורסם '+b.publishedAt:''}${b.manager_email?' · ע"י '+b.manager_email:''}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
             ${(b.targetDepts||[]).map(d=>`<span style="font-size:11px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:2px 8px">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">כל הנציגים</span>'}
             ${b.deadline?`<span style="font-size:11px;background:rgba(91,160,230,0.1);color:#5BA0E6;border-radius:20px;padding:2px 8px">📅 ${new Date(b.deadline).toLocaleDateString('he-IL')}</span>`:''}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>דמה — עמוד מבחנים | מערכת תדריכים</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:     #F7F5FB; --ink2: #FEFDFF; --ink3: #F1EDFA; --ink4: #E5DFF5;
+  --line:    rgba(36,31,61,0.08); --line2: rgba(36,31,61,0.13);
+  --gold:    #7469A6; --gold2: #9085C8; --gold-bg: rgba(116,105,166,0.08); --gold-line: rgba(116,105,166,0.25);
+  --ice:     #241F3D; --ice2: #4B4470; --ice3: #756F92;
+  --ok:      #0E9C7C; --ok-bg: rgba(14,156,124,0.08); --ok-line: rgba(14,156,124,0.25);
+  --warn:    #B8710F; --warn-bg: rgba(184,113,15,0.08); --warn-line: rgba(184,113,15,0.25);
+  --danger:  #C43B36; --danger-bg: rgba(196,59,54,0.08); --danger-line: rgba(196,59,54,0.25);
+  --accent2: #17A99C; --accent2-bg: rgba(23,169,156,0.08); --accent2-line: rgba(23,169,156,0.25);
+  --ink-accent: #4B3F82;
+  --r: 12px; --r2: 20px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sora', sans-serif; background: var(--ink3); color: var(--ice); min-height: 100vh; }
+.mockup-banner { background: var(--ink-accent); color: #fff; text-align: center; padding: 8px 16px; font-size: 12px; font-family: 'DM Mono', monospace; }
+.shell { display: flex; align-items: flex-start; max-width: 1280px; margin: 0 auto; gap: 20px; padding: 20px; }
+.rail { width: 200px; flex-shrink: 0; position: sticky; top: 20px; }
+.rail-card { background: #fff; border: 1.5px solid var(--gold-line); border-radius: 22px; padding: 14px 12px; box-shadow: 0 4px 20px rgba(116,105,166,0.08); }
+.rail-header { padding: 10px 4px 14px; border-bottom: 1px solid var(--gold-line); margin-bottom: 10px; text-align: center; }
+.rail-header .av { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,var(--gold),var(--gold2)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; margin: 0 auto 8px; }
+.rail-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-radius: 14px; padding: 11px 14px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: 'Sora', sans-serif; margin-bottom: 6px; border: 1.5px solid var(--line2); background: none; color: var(--ice2); text-align: right; }
+.rail-btn.active { background: linear-gradient(135deg,var(--gold),var(--gold2)); border: none; color: #fff; font-weight: 800; }
+
+.main { flex: 1; min-width: 0; }
+.eyebrow { font-size: 11px; color: var(--gold); font-family: 'DM Mono', monospace; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+h1 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 500; color: var(--ice); margin-bottom: 18px; }
+h1 em { color: var(--gold); font-style: normal; }
+
+.stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+.stat { background: var(--ink2); border: 1px solid var(--line); border-radius: var(--r2); padding: 16px; text-align: center; }
+.stat .v { font-size: 26px; font-weight: 800; font-family: 'DM Mono', monospace; }
+.stat .l { font-size: 11px; color: var(--ice3); margin-top: 4px; }
+
+.filter-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.pill { border-radius: 20px; padding: 7px 16px; font-size: 12.5px; font-weight: 600; border: 1.5px solid var(--line2); background: var(--ink2); color: var(--ice2); cursor: pointer; }
+.pill.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+.test-card { background: var(--ink2); border: 1px solid var(--line); border-radius: var(--r2); padding: 18px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 12px; cursor: pointer; transition: box-shadow .15s, transform .15s; box-shadow: 0 1px 2px rgba(36,31,61,0.04); }
+.test-card:hover { box-shadow: 0 6px 20px rgba(36,31,61,0.08); transform: translateY(-1px); }
+.test-card.urgent { border-color: var(--danger-line); background: linear-gradient(180deg, var(--danger-bg), var(--ink2) 60%); }
+.test-card .ic { width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--gold-bg); color: var(--gold); }
+.test-card.urgent .ic { background: var(--danger-bg); color: var(--danger); }
+.test-card .body { flex: 1; min-width: 0; }
+.test-card .t { font-size: 15.5px; font-weight: 700; color: var(--ice); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.test-card .tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+.chip-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-line); }
+.chip-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
+.chip-muted { background: var(--ink3); color: var(--ice3); border: 1px solid var(--line); }
+.test-card .cta { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.test-card .go { font-size: 11px; color: var(--gold); font-family: 'DM Mono', monospace; font-weight: 700; }
+
+.empty { text-align: center; padding: 3rem 1rem; background: var(--ok-bg); border-radius: var(--r2); border: 1.5px solid var(--ok-line); margin-top: 40px; }
+.empty .ic { font-size: 48px; margin-bottom: 14px; }
+.empty .t { font-size: 20px; font-weight: 800; color: var(--ok); margin-bottom: 6px; }
+.empty .s { font-size: 14px; color: var(--ice3); }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">🎨 מסך דמה בלבד — לא מחובר לנתונים אמיתיים ולא משפיע על המערכת החיה.</div>
+
+<div class="shell">
+  <div class="rail">
+    <div class="rail-card">
+      <div class="rail-header">
+        <div class="av">אל</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ice)">אדיר לוי</div>
+      </div>
+      <div class="rail-btn">🏠 ראשי</div>
+      <div class="rail-btn active">📋 מבחנים <span style="background:#fff;color:var(--gold);border-radius:20px;padding:1px 8px;font-size:10.5px;font-weight:800">4</span></div>
+      <div class="rail-btn">🏆 לוח תחרות</div>
+      <div class="rail-btn">🏅 הישגים</div>
+      <div class="rail-btn">📄 תדריכים <span style="background:var(--warn);color:#fff;border-radius:20px;padding:1px 8px;font-size:10.5px;font-weight:800">4</span></div>
+      <div class="rail-btn">📚 ניהול ידע</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="eyebrow">מבחנים</div>
+    <h1>תדריכים <em>ממתינים</em></h1>
+
+    <div class="stat-row">
+      <div class="stat"><div class="v" style="color:var(--gold)">4</div><div class="l">סה"כ ממתינים</div></div>
+      <div class="stat"><div class="v" style="color:var(--danger)">1</div><div class="l">דחוף (≤2 ימים)</div></div>
+      <div class="stat"><div class="v" style="color:var(--ok)">87%</div><div class="l">הציון הממוצע שלך</div></div>
+    </div>
+
+    <div class="filter-row">
+      <div class="pill active">הכל (4)</div>
+      <div class="pill">דחופים (1)</div>
+      <div class="pill">ללא דדליין (2)</div>
+    </div>
+
+    <div class="test-card urgent">
+      <div class="ic">⚡</div>
+      <div class="body">
+        <div class="t">נוהל טיפול בתלונות לקוח</div>
+        <div class="tags"><span class="chip chip-danger">⏰ יום אחרון!</span><span class="chip chip-muted">כללית אקטיב</span></div>
+      </div>
+      <div class="cta"><span class="chip chip-danger">ממתין</span><span class="go">▶ התחל</span></div>
+    </div>
+
+    <div class="test-card">
+      <div class="ic">📋</div>
+      <div class="body">
+        <div class="t">מבחן מוקד לאומית פיט</div>
+        <div class="tags"><span class="chip chip-warn">⏰ נותרו 50 ימים</span><span class="chip chip-muted">FIT לשיווק</span></div>
+      </div>
+      <div class="cta"><span class="chip chip-warn">ממתין</span><span class="go">▶ התחל</span></div>
+    </div>
+
+    <div class="test-card">
+      <div class="ic">📋</div>
+      <div class="body">
+        <div class="t">עדכון תעריפי סחר — אוגוסט</div>
+        <div class="tags"><span class="chip chip-muted">📅 עד 30.9.2026</span><span class="chip chip-muted">מחלקת סחר</span></div>
+      </div>
+      <div class="cta"><span class="chip chip-warn">ממתין</span><span class="go">▶ התחל</span></div>
+    </div>
+
+    <div class="test-card">
+      <div class="ic">🔄</div>
+      <div class="body">
+        <div class="t">בחן ידע עובדים בריא 7.5</div>
+        <div class="tags"><span class="chip" style="background:#e7f0fb;color:#3A8FD4;border:1px solid #cfe0f5">🔄 רענון נדרש</span></div>
+      </div>
+      <div class="cta"><span class="chip chip-warn">ממתין</span><span class="go">▶ התחל</span></div>
+    </div>
+
+    <!-- Reference: empty state once everything is done -->
+    <div class="empty" style="display:none">
+      <div class="ic">🎉</div>
+      <div class="t">כל הכבוד!</div>
+      <div class="s">אין תדריכים ממתינים כרגע</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
