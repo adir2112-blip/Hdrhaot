@@ -500,6 +500,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 .dept-cb.checked { border-color:var(--gold-line);background:var(--gold-bg);color:var(--gold); }
 /* SCROLLBAR */
 @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@keyframes ai-ask-pulse {
+  0%,100% { box-shadow: 0 8px 26px rgba(116,105,166,0.35), 0 0 0 0 rgba(116,105,166,0.45); }
+  50%     { box-shadow: 0 8px 26px rgba(116,105,166,0.35), 0 0 0 10px rgba(116,105,166,0); }
+}
+.ai-ask-btn { animation: ai-ask-pulse 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .ai-ask-btn { animation: none; } }
 .chip-muted { background:var(--surface2);color:var(--ice3);border:1px solid var(--line); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -828,19 +834,13 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
   .brief-row:active { transform:scale(0.99); }
 
   /* ── WELCOME BANNER ── */
-  #agent-welcome-banner {
-    background:linear-gradient(135deg,#F7F3FC 0%,#FBF8FE 50%,#F7F3FC 100%)!important;
-    border:1px solid rgba(116,105,166,0.22)!important;
-    box-shadow:0 0 30px rgba(116,105,166,0.06), 0 6px 24px rgba(0,0,0,0.08)!important;
-  }
-  #logged-agent-name { color:#2A2340!important; }
-  #agent-welcome-stats > div { background:rgba(255,255,255,0.35)!important; border:1px solid rgba(0,0,0,0.06)!important; }
+  #agent-welcome-stats > div { background:var(--ink3)!important; border:1px solid var(--line)!important; }
 
   /* ── PENDING HERO ── */
   #agent-pending-hero > div { box-shadow:0 0 30px rgba(26,110,65,0.25), 0 6px 24px rgba(0,0,0,0.08)!important; }
 
   /* ── NO BRIEFINGS ── */
-  #no-briefings .card { background:linear-gradient(145deg,#FAF7FD,#F5F1FB)!important; border-color:rgba(116,105,166,0.18)!important; }
+  #no-briefings .card { background:var(--ink2)!important; border-color:var(--line)!important; }
 
   /* ── PIN MODAL ── */
   #pin-modal > div {
@@ -1915,12 +1915,12 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
     </div>
 
-    <div id="agent-briefings" style="display:none;gap:0;align-items:flex-start;width:100%;min-height:100vh">
+    <div id="agent-briefings" style="display:none;gap:20px;align-items:flex-start;width:100%;min-height:100vh;max-width:1280px;margin:0 auto;padding:20px 20px 40px;box-sizing:border-box">
 
 
 
   <!-- AGENT SIDEBAR -->
-    <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;align-self:stretch;min-height:100vh;background:var(--ink2);border-left:1px solid var(--line)">
+    <div style="width:200px;min-width:200px;max-width:200px;flex-shrink:0;flex-grow:0;position:sticky;top:20px">
       <div style="background:#fff;border:1.5px solid rgba(116,105,166,0.15);border-radius:22px;padding:14px 12px;box-shadow:0 4px 20px rgba(116,105,166,0.08)">
         <div id="agent-sb-header" style="padding:6px 4px 12px;border-bottom:1px solid rgba(116,105,166,0.1);margin-bottom:10px;text-align:center"></div>
         <button onclick="showAgentPanel('main')" id="asb-main" style="width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),#9085C8);border:none;color:#2A2340;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:8px;text-align:right">
@@ -1948,7 +1948,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     </div>
 
     <!-- MAIN CONTENT -->
-    <div style="flex:1;min-width:0;overflow:hidden">
+    <div style="flex:1;min-width:0">
 
       <!-- PANEL: MAIN (existing content) -->
       <div id="abp-main">
@@ -1958,27 +1958,23 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- WELCOME BANNER -->
       <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
            <div id="agent-briefingdocs-notif" style="display:none;margin-bottom:12px"></div>
-     <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(135deg,#FFFDF8 0%,#FFF8EC 50%,#FFFAF2 100%);border:1.5px solid rgba(116,105,166,0.2);box-shadow:0 4px 24px rgba(116,105,166,0.1),0 1px 6px rgba(0,0,0,0.04);padding:24px 22px 20px">
-        <div style="position:absolute;top:0;right:0;width:180px;height:180px;background:radial-gradient(circle,rgba(116,105,166,0.07) 0%,transparent 70%);pointer-events:none"></div>
-        <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:radial-gradient(circle,rgba(116,105,166,0.05) 0%,transparent 70%);pointer-events:none"></div>
-        <div style="position:relative">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+     <div id="agent-welcome-banner" style="margin-bottom:1.5rem;border-radius:var(--r2);background:var(--ink2);border:1px solid var(--line);box-shadow:0 1px 2px rgba(36,31,61,0.04);padding:22px 24px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px">
             <div>
               <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">ברוך הבא 👋</div>
-              <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--ice);font-weight:500;line-height:1.1" id="logged-agent-name"></div>
+              <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--ice);font-weight:500;line-height:1.1" id="logged-agent-name"></div>
             </div>
             <div style="display:flex;gap:8px">
-              <button onclick="refreshAgentBriefings()" title="רענן" style="background:none;border:1px solid rgba(116,105,166,0.2);color:var(--ice3);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer">↻</button>
+              <button onclick="refreshAgentBriefings()" title="רענן" style="background:var(--ink2);border:1.5px solid var(--line2);color:var(--ice3);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif">↻</button>
               <button onclick="openHistoryModal()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);color:var(--gold);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">📖 היסטוריה</button>
               <button onclick="logoutAgent()" style="background:var(--danger-bg);border:1.5px solid var(--danger-line);color:var(--danger);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='var(--danger-bg)';this.style.color='var(--danger)'">✕ התנתקות</button>
             </div>
           </div>
-          <div id="agent-welcome-stats" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-          <div id="agent-trend-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid rgba(116,105,166,0.12)">
+          <div id="agent-welcome-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+          <div id="agent-trend-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
             <div style="font-size:10px;color:var(--ice3);text-transform:uppercase;letter-spacing:0.08em;font-family:'DM Mono',monospace;margin-bottom:8px">מגמת הציונים שלך</div>
             <div style="height:90px;position:relative"><canvas id="agent-trend-chart"></canvas></div>
           </div>
-        </div>
       </div>
 
       <!-- PWA INSTALL BANNER -->
@@ -2000,15 +1996,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 
       <!-- KNOWLEDGE CHAT BUTTON -->
       <div id="agent-knowledge-btn-wrap" style="margin-bottom:14px">
-        <button onclick="openAgentKnowledgeChat()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#DDD3F5,#EFEAFA);border:1.5px solid rgba(116,105,166,0.3);border-radius:18px;padding:16px 20px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s" onmouseover="this.style.boxShadow='0 6px 24px rgba(116,105,166,0.18)'" onmouseout="this.style.boxShadow='none'">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:28px;filter:drop-shadow(0 0 8px rgba(116,105,166,0.4))">🧠</span>
+        <button onclick="openAgentKnowledgeChat()" class="ai-ask-btn" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--gold),var(--ink-accent));border:none;border-radius:var(--r2);padding:18px 22px;cursor:pointer;font-family:'Sora',sans-serif">
+          <div style="display:flex;align-items:center;gap:14px">
+            <span style="font-size:30px;filter:drop-shadow(0 0 10px rgba(255,255,255,0.5))">🧠</span>
             <div style="text-align:right">
-              <div style="font-size:14px;font-weight:800;color:var(--ice)">שאל את ה-AI</div>
-              <div style="font-size:12px;color:var(--ice3)">בסיס הידע של המחלקה שלך</div>
+              <div style="font-size:15px;font-weight:800;color:#fff">שאל את ה-AI</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.75)">בסיס הידע של המחלקה שלך</div>
             </div>
           </div>
-          <span style="font-size:20px;color:var(--gold)">◂</span>
+          <span style="font-size:20px;color:#fff">◂</span>
         </button>
       </div>
 
@@ -6063,9 +6059,9 @@ function renderAgentBriefings(){
   }).length+1;
   const _welcomeStats=document.getElementById('agent-welcome-stats');
   if(_welcomeStats){
-    const statItem=(val,lbl,color='var(--gold)')=>`<div style="background:rgba(116,105,166,0.06);border-radius:12px;padding:10px 14px;min-width:80px;text-align:center;border:1px solid rgba(116,105,166,0.14)">
-      <div style="font-size:22px;font-weight:700;color:${color};font-family:'Playfair Display',serif">${val}</div>
-      <div style="font-size:10px;color:var(--ice3);margin-top:3px;text-transform:uppercase;letter-spacing:0.05em;font-family:'DM Mono',monospace">${lbl}</div>
+    const statItem=(val,lbl,color='var(--gold)')=>`<div style="background:var(--ink3);border-radius:14px;padding:12px;text-align:center;border:1px solid var(--line)">
+      <div style="font-size:20px;font-weight:800;color:${color};font-family:'DM Mono',monospace">${val}</div>
+      <div style="font-size:10.5px;color:var(--ice3);margin-top:3px">${lbl}</div>
     </div>`;
     _welcomeStats.innerHTML=
       statItem(_done.length,'הושלמו','var(--gold)')+
@@ -6125,11 +6121,10 @@ function renderAgentBriefings(){
     });
     if(featured){
       featuredEl.style.display='block';
-      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:linear-gradient(135deg,#241F3D,#3D3465);border:1.5px solid rgba(116,105,166,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(116,105,166,0.2)">
-        <div style="position:absolute;top:-20px;left:-20px;font-size:80px;opacity:0.06;pointer-events:none">⭐</div>
-        <div style="font-size:11px;color:rgba(144,133,200,0.9);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">⭐ נוהל השבוע</div>
-        <div style="font-size:18px;font-weight:800;color:#F5F2FB;margin-bottom:4px">${featured.title}</div>
-        <div style="font-size:13px;color:rgba(245,242,251,0.55)">${deadlineChip(featured.deadline)||'לחץ להתחלה →'}</div>
+      featuredEl.innerHTML=`<div onclick="openBriefing(${featured.id})" style="cursor:pointer;background:var(--ink2);border:1px solid var(--gold-line);border-radius:var(--r2);padding:18px 20px;box-shadow:0 1px 2px rgba(36,31,61,0.04)">
+        <div style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">⭐ נוהל השבוע</div>
+        <div style="font-size:15px;font-weight:800;color:var(--ice);margin-bottom:8px">${featured.title}</div>
+        <div style="font-size:12.5px;color:var(--ice3)">${deadlineChip(featured.deadline)||'לחץ להתחלה →'}</div>
       </div>`;
     } else {
       featuredEl.style.display='none';
@@ -6159,11 +6154,10 @@ function renderAgentBriefings(){
     if(refreshDue.length>0){
       refreshEl.style.display='block';
       const firstId=refreshDue[0].id;
-      refreshEl.innerHTML=`<div style="background:linear-gradient(135deg,#0B3B37,#12695F);border:1.5px solid rgba(23,169,156,0.4);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(23,169,156,0.22);cursor:pointer" onclick="openRefreshBriefing(${firstId})">
-        <div style="position:absolute;top:-10px;left:-10px;font-size:60px;opacity:0.08;pointer-events:none">🔄</div>
-        <div style="font-size:11px;color:rgba(94,224,204,0.85);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">🔄 זמן לרענון</div>
-        <div style="font-size:17px;font-weight:800;color:#F0FFFC;margin-bottom:4px">${refreshDue.length} תדריך${refreshDue.length>1?'ים':''} לרענון</div>
-        <div style="font-size:13px;color:rgba(240,255,252,0.55)">לא עברת על "${refreshDue[0].title}" כבר 30 יום</div>
+      refreshEl.innerHTML=`<div style="background:var(--ink2);border:1px solid var(--accent2-line);border-radius:var(--r2);padding:18px 20px;box-shadow:0 1px 2px rgba(36,31,61,0.04);cursor:pointer" onclick="openRefreshBriefing(${firstId})">
+        <div style="font-size:11px;color:var(--accent2);font-family:'DM Mono',monospace;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">🔄 זמן לרענון</div>
+        <div style="font-size:15px;font-weight:800;color:var(--ice);margin-bottom:6px">${refreshDue.length} תדריך${refreshDue.length>1?'ים':''} לרענון</div>
+        <div style="font-size:12.5px;color:var(--ice3)">לא עברת על "${refreshDue[0].title}" כבר 30 יום</div>
       </div>`;
     } else {
       refreshEl.style.display='none';
