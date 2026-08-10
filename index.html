@@ -1960,7 +1960,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <!-- BRIEFINGDOCS NOTIFICATION -->
       <div id="agent-briefingdocs-notif" style="display:none"></div>
 
-      <!-- TOP ROW — AI / נוהל השבוע / תדריכים לטיפול, always 3 squares -->
+      <!-- TOP ROW — AI / נוהל השבוע / מבחנים לטיפול, always 3 squares -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">
         <div id="agent-knowledge-btn-wrap">
           <button onclick="openAgentKnowledgeChat()" class="ai-ask-btn" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--gold),var(--ink-accent));border:none;border-radius:var(--r2);padding:18px 20px;cursor:pointer;font-family:'Sora',sans-serif;box-sizing:border-box;text-align:right">
@@ -1975,8 +1975,8 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div id="agent-pending-quick-wrap">
           <button onclick="openFirstPendingBriefing()" id="agent-pending-quick-btn" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:18px 20px;cursor:pointer;font-family:'Sora',sans-serif;box-sizing:border-box;text-align:right">
             <span style="font-size:28px">📋</span>
-            <div style="font-size:14.5px;font-weight:800;color:var(--ice)">תדריכים לטיפול</div>
-            <div id="agent-pending-quick-sub" style="font-size:11.5px;color:var(--ice3)">אין תדריכים חדשים</div>
+            <div style="font-size:14.5px;font-weight:800;color:var(--ice)">מבחנים לטיפול</div>
+            <div id="agent-pending-quick-sub" style="font-size:11.5px;color:var(--ice3)">אין מבחנים חדשים</div>
           </button>
         </div>
       </div>
@@ -6225,16 +6225,16 @@ function renderAgentBriefings(){
     const db=b.deadline?new Date(b.deadline):new Date('2099-01-01');
     return da-db;
   });
-  // Quick-access "תדריכים לטיפול" card — pulses when there's something waiting
+  // Quick-access "מבחנים לטיפול" card — pulses when there's something waiting
   window._agentPendingList=pending;
   const pqBtn=document.getElementById('agent-pending-quick-btn');
   const pqSub=document.getElementById('agent-pending-quick-sub');
   if(pqBtn&&pqSub){
     if(pending.length>0){
-      pqSub.textContent=pending.length+' תדריכים ממתינים — לחץ להתחלה';
+      pqSub.textContent=pending.length+' מבחנים ממתינים — לחץ להתחלה';
       pqBtn.classList.add('pending-quick-pulse');
     } else {
-      pqSub.textContent='אין תדריכים חדשים';
+      pqSub.textContent='אין מבחנים חדשים';
       pqBtn.classList.remove('pending-quick-pulse');
     }
   }
@@ -6262,7 +6262,7 @@ function renderAgentBriefings(){
     </div>`;
   }).join('');
 }
-// "תדריכים לטיפול" quick-access card — opens the most urgent pending
+// "מבחנים לטיפול" quick-access card — opens the most urgent pending
 // briefing directly, same target as the pending-count hero's button.
 function openFirstPendingBriefing(){
   const list=window._agentPendingList||[];
@@ -6278,7 +6278,7 @@ function openBriefing(id){
   const isRefresh=S._refreshMode&&String(S._refreshMode.briefingId)===String(id);
   const titleEl=document.getElementById('flow-title');
   titleEl.innerHTML=S.active.title+(isRefresh?` <span style="font-size:13px;background:rgba(91,160,230,0.15);color:#5BA0E6;border-radius:8px;padding:3px 8px;font-family:'DM Mono',monospace;font-weight:600;vertical-align:middle">🔄 רענון</span>`:'');
-  document.getElementById('flow-content').textContent=S.active.content;
+  document.getElementById('flow-content').innerHTML=formatContent(S.active.content);
   document.getElementById('sig-briefing-title').textContent=`"${S.active.title}"`;
   document.getElementById('sign-done').style.display='none';
   document.getElementById('sign-btn').style.display='inline-flex';
@@ -6710,6 +6710,23 @@ function filterAgents(){
   }
   return active.filter(a=>(a.depts||[]).includes(S.filterDept));
 }
+// The set of departments the current dashboard filter represents, or null
+// for "all". Briefing-relevance checks should compare against THIS set
+// directly rather than "does any currently-filtered agent belong to this
+// briefing's depts" — an agent assigned to many/all departments (e.g. a
+// personal test account) makes that indirect check leak unrelated
+// briefings through every filter.
+function selectedDeptSet(){
+  if(S.filterDept==='all') return null;
+  if(S.filterDept==='__group__'&&S._filterGroup) return S._filterGroup.depts.map(d=>d.trim().toLowerCase());
+  return [String(S.filterDept).trim().toLowerCase()];
+}
+function briefingMatchesDeptFilter(b){
+  const set=selectedDeptSet();
+  if(!set) return true;
+  if(!b.targetDepts||!b.targetDepts.length) return true;
+  return b.targetDepts.map(d=>d.trim().toLowerCase()).some(d=>set.includes(d));
+}
 function renderFilterBar(){
   // Hide the old pill filter bar — replaced by the dropdown
   const bar=document.getElementById('dept-filter-bar');
@@ -6821,11 +6838,7 @@ async function renderTracking(){
   const bwEl=document.getElementById('briefings-week-list');
   const allBriefings=[...S.briefings].filter(b=>b.is_active!==false).reverse();
   // Filter briefings relevant to selected group
-  const visibleBriefings=allBriefings.filter(b=>{
-    if(S.filterDept==='all') return true;
-    if(!b.targetDepts||b.targetDepts.length===0) return true;
-    return filteredAgents.some(a=>(a.depts||[]).some(d=>b.targetDepts.map(x=>x.trim().toLowerCase()).includes(d.trim().toLowerCase())));
-  });
+  const visibleBriefings=allBriefings.filter(briefingMatchesDeptFilter);
   bwEl.innerHTML=!visibleBriefings.length
     ?'<div style="font-size:14px;color:var(--ice3);padding:0.5rem 0">אין תדריכים לקבוצה זו.</div>'
     :visibleBriefings.map(b=>{
@@ -7316,10 +7329,7 @@ function renderDashboardOverview(filteredAgents, wb, allBriefings){
   // Only briefings relevant to the currently selected department filter —
   // same relevance check used for the briefings-week-list below, so every
   // card in this grid stays consistent with the top filter dropdown.
-  const deptRelevantBriefings=allBriefings.filter(b=>{
-    if(!b.targetDepts||!b.targetDepts.length) return true;
-    return filteredAgents.some(a=>(a.depts||[]).some(d=>b.targetDepts.map(x=>x.trim().toLowerCase()).includes(d.trim().toLowerCase())));
-  });
+  const deptRelevantBriefings=allBriefings.filter(briefingMatchesDeptFilter);
 
   let overdueCount=0, pendingThisWeek=0;
   wb.forEach(b=>{
@@ -9414,6 +9424,8 @@ function renderAgentBriefingsPanel(){
   const done=S.briefings.filter(b=>b.completions[agId]);
   const avg=done.length?Math.round(done.reduce((s,b)=>s+b.completions[agId].score,0)/done.length):null;
 
+  // Newest published first.
+  pending.sort((a,b)=>_parseTsToDate(b.publishedAt)-_parseTsToDate(a.publishedAt));
   const items=pending.map(function(b){
     const dl=b.deadline?new Date(b.deadline):null;
     const daysLeft=dl?Math.ceil((dl-new Date())/(1000*60*60*24)):null;
@@ -9510,6 +9522,9 @@ function formatContent(raw){
       .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, function(m,text,url){
         return '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;font-weight:600">'+text+' ↗</a>';
       })
+      // Bold+italic: ***text*** (must run before the plain ** rule below,
+      // otherwise it eats the inner ** and leaves stray * characters)
+      .replace(/\*\*\*([^*]+?)\*\*\*/g,'<strong style="color:var(--ice);font-weight:700"><em style="font-style:italic">$1</em></strong>')
       // Bold: **text**
       .replace(/\*\*([^*]+?)\*\*/g,'<strong style="color:var(--ice);font-weight:700">$1</strong>')
       // Italic: _text_ (only when surrounded by spaces/start/end, not inside URLs)
@@ -9525,12 +9540,27 @@ function formatContent(raw){
   lines.forEach(function(line){
     var l=line.trim();
     if(!l){ html+='<div style="height:8px"></div>'; return; }
+
+    // Indent level from leading whitespace (2 spaces ≈ 1 level), used for
+    // markdown-style "- " bullets and their indented continuation lines —
+    // real briefing content is commonly authored as plain GitHub-flavored
+    // markdown (###, **, - ), not the app's own ▸/• shorthand, so both need
+    // to render properly instead of showing the raw symbols.
+    var leadSpaces=(line.match(/^[ \t]*/)||[''])[0].replace(/\t/g,'  ').length;
+    var indentLevel=Math.min(3, Math.floor(leadSpaces/2));
+
     if(l.startsWith('▸ ')){
       html+='<div style="font-size:15px;font-weight:800;color:var(--ice);margin:14px 0 6px;border-right:3px solid var(--gold);padding-right:10px">'+processInline(l.slice(2))+'</div>';
+    } else if(/^#{1,6}\s+/.test(l)){
+      html+='<div style="font-size:15px;font-weight:800;color:var(--ice);margin:14px 0 6px;border-right:3px solid var(--gold);padding-right:10px">'+processInline(l.replace(/^#{1,6}\s+/,''))+'</div>';
     } else if(l==='─────────────'||l.match(/^─+$/)){
       html+='<hr style="border:none;border-top:1px solid var(--line2);margin:12px 0">';
     } else if(l.startsWith('• ')){
       html+='<div style="display:flex;gap:8px;margin:3px 0;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.slice(2))+'</span></div>';
+    } else if(/^-\s+/.test(l)){
+      html+='<div style="display:flex;gap:8px;margin:3px '+(indentLevel*20)+'px;font-size:14px;line-height:1.7;color:var(--ice2)"><span style="color:var(--gold);flex-shrink:0">•</span><span>'+processInline(l.replace(/^-\s+/,''))+'</span></div>';
+    } else if(leadSpaces>=2){
+      html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px '+((indentLevel||1)*20)+'px">'+processInline(l)+'</div>';
     } else {
       html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px 0">'+processInline(l)+'</div>';
     }
