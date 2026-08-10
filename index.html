@@ -7405,6 +7405,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
       if(!relIds.has(String(agentId))) return;
       if(comp==null||comp.score===undefined||comp.score===null) return;
       if(comp.score>=FAIL_THRESHOLD) return;
+      if(comp.reviewed_by) return; // already sat with a manager — drop off this list
       failedList.push({
         agentId: String(agentId),
         agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
@@ -7412,9 +7413,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
         briefingTitle: doc.title,
         date: comp.signed_at || '',
         score: comp.score,
-        answers: comp.answers || [],
-        reviewedBy: comp.reviewed_by || null,
-        reviewedAt: comp.reviewed_at || null
+        answers: comp.answers || []
       });
     });
   });
@@ -7736,9 +7735,7 @@ function openFailedBriefingDocsList(){
     '</tr>'+
     list.map(function(x,idx){
       const dateStr=x.date?new Date(x.date).toLocaleDateString('he-IL'):'—';
-      const debriefCell = x.reviewedBy
-        ? '<span style="font-size:11px;color:var(--ok);font-weight:700">✅ עבר מועד ב\'</span><br><span style="font-size:10px;color:var(--ice3)">'+x.reviewedBy+' · '+new Date(x.reviewedAt).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</span>'
-        : '<button onclick="markAgentDebriefed('+idx+')" style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Sora\',sans-serif">☑ נציג מושב</button>';
+      const debriefCell = '<button onclick="markAgentDebriefed('+idx+')" style="background:var(--gold-bg);border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Sora\',sans-serif">☑ נציג מושב</button>';
       return '<tr style="border-bottom:1px solid var(--line)">'+
         '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agentName+'</td>'+
         '<td style="padding:8px 12px;color:var(--gold);cursor:pointer;text-decoration:underline dotted" onclick="openFailedBriefingAnswers('+idx+')" title="לחץ לצפייה בתשובות הנכונות">'+x.briefingTitle+'</td>'+
@@ -7768,7 +7765,7 @@ async function markAgentDebriefed(idx){
   const x=(window._failedBriefingDocsList||[])[idx];
   if(!x) return;
   const {data:{session}}=await _sb.auth.getSession();
-  const managerName=session?.user?.email||'מנהל לא ידוע';
+  const managerName=await getManagerDisplayName(session);
   const nowIso=new Date().toISOString();
 
   const {data:freshRow,error:fetchErr}=await _sb.from('briefing_docs').select('completions').eq('id',x.briefingId).single();
@@ -7781,9 +7778,33 @@ async function markAgentDebriefed(idx){
   const {error:updateErr}=await _sb.from('briefing_docs').update({completions:JSON.stringify(freshCompletions)}).eq('id',x.briefingId);
   if(updateErr){ alert('שגיאה בשמירה: '+updateErr.message); return; }
 
-  x.reviewedBy=managerName;
-  x.reviewedAt=nowIso;
+  // The agent is debriefed now — drop them off both the currently-open list
+  // and the per-briefing badge list, so the count on the ניהול תדריכים
+  // card stays in sync without needing a reload.
+  window._failedBriefingDocsList=(window._failedBriefingDocsList||[]).filter(function(item){ return item!==x; });
+  const cardList=(window._briefingCardFailedLists||{})[x.briefingId];
+  if(cardList){
+    window._briefingCardFailedLists[x.briefingId]=cardList.filter(function(item){ return !(item.agentId===x.agentId && item.briefingId===x.briefingId); });
+  }
   openFailedBriefingDocsList();
+}
+// Manager's display name for the "נציג מושב" mark. Supabase Auth doesn't
+// expose other users' metadata to the client, and this app has no
+// email→name table, so: try this session's own user_metadata first, then
+// fall back to a one-time prompt cached in localStorage per email — avoids
+// showing the raw login email in the UI.
+async function getManagerDisplayName(session){
+  const meta=session?.user?.user_metadata||{};
+  if(meta.full_name) return meta.full_name;
+  if(meta.name) return meta.name;
+  const email=session?.user?.email||'';
+  const cacheKey='managerDisplayName:'+email;
+  let name=localStorage.getItem(cacheKey)||'';
+  if(!name){
+    name=(prompt('מה השם שלך? (יוצג ליד הסימון "נציג מושב")')||'').trim();
+    if(name) localStorage.setItem(cacheKey, name);
+  }
+  return name || email || 'מנהל לא ידוע';
 }
 // Same exact "עובדים שנכשלו בתדריך" window, opened from a single briefing's
 // card in ניהול תדריכים — scoped to just that briefing's failed completions.
@@ -11594,6 +11615,7 @@ async function loadBriefingsTab(){
       if(!expectedIds.has(String(agentId))) return;
       if(comp==null || comp.score===undefined || comp.score===null) return;
       if(comp.score >= 75) return;
+      if(comp.reviewed_by) return; // already sat with a manager — drop off this list
       failedForThis.push({
         agentId: String(agentId),
         agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
@@ -11601,9 +11623,7 @@ async function loadBriefingsTab(){
         briefingTitle: b.title,
         date: comp.signed_at || '',
         score: comp.score,
-        answers: comp.answers || [],
-        reviewedBy: comp.reviewed_by || null,
-        reviewedAt: comp.reviewed_at || null
+        answers: comp.answers || []
       });
     });
     failedForThis.sort(function(x,y){ return new Date(y.date||0) - new Date(x.date||0); });
