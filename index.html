@@ -1199,9 +1199,15 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <button class="nav-btn" onclick="switchTab('knowledge')" id="nav-knowledge">
         <span class="nav-icon">🧠</span><span class="nav-label">ניהול ידע</span>
       </button>
-      <button class="nav-btn" onclick="switchTab('controls')" id="nav-controls">
-        <span class="nav-icon">📋</span><span class="nav-label">בקרות</span>
-      </button>
+      <div style="position:relative" onmouseenter="document.getElementById('nav-controls-dropdown').style.display='block'" onmouseleave="document.getElementById('nav-controls-dropdown').style.display='none'">
+        <button class="nav-btn" onclick="switchTab('controls','monthly')" id="nav-controls">
+          <span class="nav-icon">📋</span><span class="nav-label">בקרות</span>
+        </button>
+        <div id="nav-controls-dropdown" style="display:none;position:absolute;top:100%;right:0;min-width:170px;background:var(--ink2);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.18);padding:6px;z-index:50">
+          <button onclick="switchTab('controls','monthly')" style="width:100%;text-align:right;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--ice2);font-size:13px;font-weight:500;font-family:'Sora',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">📋 בקרות</button>
+          <button onclick="switchTab('controls','mystery')" style="width:100%;text-align:right;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--ice2);font-size:13px;font-weight:500;font-family:'Sora',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">🕵️ לקוח סמוי</button>
+        </div>
+      </div>
       <button class="nav-btn" onclick="switchTab('discipline')" id="nav-discipline">
         <span class="nav-icon">⚖️</span><span class="nav-label">משמעת</span>
       </button>
@@ -1235,7 +1241,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
     <button class="bnav-btn" id="bnav-knowledge" onclick="switchTab('knowledge')">
       <span class="bni">🧠</span><span class="bnl">ידע</span>
     </button>
-    <button class="bnav-btn" id="bnav-controls" onclick="switchTab('controls')">
+    <button class="bnav-btn" id="bnav-controls" onclick="switchTab('controls','monthly')">
       <span class="bni">📋</span><span class="bnl">בקרות</span>
     </button>
     <button class="bnav-btn" id="bnav-discipline" onclick="switchTab('discipline')">
@@ -3522,7 +3528,7 @@ function confirmDialog(message, opts){
 }
 
 /* TABS */
-function switchTab(name){
+function switchTab(name, controlsCategory){
   document.querySelectorAll('.nav-btn').forEach(b=>{
     const tabId=b.id?b.id.replace('nav-',''):'';
     b.classList.toggle('active',tabId===name);
@@ -3595,6 +3601,8 @@ function switchTab(name){
     }
   }
   if(name==='controls'){
+    window._controlsCategory = controlsCategory || window._controlsCategory || 'monthly';
+    applyControlsCategoryLabels();
     if(!_adminUnlocked){
       const lock=document.getElementById('controls-lock');
       const cont=document.getElementById('controls-content');
@@ -3604,6 +3612,7 @@ function switchTab(name){
       document.getElementById('controls-lock').style.display='none';
       document.getElementById('controls-content').style.display='block';
       if(!_controlsLoaded) loadControls();
+      else refreshControlsCategory();
     }
   }
   if(name==='manager'){
@@ -8984,6 +8993,28 @@ function downloadPDF(){
     <div style="padding:20px 22px">
       <input type="hidden" id="ctrl-edit-id">
 
+      <!-- Row -1: Control type (prominent) -->
+      <div style="margin-bottom:16px">
+        <label class="field-label">סוג בקרה <span style="color:var(--danger)">*</span></label>
+        <input type="hidden" id="ctrl-type" value="monthly">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <label id="ctrl-type-monthly-label" onclick="selectControlType('monthly')" style="display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="ctrl-type-radio" id="ctrl-type-monthly" value="monthly" checked style="accent-color:var(--gold)">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--ice)">📊 בקרה חודשית</div>
+              <div style="font-size:11px;color:var(--ice3)">בקרת איכות רגילה</div>
+            </div>
+          </label>
+          <label id="ctrl-type-mystery-label" onclick="selectControlType('mystery')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="ctrl-type-radio" id="ctrl-type-mystery" value="mystery" style="accent-color:var(--gold)">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--ice)">🕵️ לקוח סמוי</div>
+              <div style="font-size:11px;color:var(--ice3)">שיחת בדיקה סמויה</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
       <!-- Row 0: Dept filter -->
       <div style="margin-bottom:14px">
         <label class="field-label">סנן לפי פעילות</label>
@@ -10697,6 +10728,30 @@ function closeEditIdNumber() {
 let S_controls = [];
 let _controlsLoaded = false;
 
+// Regular monthly controls and mystery-shopper ("לקוח סמוי") controls live
+// in the same table (controls.control_type), same add-control form, same
+// screen — only difference is which subset is shown. window._controlsCategory
+// ('monthly'|'mystery') tracks which one the manager is currently viewing.
+function getFilteredControls(){
+  const cat = window._controlsCategory || 'monthly';
+  return S_controls.filter(c => (c.control_type||'monthly') === cat);
+}
+function applyControlsCategoryLabels(){
+  const isMystery = (window._controlsCategory||'monthly') === 'mystery';
+  const monthlyBtn = document.getElementById('ctrl-tab-monthly');
+  const historyBtn = document.getElementById('ctrl-tab-history');
+  const tableBtn   = document.getElementById('ctrl-tab-table');
+  if(monthlyBtn) monthlyBtn.innerHTML = isMystery ? '📊 לקוח סמוי חודשי'   : '📊 בקרות חודשיות';
+  if(historyBtn) historyBtn.innerHTML = isMystery ? '📅 היסטוריית סמויים' : '📅 היסטוריית בקרות';
+  if(tableBtn)   tableBtn.innerHTML   = isMystery ? '📋 טבלת סמויים חודשית' : '📋 טבלת בקרות חודשית';
+}
+function refreshControlsCategory(){
+  populateControlFilters();
+  renderControlsMonthly();
+  if(document.getElementById('ctrl-panel-history')?.style.display !== 'none') renderControlsHistory();
+  if(document.getElementById('ctrl-panel-table')?.style.display !== 'none') { populateTableFilters(); renderControlsTable(); }
+}
+
 async function checkControlsPw(){
   const { data: { session } } = await _sb.auth.getSession();
   if(session){
@@ -10715,13 +10770,15 @@ async function loadControls(){
   const {data} = await _sb.from('controls').select('*').order('control_date', {ascending:false});
   S_controls = data||[];
   _controlsLoaded = true;
+  applyControlsCategoryLabels();
   populateControlFilters();
   renderControlsMonthly();
 }
 
 function populateControlFilters(){
+  const filtered = getFilteredControls();
   // Months
-  const months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  const months = [...new Set(filtered.map(c=>c.month).filter(Boolean))].sort().reverse();
   const now = new Date();
   const curMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(!months.includes(curMonth)) months.unshift(curMonth);
@@ -10729,10 +10786,18 @@ function populateControlFilters(){
   const mSel = document.getElementById('ctrl-month-filter');
   const hSel = document.getElementById('ctrl-hist-month');
   const opts = months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
-  if(mSel){ mSel.innerHTML = opts; mSel.value = curMonth; }
-  if(hSel){ hSel.innerHTML = '<option value="all">כל החודשים</option>' + opts; }
+  if(mSel){
+    const prev = mSel.value;
+    mSel.innerHTML = opts;
+    mSel.value = months.includes(prev) ? prev : curMonth;
+  }
+  if(hSel){
+    const prev = hSel.value;
+    hSel.innerHTML = '<option value="all">כל החודשים</option>' + opts;
+    hSel.value = (prev==='all'||months.includes(prev)) ? prev : 'all';
+  }
 
-  // Depts
+  // Depts (same for both categories)
   const depts = [...new Set(S.agents.map(a=>(a.depts||[])).flat())].sort();
   const deptOpts = '<option value="all">כל הפעילויות</option><option value="מובמנט">🔷 מובמנט (כולל כל הפעילויות)</option>' + depts.map(d=>`<option value="${d}">${d}</option>`).join('');
   ['ctrl-dept-filter','ctrl-hist-dept'].forEach(id=>{
@@ -10790,7 +10855,7 @@ function renderControlsMonthly(){
   }
 
   // Controls for this month
-  const monthControls = S_controls.filter(c=>c.month===month);
+  const monthControls = getFilteredControls().filter(c=>c.month===month);
 
   el.innerHTML = agents.map(a=>{
     const agentControls = monthControls.filter(c=>String(c.agent_id)===String(a.id))
@@ -10886,7 +10951,7 @@ function renderControlsHistory(){
   const el    = document.getElementById('controls-history-list');
   if(!el) return;
 
-  let filtered = S_controls;
+  let filtered = getFilteredControls();
   if(month!=='all') filtered = filtered.filter(c=>c.month===month);
   if(dept==='מובמנט'){
     const MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','מעוף לעמית','לאומית FIT'];
@@ -11032,6 +11097,7 @@ function openControlModal(controlId, presetAgentId){
     document.getElementById('ctrl-closing').checked = !!c.closing_done;
     document.getElementById('ctrl-retention').value = c.retention||'';
     document.getElementById('ctrl-improvement').value = c.improvement||'';
+    selectControlType(c.control_type||'monthly');
   } else {
     document.getElementById('ctrl-modal-title').textContent = 'בקרה חדשה';
     document.getElementById('ctrl-edit-id').value = '';
@@ -11050,6 +11116,9 @@ function openControlModal(controlId, presetAgentId){
     document.getElementById('ctrl-closing').checked = false;
     document.getElementById('ctrl-retention').value = '';
     document.getElementById('ctrl-improvement').value = '';
+    // Default to whichever screen the manager opened the form from —
+    // adding from the "לקוח סמוי" view should default to that type too.
+    selectControlType(window._controlsCategory||'monthly');
   }
 
   updateLiveScore();
@@ -11058,6 +11127,20 @@ function openControlModal(controlId, presetAgentId){
   });
 
   modal.style.display = 'flex';
+}
+
+function selectControlType(type){
+  ['monthly','mystery'].forEach(t=>{
+    const label = document.getElementById('ctrl-type-'+t+'-label');
+    const radio = document.getElementById('ctrl-type-'+t);
+    if(label){
+      label.style.borderColor = t===type?'var(--gold)':'var(--line2)';
+      label.style.background  = t===type?'var(--gold-bg)':'var(--ink3)';
+    }
+    if(radio) radio.checked = t===type;
+  });
+  const hidden = document.getElementById('ctrl-type');
+  if(hidden) hidden.value = type;
 }
 
 function fillAgentDept(){
@@ -11124,6 +11207,7 @@ async function saveControl(){
     agent_id: parseInt(agentId),
     agent_name: agent?.name||'',
     dept: document.getElementById('ctrl-dept').value,
+    control_type: document.getElementById('ctrl-type')?.value||'monthly',
     control_date: date,
     control_time: document.getElementById('ctrl-time')?.value||'',
     supervisor,
@@ -11156,7 +11240,7 @@ async function saveControl(){
 }
 
 function populateTableFilters(){
-  const months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  const months = [...new Set(getFilteredControls().map(c=>c.month).filter(Boolean))].sort().reverse();
   const sel = document.getElementById('ctrl-tbl-month');
   if(sel) sel.innerHTML = '<option value="all">כל החודשים</option>' +
     months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
@@ -11176,8 +11260,10 @@ function renderControlsTable(){
   let agents = S.agents.filter(a=>a.active!==false);
   if(dept!=='all') agents = agents.filter(a=>(a.depts||[]).includes(dept));
 
+  const catControls = getFilteredControls();
+
   // Get months to show as columns
-  let months = [...new Set(S_controls.map(c=>c.month).filter(Boolean))].sort().reverse();
+  let months = [...new Set(catControls.map(c=>c.month).filter(Boolean))].sort().reverse();
   if(month!=='all') months = [month];
   if(!months.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נתונים</div>'; return; }
 
@@ -11185,7 +11271,7 @@ function renderControlsTable(){
   if(status!=='all' && months.length>0){
     const checkMonth = month!=='all' ? month : months[0];
     agents = agents.filter(a=>{
-      const cnt = S_controls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth).length;
+      const cnt = catControls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth).length;
       return status==='done' ? cnt>=4 : cnt<4;
     });
   }
@@ -11194,7 +11280,7 @@ function renderControlsTable(){
   if(debriefFilter!=='all' && months.length>0){
     const checkMonth = month!=='all' ? month : months[0];
     agents = agents.filter(a=>{
-      const debriefed = S_controls.some(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth&&c.debriefed);
+      const debriefed = catControls.some(c=>String(c.agent_id)===String(a.id)&&c.month===checkMonth&&c.debriefed);
       return debriefFilter==='yes' ? debriefed : !debriefed;
     });
   }
@@ -11219,7 +11305,7 @@ function renderControlsTable(){
           <td style="padding:8px 12px;color:var(--ice);font-weight:600">${a.name}</td>
           <td style="padding:8px 12px;color:var(--ice3)">${dept1}</td>
           ${months.map(m=>{
-            const agentControls = S_controls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===m);
+            const agentControls = catControls.filter(c=>String(c.agent_id)===String(a.id)&&c.month===m);
             const cnt = agentControls.length;
             const done = cnt>=4;
             if(!cnt) return '<td style="padding:8px 12px;text-align:center;color:var(--ice4)">—</td><td style="padding:8px 12px;text-align:center"><span style="background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-line);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;font-family:DM Mono,monospace">טרם בוצע</span></td>';
@@ -11244,7 +11330,7 @@ function renderControlsTable(){
 // ── Summary of the (up to 4) controls performed for an agent/month ──
 function showControlsSummary(agentId, month){
   const agent = S.agents.find(a=>String(a.id)===String(agentId));
-  const agentControls = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month)
+  const agentControls = getFilteredControls().filter(c=>String(c.agent_id)===String(agentId)&&c.month===month)
     .sort((a,b)=>(a.control_date||'').localeCompare(b.control_date||'')||(a.control_time||'').localeCompare(b.control_time||''));
 
   const modal = document.getElementById('briefing-status-modal');
@@ -11338,8 +11424,10 @@ async function saveDebrief(){
   if(!time){ alert('יש לבחור שעת משוב'); return; }
   if(!type){ alert('יש לבחור סוג ישיבה'); return; }
 
-  // Find controls of this agent in this month
-  const agentControls = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
+  // Find controls of this agent in this month (scoped to the currently
+  // viewed category — a debrief on the regular list shouldn't touch that
+  // agent's mystery-shopper controls for the same month, and vice versa)
+  const agentControls = getFilteredControls().filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
   if(!agentControls.length){ alert('לא נמצאו בקרות לנציג זה בחודש זה'); return; }
 
   // Validate 4 controls
@@ -11379,11 +11467,14 @@ async function deleteAgentControls(agentId, month){
   if(!(await confirmDialog('האם אתה בטוח שברצונך למחוק את כל הבקרות של נציג זה בחודש זה?', {danger:true}))) return;
   const { data: { session: _dcs } } = await _sb.auth.getSession();
   if(!_dcs){ alert('נדרש להיות מחובר כמנהל'); return; }
-  const toDelete = S_controls.filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
+  // Scoped to the current category — "מחק הכל" on the regular list must not
+  // touch that agent's mystery-shopper controls for the same month.
+  const toDelete = getFilteredControls().filter(c=>String(c.agent_id)===String(agentId)&&c.month===month);
   for(const c of toDelete){
     await _sb.from('controls').delete().eq('id',c.id);
   }
-  S_controls = S_controls.filter(c=>!(String(c.agent_id)===String(agentId)&&c.month===month));
+  const deletedIds = new Set(toDelete.map(c=>c.id));
+  S_controls = S_controls.filter(c=>!deletedIds.has(c.id));
   renderControlsMonthly();
 }
 
@@ -14242,6 +14333,28 @@ function renderManagersDiscipline(){
     </div>
     <div style="padding:20px 22px">
       <input type="hidden" id="ctrl-edit-id">
+
+      <!-- Row -1: Control type (prominent) -->
+      <div style="margin-bottom:16px">
+        <label class="field-label">סוג בקרה <span style="color:var(--danger)">*</span></label>
+        <input type="hidden" id="ctrl-type" value="monthly">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <label id="ctrl-type-monthly-label" onclick="selectControlType('monthly')" style="display:flex;align-items:center;gap:10px;background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="ctrl-type-radio" id="ctrl-type-monthly" value="monthly" checked style="accent-color:var(--gold)">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--ice)">📊 בקרה חודשית</div>
+              <div style="font-size:11px;color:var(--ice3)">בקרת איכות רגילה</div>
+            </div>
+          </label>
+          <label id="ctrl-type-mystery-label" onclick="selectControlType('mystery')" style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1.5px solid var(--line2);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all 0.15s">
+            <input type="radio" name="ctrl-type-radio" id="ctrl-type-mystery" value="mystery" style="accent-color:var(--gold)">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--ice)">🕵️ לקוח סמוי</div>
+              <div style="font-size:11px;color:var(--ice3)">שיחת בדיקה סמויה</div>
+            </div>
+          </label>
+        </div>
+      </div>
 
       <!-- Row 0: Dept filter -->
       <div style="margin-bottom:14px">
