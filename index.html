@@ -1820,6 +1820,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div class="sec-title">בקרות <em>נציגים</em></div>
       </div>
 
+      <!-- Today's mystery-shopper count — לקוח סמוי only, resets daily -->
+      <div id="ctrl-today-mystery-widget" style="display:none;align-items:center;gap:20px;background:linear-gradient(135deg,rgba(116,105,166,0.1),transparent);border:1.5px solid var(--gold-line);border-radius:16px;padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:34px">🕵️</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--ice)">לקוחות סמויים שבוצעו היום</div>
+          <div style="font-size:11px;color:var(--ice3);margin-top:2px">היעד היומי: 4 · הספירה מתאפסת בכל יום</div>
+        </div>
+        <div id="ctrl-today-mystery-count" style="font-size:38px;font-weight:900;color:var(--gold);font-family:'Playfair Display',serif">0<span style="font-size:16px;color:var(--ice3);font-weight:600"> / 4</span></div>
+      </div>
+
       <!-- Sub tabs -->
       <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0">
         <button id="ctrl-tab-monthly" onclick="showControlsPanel('monthly')"
@@ -1833,6 +1843,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <button id="ctrl-tab-table" onclick="showControlsPanel('table')"
           style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
           📋 טבלת בקרות חודשית
+        </button>
+        <button id="ctrl-tab-daily" onclick="showControlsPanel('daily')" style="display:none;padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+          🕵️ טבלת ביצוע לקוח סמוי
         </button>
       </div>
 
@@ -1897,6 +1910,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           </button>
         </div>
         <div id="controls-table-list" style="overflow-x:auto"></div>
+      </div>
+
+      <!-- MYSTERY DAILY PERFORMANCE PANEL (לקוח סמוי only) -->
+      <div id="ctrl-panel-daily" style="display:none">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <select id="ctrl-daily-month" onchange="renderMysteryDailyReport()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל החודשים</option>
+          </select>
+        </div>
+        <div id="ctrl-daily-report-list" style="overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -10741,15 +10764,138 @@ function applyControlsCategoryLabels(){
   const monthlyBtn = document.getElementById('ctrl-tab-monthly');
   const historyBtn = document.getElementById('ctrl-tab-history');
   const tableBtn   = document.getElementById('ctrl-tab-table');
+  const dailyBtn   = document.getElementById('ctrl-tab-daily');
   if(monthlyBtn) monthlyBtn.innerHTML = isMystery ? '📊 לקוח סמוי חודשי'   : '📊 בקרות חודשיות';
   if(historyBtn) historyBtn.innerHTML = isMystery ? '📅 היסטוריית סמויים' : '📅 היסטוריית בקרות';
   if(tableBtn)   tableBtn.innerHTML   = isMystery ? '📋 טבלת סמויים חודשית' : '📋 טבלת בקרות חודשית';
+  if(dailyBtn){
+    dailyBtn.style.display = isMystery ? '' : 'none';
+    // The daily-performance tab only exists for לקוח סמוי — if we just
+    // switched to the regular category while it was open, fall back to
+    // the monthly panel instead of leaving an invisible tab active.
+    if(!isMystery && dailyBtn.style.borderBottomColor==='var(--gold)') showControlsPanel('monthly');
+  }
+  updateTodayMysteryWidget();
+}
+// "לקוחות סמויים שבוצעו היום" — company-wide count (not dept/agent
+// filtered — this is a page-level daily target, not scoped to whatever
+// sub-tab filters happen to be set), against a fixed daily goal of 4.
+// Resets naturally every day since it's always computed against today's
+// date rather than stored anywhere.
+function updateTodayMysteryWidget(){
+  const widget = document.getElementById('ctrl-today-mystery-widget');
+  if(!widget) return;
+  const isMystery = (window._controlsCategory||'monthly') === 'mystery';
+  widget.style.display = isMystery ? 'flex' : 'none';
+  if(!isMystery) return;
+  const DAILY_TARGET = 4;
+  const today = new Date().toISOString().slice(0,10);
+  const count = S_controls.filter(c => (c.control_type||'monthly')==='mystery' && c.control_date===today).length;
+  const countEl = document.getElementById('ctrl-today-mystery-count');
+  if(countEl){
+    countEl.innerHTML = count + '<span style="font-size:16px;color:var(--ice3);font-weight:600"> / '+DAILY_TARGET+'</span>';
+    countEl.style.color = count>=DAILY_TARGET ? 'var(--ok)' : 'var(--gold)';
+  }
+}
+// "טבלת ביצוע לקוח סמוי" — its own sub-tab (like היסטוריית סמויים /
+// טבלת סמויים חודשית), real table one row per day: תאריך, כמות (clickable
+// — opens the breakdown by agent name), שעה, גורם מבצע. Scoped to
+// whichever month this panel's own month filter is set to.
+window._mysteryDailyBreakdown = {};
+function renderMysteryDailyReport(){
+  const box = document.getElementById('ctrl-daily-report-list');
+  if(!box) return;
+
+  const month = document.getElementById('ctrl-daily-month')?.value||'all';
+  let list = getFilteredControls();
+  if(month!=='all') list = list.filter(c=>c.month===month);
+
+  const byDate = {};
+  list.forEach(c=>{
+    const d = c.control_date||'—';
+    if(!byDate[d]) byDate[d] = {count:0, times:[], supervisors:new Set()};
+    byDate[d].count++;
+    if(c.control_time) byDate[d].times.push(c.control_time);
+    if(c.supervisor) byDate[d].supervisors.add(c.supervisor);
+  });
+  const dates = Object.keys(byDate).sort().reverse();
+  window._mysteryDailyBreakdown = byDate;
+
+  if(!dates.length){
+    box.innerHTML = emptyState('📋','אין נתונים לסינון זה','נסה לבחור חודש אחר');
+    return;
+  }
+
+  box.innerHTML = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="background:var(--ink3)">'+
+      '<th style="padding:8px 10px;text-align:right;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10px">תאריך</th>'+
+      '<th style="padding:8px 10px;text-align:center;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10px">כמות</th>'+
+      '<th style="padding:8px 10px;text-align:center;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10px">שעה</th>'+
+      '<th style="padding:8px 10px;text-align:right;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10px">גורם מבצע</th>'+
+    '</tr></thead><tbody>'+
+    dates.map(d=>{
+      const info = byDate[d];
+      const timesStr = info.times.length ? info.times.join(', ') : '—';
+      const supStr = [...info.supervisors].join(', ')||'—';
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:8px 10px;color:var(--ice);font-weight:600;font-family:\'DM Mono\',monospace">'+d+'</td>'+
+        '<td style="padding:8px 10px;text-align:center"><span onclick="openMysteryDayBreakdown(\''+d+'\')" style="cursor:pointer;text-decoration:underline dotted;color:var(--gold);font-weight:800" title="לחץ לצפייה בבקרות לפי שם">'+info.count+'</span></td>'+
+        '<td style="padding:8px 10px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+timesStr+'</td>'+
+        '<td style="padding:8px 10px;color:var(--ice3)">'+supStr+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</tbody></table></div>';
+}
+// Drill-down for a single day's count in "טבלת ביצוע לקוח סמוי" — lists
+// each mystery control performed that day by agent name.
+function openMysteryDayBreakdown(date){
+  const month = document.getElementById('ctrl-daily-month')?.value||'all';
+  let list = getFilteredControls().filter(c=>c.control_date===date);
+  if(month!=='all') list = list.filter(c=>c.month===month);
+  list = list.sort((a,b)=>(a.control_time||'').localeCompare(b.control_time||''));
+
+  const modal = document.getElementById('briefing-status-modal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('bsm-title').textContent = '🕵️ לקוח סמוי — '+date;
+
+  const el = document.getElementById('bsm-content');
+  if(!list.length){
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נתונים ליום זה</div>';
+    return;
+  }
+  el.innerHTML = '<div class="card" style="padding:0;overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
+    '<tr style="background:var(--ink3)">'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם נציג</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">שעה</th>'+
+      '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">גורם מבצע</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון</th>'+
+    '</tr>'+
+    list.map(c=>{
+      const scoreColor = c.score>=0.8?'var(--ok)':c.score>=0.5?'var(--warn)':'var(--danger)';
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:8px 12px;color:var(--gold);font-weight:600;cursor:pointer;text-decoration:underline dotted" onclick="viewMysteryControlDetail(\''+c.id+'\')" title="לחץ לצפייה בפרטי הבקרה">'+(c.agent_name||'—')+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+(c.control_time||'—')+'</td>'+
+        '<td style="padding:8px 12px;color:var(--ice3)">'+(c.supervisor||'—')+'</td>'+
+        '<td style="padding:8px 12px;text-align:center;font-weight:800;color:'+scoreColor+'">'+(c.score!=null?c.score.toFixed(2):'—')+'</td>'+
+      '</tr>';
+    }).join('')+
+  '</table></div>';
+}
+// Clicking an agent's name in the day breakdown opens the exact same
+// control detail view used everywhere else in בקרות (the same modal a
+// score card or history row opens) — full parameter checklist + שימור/
+// שיפור notes, so the manager can see what went well and what didn't.
+function viewMysteryControlDetail(controlId){
+  document.getElementById('briefing-status-modal').style.display = 'none';
+  openControlModal(controlId);
 }
 function refreshControlsCategory(){
   populateControlFilters();
   renderControlsMonthly();
   if(document.getElementById('ctrl-panel-history')?.style.display !== 'none') renderControlsHistory();
   if(document.getElementById('ctrl-panel-table')?.style.display !== 'none') { populateTableFilters(); renderControlsTable(); }
+  if(document.getElementById('ctrl-panel-daily')?.style.display !== 'none') { populateTableFilters(); renderMysteryDailyReport(); }
 }
 
 async function checkControlsPw(){
@@ -10814,7 +10960,7 @@ function formatMonth(m){
 }
 
 function showControlsPanel(panel){
-  ['monthly','history','table'].forEach(p=>{
+  ['monthly','history','table','daily'].forEach(p=>{
     const el=document.getElementById('ctrl-panel-'+p);
     const btn=document.getElementById('ctrl-tab-'+p);
     if(el) el.style.display=p===panel?'block':'none';
@@ -10825,6 +10971,7 @@ function showControlsPanel(panel){
   });
   if(panel==='history') renderControlsHistory();
   if(panel==='table') { populateTableFilters(); renderControlsTable(); }
+  if(panel==='daily') { populateTableFilters(); renderMysteryDailyReport(); }
 }
 
 function renderControlsMonthly(){
@@ -11237,13 +11384,19 @@ async function saveControl(){
   closeControlModal();
   populateControlFilters();
   renderControlsMonthly();
+  updateTodayMysteryWidget();
 }
 
 function populateTableFilters(){
   const months = [...new Set(getFilteredControls().map(c=>c.month).filter(Boolean))].sort().reverse();
-  const sel = document.getElementById('ctrl-tbl-month');
-  if(sel) sel.innerHTML = '<option value="all">כל החודשים</option>' +
-    months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
+  const monthOpts = '<option value="all">כל החודשים</option>' + months.map(m=>`<option value="${m}">${formatMonth(m)}</option>`).join('');
+  ['ctrl-tbl-month','ctrl-daily-month'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = monthOpts;
+    sel.value = (prev==='all'||months.includes(prev)) ? prev : 'all';
+  });
   const depts = [...new Set(S.agents.flatMap(a=>a.depts||[]))].sort();
   const dsel = document.getElementById('ctrl-tbl-dept');
   if(dsel) dsel.innerHTML = '<option value="all">כל הפעילויות</option>' +
@@ -11476,6 +11629,7 @@ async function deleteAgentControls(agentId, month){
   const deletedIds = new Set(toDelete.map(c=>c.id));
   S_controls = S_controls.filter(c=>!deletedIds.has(c.id));
   renderControlsMonthly();
+  updateTodayMysteryWidget();
 }
 
 function resetMonthlyFilters(){
