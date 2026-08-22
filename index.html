@@ -9,10 +9,10 @@
 <link rel="manifest" href="/Hdrhaot/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="מערכת תדריכים">
+<meta name="apple-mobile-web-app-title" content="LearnIx">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F7F5FB">
-<title>מערכת תדריכים — מוקד שירות</title>
+<title>LearnIx — מוקד שירות</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -128,6 +128,17 @@ body::after {
   pointer-events: none;
 }
 .brand-mark img { width: 100%; height: 100%; object-fit: cover; position: relative; }
+.brand-logo-svg { width: 62%; height: 62%; position: relative; overflow: visible; }
+.lx-bar { transform-box: fill-box; transform-origin: center bottom; animation: lx-rise 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+.lx-bar-1 { animation-delay: 0.05s; }
+.lx-bar-2 { animation-delay: 0.18s; }
+.lx-bar-3 { animation-delay: 0.31s; }
+.lx-arrow { stroke-dasharray: 26; stroke-dashoffset: 26; animation: lx-draw 0.35s ease-out both; animation-delay: 0.52s; }
+@keyframes lx-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes lx-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .lx-bar, .lx-arrow { animation: none; }
+}
 .brand-name { font-size: 13px; font-weight: 600; color: var(--ice); letter-spacing: 0.02em; }
 .brand-sub { font-size: 10px; color: var(--ice3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 1px; font-family: 'DM Mono', monospace; }
 
@@ -1168,15 +1179,26 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
 </head>
 <body>
 
+<!-- LearnIx logo mark — shared symbol, referenced via <use> everywhere the
+     logo appears. Bars rise + arrow draws in once on load. -->
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <symbol id="lx-logo-mark" viewBox="0 0 48 48">
+    <rect class="lx-bar lx-bar-1" x="8" y="30" width="8" height="10" rx="2.2" fill="#9085C8"/>
+    <rect class="lx-bar lx-bar-2" x="20" y="21" width="8" height="19" rx="2.2" fill="#7469A6"/>
+    <rect class="lx-bar lx-bar-3" x="32" y="12" width="8" height="28" rx="2.2" fill="#4B3F82"/>
+    <path class="lx-arrow" d="M32 12 L40 4 M40 4 L40 10 M40 4 L34 4" stroke="#4B3F82" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
       <div class="brand-mark">
-        <img src="logo.jpg" alt="לוגו">
+        <svg class="brand-logo-svg" viewBox="0 0 48 48" role="img" aria-label="LearnIx"><use href="#lx-logo-mark"></use></svg>
       </div>
       <div>
-        <div class="brand-name">מערכת תדריכים</div>
+        <div class="brand-name">LearnIx</div>
         <div class="brand-sub">מוקד שירות ומכירה</div>
       </div>
     </div>
@@ -8959,7 +8981,7 @@ function downloadPDF(){
       <thead><tr><th>כותרת</th><th>פעילויות</th><th>פורסם</th><th>דדליין</th><th>השלמות</th></tr></thead>
       <tbody>${completedRows}</tbody>
     </table>
-    <div class="footer">כל הזכויות שמורות לA.L ייעוץ ותכנון מערכות</div>
+    <div class="footer">כל הזכויות שמורות לA.L Systems</div>
   
 <!-- EXAM REVIEW MODAL -->
 <div id="exam-review-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
@@ -9167,8 +9189,8 @@ function downloadPDF(){
   <div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#9085C8,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
-      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(116,105,166,0.25);position:relative"><img src="logo.jpg" alt="לוגו" style="width:100%;height:100%;object-fit:cover"></div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
+      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(116,105,166,0.25);position:relative;background:#fff;display:flex;align-items:center;justify-content:center"><svg class="brand-logo-svg" viewBox="0 0 48 48" style="width:62%;height:62%" role="img" aria-label="LearnIx"><use href="#lx-logo-mark"></use></svg></div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">LearnIx</div>
       <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
     </div>
     <div class="field">
@@ -9185,7 +9207,7 @@ function downloadPDF(){
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
-    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L ייעוץ ותכנון מערכות</div>
+    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L Systems</div>
   </div>
 </div>
 
@@ -14430,7 +14452,7 @@ function renderManagersDiscipline(){
   position: relative;
   z-index: 1;
 ">
-  כל הזכויות שמורות לA.L ייעוץ ותכנון מערכות
+  כל הזכויות שמורות לA.L Systems
 </footer>
 
 <!-- EXAM REVIEW MODAL -->
@@ -14639,8 +14661,8 @@ function renderManagersDiscipline(){
   <div style="background:#fff;border:1px solid rgba(116,105,166,0.2);border-radius:24px;padding:2.5rem 2rem;width:380px;max-width:92vw;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.15)">
     <div style="position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),#9085C8,var(--gold))"></div>
     <div style="text-align:center;margin-bottom:28px">
-      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(116,105,166,0.25);position:relative"><img src="logo.jpg" alt="לוגו" style="width:100%;height:100%;object-fit:cover"></div>
-      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">מערכת תדריכים</div>
+      <div style="width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;box-shadow:0 4px 12px rgba(116,105,166,0.25);position:relative;background:#fff;display:flex;align-items:center;justify-content:center"><svg class="brand-logo-svg" viewBox="0 0 48 48" style="width:62%;height:62%" role="img" aria-label="LearnIx"><use href="#lx-logo-mark"></use></svg></div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--ice);margin-bottom:6px">LearnIx</div>
       <div style="font-size:13px;color:var(--ice3)">כניסת מנהל</div>
     </div>
     <div class="field">
@@ -14657,7 +14679,7 @@ function renderManagersDiscipline(){
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
-    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L ייעוץ ותכנון מערכות</div>
+    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L Systems</div>
   </div>
 </div>
 
