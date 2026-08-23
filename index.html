@@ -1675,6 +1675,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                         <option value="לבנה דניאל">לבנה דניאל</option>
                         <option value="תהילה כהן">תהילה כהן</option>
                         <option value="אליה ביטון">אליה ביטון</option>
+                        <option value="עדי כהן">עדי כהן</option>
                       </select>
                     </div>
                     <div><label class="field-label">תאריך</label>
@@ -1712,6 +1713,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
                         <option value="לבנה דניאל">לבנה דניאל</option>
                         <option value="תהילה כהן">תהילה כהן</option>
                         <option value="אליה ביטון">אליה ביטון</option>
+                        <option value="עדי כהן">עדי כהן</option>
                       </select>
                     </div>
                     <div><label class="field-label">מתאריך</label>
@@ -9101,6 +9103,7 @@ function downloadPDF(){
             <option>לבנה דניאל</option>
             <option>תהילה כהן</option>
             <option>אליה ביטון</option>
+            <option>עדי כהן</option>
           </select>
         </div>
       </div>
@@ -11742,7 +11745,8 @@ const MANAGER_EMAILS = [
   'levanad@m4l.co.il',
   'hodayam@targetcall.co.il',
   'eliyab@targetcall.co.il',
-  'bekib@targetcall.co.il'
+  'bekib@targetcall.co.il',
+  'adic@m4l.co.il'
 ];
 
 let _currentUserEmail = '';
@@ -12887,7 +12891,7 @@ function populateDisciplineFilters(){
   const sumEl=document.getElementById('disc-sum-agent');
   if(sumEl) sumEl.innerHTML='<option value="">בחר עובד...</option>'+agentOpts;
   const mgrSel=document.getElementById('mgr-filter-who');
-  const managers=['הודיה מזרחי','בקי ביטון','טל אברהם','לבנה דניאל','תהילה כהן','אליה ביטון'];
+  const managers=['הודיה מזרחי','בקי ביטון','טל אברהם','לבנה דניאל','תהילה כהן','אליה ביטון','עדי כהן'];
   if(mgrSel) mgrSel.innerHTML='<option value="all">כל המנהלים</option>'+managers.map(m=>`<option value="${m}">${m}</option>`).join('');
 }
 
@@ -14573,6 +14577,7 @@ function renderManagersDiscipline(){
             <option>לבנה דניאל</option>
             <option>תהילה כהן</option>
             <option>אליה ביטון</option>
+            <option>עדי כהן</option>
           </select>
         </div>
       </div>
