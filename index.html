@@ -11428,7 +11428,7 @@ function populateTableFilters(){
     depts.map(d=>`<option value="${d}">${d}</option>`).join('');
 }
 
-function renderControlsTable(){
+async function renderControlsTable(){
   const month  = document.getElementById('ctrl-tbl-month')?.value||'all';
   const dept   = document.getElementById('ctrl-tbl-dept')?.value||'all';
   const status = document.getElementById('ctrl-tbl-status')?.value||'all';
@@ -11465,6 +11465,13 @@ function renderControlsTable(){
 
   if(!agents.length){ el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין נציגים לסינון זה</div>'; return; }
 
+  // id_number is deliberately left out of the shared S.agents cache (that
+  // list loads for anonymous agent sessions too — see dbAgents()), so this
+  // manager-only table fetches it on demand for just the agents being shown.
+  const idNumberById = {};
+  const {data: idRows} = await _sb.from('agents').select('id,id_number').in('id', agents.map(a=>a.id));
+  (idRows||[]).forEach(r=>{ idNumberById[r.id] = r.id_number; });
+
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px" id="ctrl-export-table">
     <thead>
       <tr style="background:var(--ink3)">
@@ -11476,7 +11483,7 @@ function renderControlsTable(){
     </thead>
     <tbody>
       ${agents.map((a,i)=>{
-        const pin  = a.id_number||a.pin||'—';
+        const pin  = idNumberById[a.id]||a.pin||'—';
         const dept1 = (a.depts||[])[0]||'—';
         return `<tr style="border-bottom:1px solid var(--line);background:${i%2===0?'transparent':'var(--ink3)'}">
           <td style="padding:8px 12px;color:var(--ice3);font-family:'DM Mono',monospace">${pin}</td>
@@ -11549,8 +11556,29 @@ function exportControlsExcel(){
   if(!XLSX){ alert('ספריית אקסל לא נטענה'); return; }
   const table = document.getElementById('ctrl-export-table');
   if(!table){ alert('אין נתונים לייצוא'); return; }
+
+  // Build the sheet manually instead of table_to_sheet(): need to split
+  // the "שם" column into שם פרטי/שם משפחה, which a straight DOM-to-sheet
+  // copy can't do on its own.
+  const nameColIdx = [...table.querySelectorAll('thead th')].findIndex(th=>th.textContent.trim()==='שם');
+  const aoa = [...table.rows].map((tr,ri)=>{
+    const cells = [...tr.cells].map(td=>td.textContent.trim());
+    if(nameColIdx<0) return cells;
+    if(ri===0){
+      cells.splice(nameColIdx, 1, 'שם פרטי', 'שם משפחה');
+    } else {
+      const full = cells[nameColIdx]||'';
+      const spaceIdx = full.indexOf(' ');
+      const first = spaceIdx<0 ? full : full.slice(0,spaceIdx);
+      const last  = spaceIdx<0 ? '' : full.slice(spaceIdx+1);
+      cells.splice(nameColIdx, 1, first, last);
+    }
+    return cells;
+  });
+
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.table_to_sheet(table);
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!views'] = [{ RTL: true }];
   XLSX.utils.book_append_sheet(wb, ws, 'בקרות');
   XLSX.writeFile(wb, 'בקרות_חודשיות.xlsx');
 }
