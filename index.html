@@ -2331,8 +2331,11 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <button onclick="showKnowledgePanel('briefings')" id="ksb-briefings" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
               <span style="font-size:18px">📋</span><span>מבחנים</span>
             </button>
-            <button onclick="showKnowledgePanel('ai-feedback')" id="ksb-ai-feedback" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+            <button onclick="showKnowledgePanel('ai-feedback')" id="ksb-ai-feedback" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
               <span style="font-size:18px">⭐</span><span>הערות AI</span>
+            </button>
+            <button onclick="showKnowledgePanel('incorrect-answers')" id="ksb-incorrect-answers" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <span style="font-size:18px">❌</span><span>תשובות לא נכונות לטיפול</span>
             </button>
           </div>
         </div>
@@ -2544,6 +2547,27 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <button class="btn btn-outline btn-sm" onclick="loadAIFeedback()">↺ רענן</button>
             </div>
             <div id="ai-feedback-list"></div>
+          </div>
+
+          <!-- INCORRECT ANSWERS PANEL -->
+          <div id="kp-incorrect-answers" style="display:none">
+            <div class="sec-eyebrow" style="margin-bottom:6px">תשובות לא נכונות</div>
+            <div class="sec-title" style="margin-bottom:16px">תשובות לא נכונות <em>לטיפול מנהל</em></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="incorrect-fb-filter-rating" onchange="renderIncorrectAnswers()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">כל הדירוגים</option>
+                <option value="low">⭐⭐ נמוך (1-2)</option>
+                <option value="mid">⭐⭐⭐ בינוני (3)</option>
+                <option value="high">⭐⭐⭐⭐⭐ גבוה (4-5)</option>
+              </select>
+              <select id="incorrect-fb-filter-handled" onchange="renderIncorrectAnswers()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+                <option value="all">הכל</option>
+                <option value="pending">🔴 לטיפול</option>
+                <option value="handled">✅ טופל</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="loadAIFeedback()">↺ רענן</button>
+            </div>
+            <div id="incorrect-answers-list"></div>
           </div>
 
         </div>
@@ -4002,7 +4026,7 @@ function checkKnowledgePw(){
 
 function showKnowledgePanel(key){
   console.log('[Panel] key=',key, 'kp-ai-feedback el=', document.getElementById('kp-ai-feedback'));
-  ['library','articles','add','chat','briefings','ai-feedback'].forEach(p=>{
+  ['library','articles','add','chat','briefings','ai-feedback','incorrect-answers'].forEach(p=>{
     const el=document.getElementById('kp-'+p);
     if(el) el.style.display=p===key?'block':'none';
   });
@@ -4014,7 +4038,7 @@ function showKnowledgePanel(key){
       if(sel) sel.value=window._lastKbDept;
     }
   }
-  if(key==='ai-feedback') loadAIFeedback();
+  if(key==='ai-feedback'||key==='incorrect-answers') loadAIFeedback();
   document.querySelectorAll('.ksb-btn').forEach(b=>{b.style.background='none';b.style.border='none';b.style.color='var(--ice2)';b.style.fontWeight='600';});
   const ab=document.getElementById('ksb-'+key);
   if(ab){ab.style.background='var(--gold-bg)';ab.style.border='1px solid var(--gold-line)';ab.style.color='var(--gold)';ab.style.fontWeight='700';}
@@ -5033,6 +5057,7 @@ async function markAIFeedbackHandled(id){
   var item = (window._aiFeedbackData||[]).find(function(i){ return String(i.id)===String(id); });
   if(item) item.handled = true;
   renderAIFeedback();
+  renderIncorrectAnswers();
 }
 
 async function deleteAIFeedback(id){
@@ -5041,6 +5066,7 @@ async function deleteAIFeedback(id){
   if(res.error){alert('שגיאה: '+res.error.message);return;}
   window._aiFeedbackData=(window._aiFeedbackData||[]).filter(function(i){return String(i.id)!==String(id);});
   renderAIFeedback();
+  renderIncorrectAnswers();
 }
 
 function openArticleFromFeedback(articleId){
@@ -5050,6 +5076,50 @@ function openArticleFromFeedback(articleId){
   setTimeout(function(){
     var article=S_knowledge.find(function(a){return String(a.id)===String(articleId);});
     if(article) editKnowledgeArticle(article.id);
+  },300);
+}
+
+// Every article auto-created from "✏️ ערוך בקלות" (no known source
+// article to edit in place) is filed into this one folder, so fixes don't
+// clutter the main article list — created on first use, reused after.
+var _correctionsFolderName='תיקוני תשובות AI';
+async function ensureCorrectionsFolder(){
+  if(!S_folders.length) await loadFolders();
+  var existing=S_folders.find(function(f){ return f.name===_correctionsFolderName && !f.parent_id; });
+  if(existing) return existing.id;
+  var {data,error}=await _sb.from('kb_folders').insert({name:_correctionsFolderName, parent_id:null}).select().single();
+  if(error){ console.error('ensureCorrectionsFolder', error.message); return null; }
+  S_folders.push(data);
+  return data.id;
+}
+
+// "✏️ ערוך בקלות" on a wrong-answer row — jumps straight to fixing it.
+// If the AI's answer came from a known knowledge_base article, opens that
+// article's edit modal directly. Otherwise (the common case for the quick
+// ✓/✗ mark, which doesn't save article_ids) opens a fresh article, filed
+// into the תיקוני תשובות AI folder, pre-filled with the agent's question
+// and the wrong answer they got, so the manager just has to write the
+// correct version instead of hunting for where the bad content lives.
+async function openIncorrectAnswerFix(itemId){
+  var item=(window._aiFeedbackData||[]).find(function(i){ return String(i.id)===String(itemId); });
+  if(!item) return;
+  var articleIds=item.article_ids ? item.article_ids.split(',').filter(Boolean) : [];
+  var article=articleIds.length ? S_knowledge.find(function(a){ return String(a.id)===String(articleIds[0]); }) : null;
+  var folderId = article ? null : await ensureCorrectionsFolder();
+
+  switchTab('knowledge');
+  showKnowledgePanel(article ? 'articles' : 'add');
+  setTimeout(function(){
+    if(article){
+      editKnowledgeArticle(article.id);
+    } else {
+      var titleEl=document.getElementById('k-title');
+      var contentEl=document.getElementById('k-content');
+      var folderEl=document.getElementById('k-folder-select');
+      if(titleEl) titleEl.value='תיקון: '+(item.question||'').slice(0,80);
+      if(contentEl) contentEl.value='שאלה שהנציג שאל:\n'+(item.question||'')+'\n\nתשובה שגויה שה-AI נתן:\n'+(item.answer||'')+'\n\nתשובה נכונה:\n';
+      if(folderEl && folderId) folderEl.value=folderId;
+    }
   },300);
 }
 
@@ -5067,6 +5137,7 @@ async function loadAIFeedback(){
     window._aiFeedbackData = data||[];
     console.log('[loadAIFeedback] stored', window._aiFeedbackData.length, 'items, el=', !!el);
     renderAIFeedback();
+    renderIncorrectAnswers();
   } catch(e) {
     console.error('[loadAIFeedback] exception:', e.message);
     if(el) el.innerHTML='<div style="color:var(--danger)">שגיאה: '+e.message+'</div>';
@@ -5085,13 +5156,36 @@ function renderAIFeedback(){
   var handledFilter=document.getElementById('ai-fb-filter-handled')?.value||'all';
   if(handledFilter==='pending') items=items.filter(function(i){return !i.handled;});
   else if(handledFilter==='handled') items=items.filter(function(i){return !!i.handled;});
+  renderFeedbackItemsInto(el, items, 'אין משובים עדיין');
+}
 
+// "תשובות לא נכונות לטיפול" — same ai_feedback data/UI as הערות AI, but
+// scoped to the quick ✓/✗ marks agents leave under AI answers
+// (is_correct===false), so a manager has one dedicated place to work
+// through wrong answers without having to know to filter for them.
+function renderIncorrectAnswers(){
+  const el=document.getElementById('incorrect-answers-list');
+  if(!el) return;
+  var items=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false; });
+  var filter=document.getElementById('incorrect-fb-filter-rating')?.value||'all';
+  if(filter==='low') items=items.filter(function(i){return i.rating<=2;});
+  else if(filter==='mid') items=items.filter(function(i){return i.rating===3;});
+  else if(filter==='high') items=items.filter(function(i){return i.rating>=4;});
+  var handledFilter=document.getElementById('incorrect-fb-filter-handled')?.value||'all';
+  if(handledFilter==='pending') items=items.filter(function(i){return !i.handled;});
+  else if(handledFilter==='handled') items=items.filter(function(i){return !!i.handled;});
+  renderFeedbackItemsInto(el, items, 'אין תשובות לא נכונות ממתינות 🎉');
+}
+
+function renderFeedbackItemsInto(el, items, emptyMsg){
   if(!items.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">אין משובים עדיין</div>';
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ice3)">'+emptyMsg+'</div>';
     return;
   }
+  el.innerHTML=items.map(aiFeedbackCardHtml).join('');
+}
 
-  var html=items.map(function(item){
+function aiFeedbackCardHtml(item){
     var stars='★'.repeat(item.rating||0)+'☆'.repeat(5-(item.rating||0));
     var bgColor=item.rating<=2?'rgba(196,59,54,0.12)':item.rating<=3?'rgba(116,105,166,0.08)':'rgba(14,156,124,0.08)';
     var borderColor=item.rating<=2?'#C43B36':item.rating<=3?'#7469A6':'#0E9C7C';
@@ -5117,6 +5211,9 @@ function renderAIFeedback(){
         '</div>' +
         '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
           '<span style="font-size:11px;color:#555;font-family:monospace">'+dateStr+'</span>' +
+          (item.is_correct===false
+            ? '<button onclick="openIncorrectAnswerFix(\'' + item.id + '\')" style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,156,124,0.12);border:1.5px solid rgba(14,156,124,0.5);color:#0E9C7C;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Sora,sans-serif" title="פותח את מאמר המקור לתיקון, או מאמר חדש עם השאלה והתשובה השגויה ממולאות מראש">✏️ ערוך בקלות</button>'
+            : '') +
           srcBtnHtml +
           (item.handled
             ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(14,156,124,0.15);border:1px solid rgba(14,156,124,0.4);color:#0E9C7C;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">✅ טופל</span>'
@@ -5142,10 +5239,6 @@ function renderAIFeedback(){
         '<div style="font-size:13px;color:#2A2520;line-height:1.7;font-weight:600">'+item.agent_answer+'</div>' +
       '</div>' : '') +
     '</div>';
-  }).join('');
-  console.log('[renderAIFeedback] html length=', html.length, 'preview=', html.slice(0,100));
-  el.innerHTML=html;
-  console.log('[renderAIFeedback] el.innerHTML length=', el.innerHTML.length);
 }
 
 let _agentKbHistory=[];
