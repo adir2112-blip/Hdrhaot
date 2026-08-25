@@ -1220,6 +1220,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </button>
       <button class="nav-btn" onclick="switchTab('knowledge')" id="nav-knowledge">
         <span class="nav-icon">🧠</span><span class="nav-label">ניהול ידע</span>
+        <span id="nav-knowledge-badge" style="display:none;background:var(--danger);color:#fff;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800;margin-right:2px"></span>
       </button>
       <div style="position:relative" onmouseenter="document.getElementById('nav-controls-dropdown').style.display='block'" onmouseleave="document.getElementById('nav-controls-dropdown').style.display='none'">
         <button class="nav-btn" onclick="switchTab('controls','monthly')" id="nav-controls">
@@ -3249,6 +3250,29 @@ async function signIn(){
   localStorage.setItem('bs_login_ts', String(Date.now()));
   hideAuthModal();
   onAdminSignedIn();
+  checkIncorrectAnswersLoginAlert();
+}
+
+// Login-time heads-up for the specific managers responsible for AI-answer
+// quality — only fires on a fresh sign-in (not on session-restore across
+// page refreshes), and only when there's actually something pending.
+const INCORRECT_ALERT_MANAGER_EMAILS = ['hodayam@targetcall.co.il','bekib@targetcall.co.il'];
+async function checkIncorrectAnswersLoginAlert(){
+  const { data: { session } } = await _sb.auth.getSession();
+  const email = session?.user?.email || '';
+  if(!INCORRECT_ALERT_MANAGER_EMAILS.includes(email)) return;
+  await loadAIFeedback();
+  const pendingCount = (window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false && !i.handled; }).length;
+  if(pendingCount<=0) return;
+  const textEl=document.getElementById('incorrect-alert-text');
+  if(textEl) textEl.textContent='שים לב, יש לך '+pendingCount+' תשובות לא נכונות לטיפול בתפריט ניהול ידע';
+  const modal=document.getElementById('incorrect-alert-modal');
+  if(modal) modal.style.display='flex';
+}
+function goToIncorrectAnswersFromAlert(){
+  document.getElementById('incorrect-alert-modal').style.display='none';
+  switchTab('knowledge');
+  showKnowledgePanel('incorrect-answers');
 }
 
 async function signOut(){
@@ -3728,6 +3752,7 @@ async function unlockAll(){
   renderTracking();
   showSettingsPanel('main');
   loadKnowledge();
+  loadAIFeedback(); // populates the incorrect-answers pending badges (sidebar + top nav)
 }
 function lockAll(){
   _adminUnlocked = false;
@@ -5168,14 +5193,15 @@ function renderAIFeedback(){
 function renderIncorrectAnswers(){
   const el=document.getElementById('incorrect-answers-list');
 
-  // Sidebar badge — always the true pending count, independent of whatever
-  // this panel's own filters happen to be set to.
-  var badge=document.getElementById('incorrect-answers-badge');
-  if(badge){
-    var pendingCount=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false && !i.handled; }).length;
+  // Sidebar + top-nav badges — always the true pending count, independent
+  // of whatever this panel's own filters happen to be set to.
+  var pendingCount=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false && !i.handled; }).length;
+  ['incorrect-answers-badge','nav-knowledge-badge'].forEach(function(badgeId){
+    var badge=document.getElementById(badgeId);
+    if(!badge) return;
     badge.textContent=String(pendingCount);
     badge.style.display=pendingCount>0?'inline-block':'none';
-  }
+  });
 
   if(!el) return;
   var items=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false; });
@@ -9344,6 +9370,20 @@ function downloadPDF(){
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
     <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L Systems</div>
+  </div>
+</div>
+
+<!-- INCORRECT ANSWERS LOGIN ALERT — shown to specific managers when they
+     sign in, if they have pending "תשובות לא נכונות" to handle -->
+<div id="incorrect-alert-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1.5px solid var(--danger-line);border-radius:24px;max-width:420px;width:100%;padding:28px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+    <div style="font-size:40px;margin-bottom:10px">⚠️</div>
+    <div style="font-size:17px;font-weight:800;color:var(--ice);margin-bottom:8px">מנהל יקר</div>
+    <div id="incorrect-alert-text" style="font-size:14px;color:var(--ice2);line-height:1.7;margin-bottom:22px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="goToIncorrectAnswersFromAlert()" class="btn btn-gold" style="flex:1;justify-content:center">📋 עבור לטיפול</button>
+      <button onclick="document.getElementById('incorrect-alert-modal').style.display='none'" class="btn btn-outline">מאוחר יותר</button>
+    </div>
   </div>
 </div>
 
@@ -14846,6 +14886,20 @@ function renderManagersDiscipline(){
       <button onclick="enterAgentOnlyMode()" style="background:var(--gold-bg);border:1.5px solid var(--gold-line);border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Sora',sans-serif;width:100%">👤 כניסה כנציג ←</button>
     </div>
     <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;letter-spacing:0.02em">כל הזכויות שמורות לA.L Systems</div>
+  </div>
+</div>
+
+<!-- INCORRECT ANSWERS LOGIN ALERT — shown to specific managers when they
+     sign in, if they have pending "תשובות לא נכונות" to handle -->
+<div id="incorrect-alert-modal" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--ink2);border:1.5px solid var(--danger-line);border-radius:24px;max-width:420px;width:100%;padding:28px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
+    <div style="font-size:40px;margin-bottom:10px">⚠️</div>
+    <div style="font-size:17px;font-weight:800;color:var(--ice);margin-bottom:8px">מנהל יקר</div>
+    <div id="incorrect-alert-text" style="font-size:14px;color:var(--ice2);line-height:1.7;margin-bottom:22px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="goToIncorrectAnswersFromAlert()" class="btn btn-gold" style="flex:1;justify-content:center">📋 עבור לטיפול</button>
+      <button onclick="document.getElementById('incorrect-alert-modal').style.display='none'" class="btn btn-outline">מאוחר יותר</button>
+    </div>
   </div>
 </div>
 
