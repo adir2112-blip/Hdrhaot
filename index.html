@@ -2334,8 +2334,9 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <button onclick="showKnowledgePanel('ai-feedback')" id="ksb-ai-feedback" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right">
               <span style="font-size:18px">⭐</span><span>הערות AI</span>
             </button>
-            <button onclick="showKnowledgePanel('incorrect-answers')" id="ksb-incorrect-answers" class="ksb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
-              <span style="font-size:18px">❌</span><span>תשובות לא נכונות לטיפול</span>
+            <button onclick="showKnowledgePanel('incorrect-answers')" id="ksb-incorrect-answers" class="ksb-btn" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
+              <div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">❌</span><span>תשובות לא נכונות לטיפול</span></div>
+              <span id="incorrect-answers-badge" style="display:none;background:var(--danger);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
             </button>
           </div>
         </div>
@@ -3626,6 +3627,7 @@ function switchTab(name, controlsCategory){
       document.getElementById('knowledge-lock').style.display='none';
       document.getElementById('knowledge-content').style.display='block';
       Promise.all([loadKnowledge(),loadFolders()]).then(()=>{renderKnowledgeArticles();});
+      loadAIFeedback(); // also drives the incorrect-answers pending badge
       showKnowledgePanel('articles');
     }
   }
@@ -5165,6 +5167,16 @@ function renderAIFeedback(){
 // through wrong answers without having to know to filter for them.
 function renderIncorrectAnswers(){
   const el=document.getElementById('incorrect-answers-list');
+
+  // Sidebar badge — always the true pending count, independent of whatever
+  // this panel's own filters happen to be set to.
+  var badge=document.getElementById('incorrect-answers-badge');
+  if(badge){
+    var pendingCount=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false && !i.handled; }).length;
+    badge.textContent=String(pendingCount);
+    badge.style.display=pendingCount>0?'inline-block':'none';
+  }
+
   if(!el) return;
   var items=(window._aiFeedbackData||[]).filter(function(i){ return i.is_correct===false; });
   var filter=document.getElementById('incorrect-fb-filter-rating')?.value||'all';
