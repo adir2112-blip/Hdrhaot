@@ -4596,7 +4596,7 @@ function viewFolderArticle(id){
   editKnowledgeArticle(id);
 }
 
-function buildKnowledgeContext(dept){
+async function buildKnowledgeContext(dept){
   // dept = group key (e.g. 'מובמנט') OR agent's specific dept
   // For AI: show only articles relevant to THIS specific agent
   const agentGrp = S.agent ? agentGroup(S.agent) : null;
@@ -4645,10 +4645,38 @@ function buildKnowledgeContext(dept){
   });
   const briefCtx=relBriefs.map(b=>{
     const qs=(b.questions||[]).map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
-    return '📋 תדריך: '+b.title+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,1500):'');
+    const cleanContent=(b.content||'')
+      .replace(/!\[.*?\]\(data:image[^)]+\)/g,'[תמונה]')
+      .replace(/!\[.*?\]\(https?:[^)]+\)/g,'[תמונה]')
+      .slice(0,2000);
+    return '📋 מבחן: '+b.title+(cleanContent?'\nתוכן:\n'+cleanContent:'')+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,1500):'');
   }).join('\n\n---\n\n');
 
-  const combined=[articleCtx,briefCtx].filter(Boolean).join('\n\n===\n\n');
+  // תדריכים (briefing_docs) — same dept-scoping as מבחנים above, but this
+  // is a fresh manager-independent read since agent sessions have no
+  // standing cache of every briefing_doc (only their own pending list).
+  const {data:docsRaw}=await _sb.from('briefing_docs').select('title,content,questions,dept').eq('is_active',true);
+  const relDocs=(docsRaw||[]).filter(d=>{
+    if(d.dept==='all') return true;
+    const deptLower=(dept||'').trim().toLowerCase();
+    const docDepts=(d.dept||'').split(',').map(s=>s.trim().toLowerCase());
+    return docDepts.some(td=>
+      td===deptLower ||
+      (agentGrp && td===agentGrp.trim().toLowerCase())
+    );
+  });
+  const docCtx=relDocs.map(d=>{
+    let qArr=[];
+    try{ qArr=typeof d.questions==='string'?JSON.parse(d.questions):(d.questions||[]); }catch(e){}
+    const qs=qArr.map((q,i)=>(i+1)+'. '+q.q+' → תשובה נכונה: '+(q.options||[])[q.correct]).join('\n');
+    const cleanContent=(d.content||'')
+      .replace(/!\[.*?\]\(data:image[^)]+\)/g,'[תמונה]')
+      .replace(/!\[.*?\]\(https?:[^)]+\)/g,'[תמונה]')
+      .slice(0,2000);
+    return '📄 תדריך: '+d.title+(cleanContent?'\nתוכן:\n'+cleanContent:'')+(qs?'\nשאלות ותשובות:\n'+qs.slice(0,1500):'');
+  }).join('\n\n---\n\n');
+
+  const combined=[articleCtx,briefCtx,docCtx].filter(Boolean).join('\n\n===\n\n');
   return combined;
 }
 
@@ -4668,7 +4696,7 @@ async function sendKnowledgeChat(mode){
   appendKbMessage(boxId,'ai','חושב...',thinkingId);
   // Load knowledge (cached, max once per 5 min)
   await loadKnowledge();
-  const ctx=buildKnowledgeContext(dept);
+  const ctx=await buildKnowledgeContext(dept);
   console.log('[AI] dept=',dept,'articles=',S_knowledge.length,'ctx=',ctx.length);
   // Build system message with knowledge - injected as first message every time
   const sysMsg = ctx
