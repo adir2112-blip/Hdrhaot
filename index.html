@@ -5079,10 +5079,13 @@ async function saveAIFeedbackRow(msgId, rating, ctx, reason, agentAnswer){
 }
 
 async function markAIFeedbackHandled(id){
-  var res = await _sb.from('ai_feedback').update({handled:true}).eq('id', String(id));
+  var { data: { session } } = await _sb.auth.getSession();
+  var managerName = await getManagerDisplayName(session);
+  var nowIso = new Date().toISOString();
+  var res = await _sb.from('ai_feedback').update({handled:true, handled_by:managerName, handled_at:nowIso}).eq('id', String(id));
   if(res.error){ alert('שגיאה: '+res.error.message); return; }
   var item = (window._aiFeedbackData||[]).find(function(i){ return String(i.id)===String(id); });
-  if(item) item.handled = true;
+  if(item){ item.handled = true; item.handled_by = managerName; item.handled_at = nowIso; }
   renderAIFeedback();
   renderIncorrectAnswers();
 }
@@ -5224,11 +5227,15 @@ function renderFeedbackItemsInto(el, items, emptyMsg){
 }
 
 function aiFeedbackCardHtml(item){
+    var isHandled=!!item.handled;
     var stars='★'.repeat(item.rating||0)+'☆'.repeat(5-(item.rating||0));
-    var bgColor=item.rating<=2?'rgba(196,59,54,0.12)':item.rating<=3?'rgba(116,105,166,0.08)':'rgba(14,156,124,0.08)';
-    var borderColor=item.rating<=2?'#C43B36':item.rating<=3?'#7469A6':'#0E9C7C';
+    var bgColor=isHandled?'rgba(14,156,124,0.14)':(item.rating<=2?'rgba(196,59,54,0.12)':item.rating<=3?'rgba(116,105,166,0.08)':'rgba(14,156,124,0.08)');
+    var borderColor=isHandled?'#0E9C7C':(item.rating<=2?'#C43B36':item.rating<=3?'#7469A6':'#0E9C7C');
     var starColor=item.rating<=2?'#C43B36':item.rating<=3?'#7469A6':'#0E9C7C';
     var dateStr=item.created_at?new Date(item.created_at).toLocaleDateString('he-IL'):'';
+    var handledLine=isHandled ? '<div style="background:rgba(14,156,124,0.18);border:1.5px solid #0E9C7C;border-radius:10px;padding:10px 14px;margin-bottom:8px;text-align:center">' +
+      '<span style="font-size:13px;font-weight:800;color:#0E9C7C">✅ טופל על ידי '+(item.handled_by||'לא ידוע')+' בתאריך '+(item.handled_at?new Date(item.handled_at).toLocaleDateString('he-IL'):'—')+' בשעה '+(item.handled_at?new Date(item.handled_at).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):'—')+'</span>' +
+    '</div>' : '';
     // Use saved article_ids from when AI answered
     var savedIds = item.article_ids ? item.article_ids.split(',').filter(Boolean) : [];
     var srcArticles = savedIds.map(function(id){
@@ -5260,6 +5267,7 @@ function aiFeedbackCardHtml(item){
           '<button onclick="deleteAIFeedback(\'' + item.id + '\')" style="background:rgba(196,59,54,0.15);border:1px solid rgba(196,59,54,0.3);color:#C43B36;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer">🗑</button>' +
         '</div>' +
       '</div>' +
+      handledLine +
       '<div style="background:rgba(255,255,255,0.6);border-radius:10px;padding:10px 14px;margin-bottom:8px;border:1px solid rgba(0,0,0,0.06)">' +
         '<div style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">❓ שאלת הנציג</div>' +
         '<div style="font-size:14px;color:#1A1814;line-height:1.6">'+(item.question||'—')+'</div>' +
@@ -8035,7 +8043,7 @@ async function getManagerDisplayName(session){
   const cacheKey='managerDisplayName:'+email;
   let name=localStorage.getItem(cacheKey)||'';
   if(!name){
-    name=(prompt('מה השם שלך? (יוצג ליד הסימון "נציג מושב")')||'').trim();
+    name=(prompt('מה השם שלך? (יוצג ליד פעולות ניהול שאתה מבצע במערכת)')||'').trim();
     if(name) localStorage.setItem(cacheKey, name);
   }
   return name || email || 'מנהל לא ידוע';
