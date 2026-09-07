@@ -2734,30 +2734,73 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       <div class="sec-eyebrow">ניהול תדריכים</div>
       <div class="sec-title">תדריכים <em>לנציגים</em></div>
     </div>
-    <div style="display:flex;align-items:flex-start;gap:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:14px;padding:12px 16px;margin-bottom:18px">
-      <span style="font-size:18px;flex-shrink:0">⚠️</span>
-      <div style="font-size:13px;color:var(--ice2);line-height:1.7"><strong style="color:var(--warn)">מנהל, שים לב!</strong> תדריך שנבנה במערכת יועבר באופן אוטומטי למערכת ה-CRM. לאחר שהנציג ימלא אותו שם, תוכל לצפות כאן בציון.</div>
+    <!-- Sub-tabs — "תדריכים חודשי" is shown only to SUPER_ADMIN_EMAIL,
+         toggled in loadBriefingsTab() -->
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0">
+      <button id="bt-tab-list" onclick="showBriefingsTabPanel('list')"
+        style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-family:'Sora',sans-serif">
+        📄 רשימת תדריכים
+      </button>
+      <button id="bt-tab-monthly" onclick="showBriefingsTabPanel('monthly')" style="display:none;padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;color:var(--ice3);font-family:'Sora',sans-serif">
+        📊 תדריכים חודשי
+      </button>
     </div>
 
-    <!-- Manager view -->
-    <div id="briefings-manager-view">
-      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">
-          ➕ תדריך חדש
-        </button>
-        <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
-          <option value="all">כל המחלקות</option>
-          <option value="מובמנט">מובמנט</option>
-          <option value="פריפיט">פריפיט</option>
-          <option value="מאוחדת">מאוחדת</option>
-          <option value="אלן קאר">אלן קאר</option>
-          <option value="סחר">סחר</option>
-        </select>
+    <!-- LIST PANEL -->
+    <div id="bt-panel-list">
+      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:14px;padding:12px 16px;margin-bottom:18px">
+        <span style="font-size:18px;flex-shrink:0">⚠️</span>
+        <div style="font-size:13px;color:var(--ice2);line-height:1.7"><strong style="color:var(--warn)">מנהל, שים לב!</strong> תדריך שנבנה במערכת יועבר באופן אוטומטי למערכת ה-CRM. לאחר שהנציג ימלא אותו שם, תוכל לצפות כאן בציון.</div>
       </div>
-      <div id="briefings-tab-list">
-        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
-        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
-        <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+
+      <!-- Manager view -->
+      <div id="briefings-manager-view">
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-gold" onclick="openNewBriefingModal()" style="padding:10px 20px">
+            ➕ תדריך חדש
+          </button>
+          <select id="briefings-filter-dept" onchange="loadBriefingsTab()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+            <option value="all">כל המחלקות</option>
+            <option value="מובמנט">מובמנט</option>
+            <option value="פריפיט">פריפיט</option>
+            <option value="מאוחדת">מאוחדת</option>
+            <option value="אלן קאר">אלן קאר</option>
+            <option value="סחר">סחר</option>
+          </select>
+        </div>
+        <div id="briefings-tab-list">
+          <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+          <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+          <div class="skel-card"><div class="skel-line" style="width:45%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:30%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONTHLY PANEL — super-admin only -->
+    <div id="bt-panel-monthly" style="display:none">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+        <select id="bm-dept" onchange="renderBriefingsMonthly()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif">
+          <option value="all">כל הפעילויות</option>
+        </select>
+        <select id="bm-month" onchange="renderBriefingsMonthly()" style="padding:9px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif"></select>
+        <button class="btn btn-outline btn-sm" onclick="resetBriefingsMonthlyFilters()">↺ איפוס</button>
+        <button class="btn btn-outline btn-sm" onclick="exportBriefingsMonthlyExcel()" style="margin-right:auto">📥 ייצוא לאקסל</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;margin-bottom:20px">
+        <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:20px 22px;display:flex;flex-direction:column;justify-content:center">
+          <div id="bm-avg-val" style="font-family:'Playfair Display',serif;font-size:40px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:var(--ice)">—</div>
+          <div style="font-size:12px;color:var(--ice3);margin-top:8px">ממוצע תדריכים חודשי</div>
+        </div>
+        <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);padding:20px 22px;display:flex;align-items:center;gap:26px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:4px"><span id="bm-ctx-count" style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--ice);font-variant-numeric:tabular-nums">—</span><span style="font-size:11px;color:var(--ice3)">תדריכים בתקופה</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span id="bm-ctx-completions" style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--ice);font-variant-numeric:tabular-nums">—</span><span style="font-size:11px;color:var(--ice3)">סה"כ ביצועים</span></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><span id="bm-ctx-best" style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--ice);font-variant-numeric:tabular-nums">—</span><span style="font-size:11px;color:var(--ice3)">התדריך המוביל</span></div>
+        </div>
+      </div>
+
+      <div style="background:var(--ink2);border:1px solid var(--line);border-radius:var(--r2);overflow:hidden">
+        <div id="bm-table-wrap" style="overflow-x:auto"></div>
       </div>
     </div>
   </div>
@@ -7628,24 +7671,33 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
     Object.entries(doc.completions||{}).forEach(([agentId,comp])=>{
       if(!relIds.has(String(agentId))) return;
       if(comp==null||comp.score===undefined||comp.score===null) return;
-      if(comp.score>=FAIL_THRESHOLD) return;
-      const entry={
-        agentId: String(agentId),
-        agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
-        briefingId: doc.id,
-        briefingTitle: doc.title,
-        date: comp.signed_at || '',
-        score: comp.score,
-        answers: comp.answers || []
-      };
+      // Debriefing sets score to 100 (see markAgentDebriefed), so a
+      // debriefed completion can no longer be told apart from a real pass
+      // by score alone — check reviewed_by first, and use original_score
+      // (the real score before the 100 override) for display.
       if(comp.reviewed_by){
-        // already sat with a manager — drops off the failed list, shows up
-        // in the "עברו מועד ב'" list instead
-        entry.reviewedBy=comp.reviewed_by;
-        entry.reviewedAt=comp.reviewed_at||null;
-        debriefedList.push(entry);
-      } else {
-        failedList.push(entry);
+        debriefedList.push({
+          agentId: String(agentId),
+          agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
+          briefingId: doc.id,
+          briefingTitle: doc.title,
+          date: comp.signed_at || '',
+          score: comp.original_score!=null ? comp.original_score : comp.score,
+          newScore: comp.score,
+          answers: comp.answers || [],
+          reviewedBy: comp.reviewed_by,
+          reviewedAt: comp.reviewed_at||null
+        });
+      } else if(comp.score<FAIL_THRESHOLD){
+        failedList.push({
+          agentId: String(agentId),
+          agentName: comp.name || (S.agents.find(a=>String(a.id)===String(agentId))||{}).name || 'נציג '+agentId,
+          briefingId: doc.id,
+          briefingTitle: doc.title,
+          date: comp.signed_at || '',
+          score: comp.score,
+          answers: comp.answers || []
+        });
       }
     });
   });
@@ -8010,6 +8062,11 @@ async function markAgentDebriefed(idx){
   if(!freshCompletions[x.agentId]) return;
   freshCompletions[x.agentId].reviewed_by=managerName;
   freshCompletions[x.agentId].reviewed_at=nowIso;
+  // Preserve the real score before overriding it — otherwise it's lost
+  // the moment this reloads from the DB, and "ציון מקורי" everywhere
+  // would show 100 instead of what the agent actually got wrong.
+  freshCompletions[x.agentId].original_score=freshCompletions[x.agentId].score;
+  freshCompletions[x.agentId].score=100; // ישיבת מושב עם המנהל = עבר, הציון עולה ל-100%
   const {error:updateErr}=await _sb.from('briefing_docs').update({completions:JSON.stringify(freshCompletions)}).eq('id',x.briefingId);
   if(updateErr){ alert('שגיאה בשמירה: '+updateErr.message); return; }
 
@@ -8022,6 +8079,10 @@ async function markAgentDebriefed(idx){
   if(cardList){
     window._briefingCardFailedLists[x.briefingId]=cardList.filter(function(item){ return !(item.agentId===x.agentId && item.briefingId===x.briefingId); });
   }
+  // x.score is deliberately left as the original (failing) score — the
+  // "עברו מועד ב'" list's "ציון מקורי" column shows what they actually
+  // got wrong; only the stored completion (and future averages) reflect
+  // the 100 from sitting with a manager.
   x.reviewedBy=managerName;
   x.reviewedAt=nowIso;
   if(!window._debriefedAgentsList) window._debriefedAgentsList=[];
@@ -8103,6 +8164,7 @@ function renderDebriefedAgentsList(){
       '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם נציג</th>'+
       '<th style="padding:8px 12px;text-align:right;color:var(--ice3)">שם תדריך</th>'+
       '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון מקורי</th>'+
+      '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">ציון חדש</th>'+
       '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">סומן ע"י</th>'+
       '<th style="padding:8px 12px;text-align:center;color:var(--ice3)">בתאריך</th>'+
     '</tr>'+
@@ -8112,6 +8174,7 @@ function renderDebriefedAgentsList(){
         '<td style="padding:8px 12px;color:var(--ice);font-weight:600">'+x.agentName+'</td>'+
         '<td style="padding:8px 12px;color:var(--gold);cursor:pointer;text-decoration:underline dotted" onclick="openDebriefedAgentAnswers('+idx+')" title="לחץ לצפייה בתשובות הנכונות">'+x.briefingTitle+'</td>'+
         '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--danger);font-family:\'DM Mono\',monospace">'+x.score+'%</td>'+
+        '<td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--ok);font-family:\'DM Mono\',monospace">'+(x.newScore!=null?x.newScore:100)+'%</td>'+
         '<td style="padding:8px 12px;text-align:center;color:var(--ok);font-weight:700">'+x.reviewedBy+'</td>'+
         '<td style="padding:8px 12px;text-align:center;color:var(--ice3);font-family:\'DM Mono\',monospace">'+dt+'</td>'+
       '</tr>';
@@ -12141,6 +12204,14 @@ pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.
 
 // ── Load Briefings Tab (Manager) ──────────────────────
 async function loadBriefingsTab(){
+  var email = await getCurrentUserEmail();
+  var monthlyBtn = document.getElementById('bt-tab-monthly');
+  if(monthlyBtn){
+    var canSeeMonthly = isSuperAdmin(email);
+    monthlyBtn.style.display = canSeeMonthly ? '' : 'none';
+    if(!canSeeMonthly) showBriefingsTabPanel('list');
+  }
+
   var el = document.getElementById('briefings-tab-list');
   if(!el) return;
   el.innerHTML = '<div style="color:var(--ice3);text-align:center;padding:2rem">טוען...</div>';
@@ -12163,6 +12234,11 @@ async function loadBriefingsTab(){
     try{ completions = typeof b.completions === 'string' ? JSON.parse(b.completions) : (b.completions||{}); }catch(e){}
     var doneCount = Object.keys(completions).filter(function(k){ return !k.startsWith('_'); }).length;
 
+    // ממוצע ציונים — כולל נציגים שסומנו "נציג מושב" (הציון שלהם נשמר כ-100
+    // באותו רגע, ראה markAgentDebriefed).
+    var scoreVals = Object.values(completions).map(function(c){ return c && c.score; }).filter(function(s){ return s!=null; });
+    var avgScore = scoreVals.length ? Math.round(scoreVals.reduce(function(s,v){ return s+v; },0)/scoreVals.length) : null;
+
     // Count expected agents
     var targetDepts = b.dept === 'all' ? [] : b.dept.split(',').map(function(s){ return s.trim(); });
     var expectedAgents = b.dept === 'all'
@@ -12182,22 +12258,33 @@ async function loadBriefingsTab(){
       var agentId = entry[0], comp = entry[1];
       if(!expectedIds.has(String(agentId))) return;
       if(comp==null || comp.score===undefined || comp.score===null) return;
-      if(comp.score >= 75) return;
-      var item = {
-        agentId: String(agentId),
-        agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
-        briefingId: b.id,
-        briefingTitle: b.title,
-        date: comp.signed_at || '',
-        score: comp.score,
-        answers: comp.answers || []
-      };
+      // Debriefing sets score to 100 (see markAgentDebriefed), so a
+      // debriefed completion can no longer be told apart from a real pass
+      // by score alone — check reviewed_by first, and use original_score
+      // (the real score before the 100 override) for display.
       if(comp.reviewed_by){
-        item.reviewedBy = comp.reviewed_by;
-        item.reviewedAt = comp.reviewed_at || null;
-        debriefedForThis.push(item);
-      } else {
-        failedForThis.push(item);
+        debriefedForThis.push({
+          agentId: String(agentId),
+          agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
+          briefingId: b.id,
+          briefingTitle: b.title,
+          date: comp.signed_at || '',
+          score: comp.original_score!=null ? comp.original_score : comp.score,
+          newScore: comp.score,
+          answers: comp.answers || [],
+          reviewedBy: comp.reviewed_by,
+          reviewedAt: comp.reviewed_at || null
+        });
+      } else if(comp.score<75){
+        failedForThis.push({
+          agentId: String(agentId),
+          agentName: comp.name || (S.agents.find(function(a){ return String(a.id)===String(agentId); })||{}).name || 'נציג '+agentId,
+          briefingId: b.id,
+          briefingTitle: b.title,
+          date: comp.signed_at || '',
+          score: comp.score,
+          answers: comp.answers || []
+        });
       }
     });
     failedForThis.sort(function(x,y){ return new Date(y.date||0) - new Date(x.date||0); });
@@ -12215,6 +12302,9 @@ async function loadBriefingsTab(){
             '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(5,150,105,0.12);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי חתם">✅ '+doneCount+' חתמו</span>' +
             '<span onclick="showBriefingStatus(this)" data-id="'+b.id+'" style="cursor:pointer;background:rgba(184,113,15,0.12);color:var(--warn);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה במי ממתין">⏳ '+pending+' ממתינים</span>' +
             '<span style="background:rgba(91,160,230,0.12);color:#5BA0E6;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">'+pct+'% הושלם</span>' +
+            (avgScore!=null
+              ? '<span style="background:'+(avgScore>=80?'var(--ok-bg)':avgScore>=60?'var(--warn-bg)':'var(--danger-bg)')+';color:'+(avgScore>=80?'var(--ok)':avgScore>=60?'var(--warn)':'var(--danger)')+';border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="ממוצע כל הציונים שנרשמו לתדריך זה">⭐ ממוצע ציונים: '+avgScore+'%</span>'
+              : '') +
             (failedForThis.length
               ? '<span onclick="openFailedListForBriefingCard('+b.id+')" style="cursor:pointer;background:var(--danger-bg);color:var(--danger);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700" title="לחץ לצפייה בעובדים שנכשלו">😞 '+failedForThis.length+' נכשלו</span>'
               : '<span style="background:var(--ok-bg);color:var(--ok);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">😞 0 נכשלו</span>') +
@@ -12235,6 +12325,168 @@ async function loadBriefingsTab(){
   // Keep the aggregated "✅ עברו מועד ב'" list fresh from whichever tab
   // (דשבורד or ניהול תדריכים) last loaded — both write the same shape.
   window._debriefedAgentsList = Object.values(window._briefingCardDebriefedLists).flat();
+}
+
+/* ══ תדריכים חודשי — super-admin only ══════════════════ */
+function showBriefingsTabPanel(key){
+  ['list','monthly'].forEach(function(p){
+    var el=document.getElementById('bt-panel-'+p);
+    var btn=document.getElementById('bt-tab-'+p);
+    if(el) el.style.display = p===key ? 'block' : 'none';
+    if(btn){
+      btn.style.borderBottomColor = p===key ? 'var(--gold)' : 'transparent';
+      btn.style.color = p===key ? 'var(--gold)' : 'var(--ice3)';
+    }
+  });
+  if(key==='monthly') loadBriefingsMonthly();
+}
+
+// Every briefing_doc regardless of is_active — a deactivated briefing's
+// past completions still happened and belong in a historical monthly
+// report — filtered per-completion by month (signed_at), not by the
+// briefing's own published_at.
+async function loadBriefingsMonthly(){
+  var {data} = await _sb.from('briefing_docs').select('title,dept,completions');
+  window._briefingsMonthlyDocs = (data||[]).map(function(d){
+    try{ d.completions = typeof d.completions==='string' ? JSON.parse(d.completions) : (d.completions||{}); }catch(e){ d.completions={}; }
+    return d;
+  });
+  populateBriefingsMonthlyFilters();
+  renderBriefingsMonthly();
+}
+
+function populateBriefingsMonthlyFilters(){
+  var docs = window._briefingsMonthlyDocs || [];
+  var deptSet = new Set();
+  docs.forEach(function(d){
+    if(d.dept==='all') return;
+    (d.dept||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(x){ deptSet.add(x); });
+  });
+  var deptSel = document.getElementById('bm-dept');
+  if(deptSel){
+    var prevDept = deptSel.value;
+    var depts = [...deptSet].sort();
+    deptSel.innerHTML = '<option value="all">כל הפעילויות</option>' +
+      '<option value="מובמנט">🔷 מובמנט (כללית אקטיב, עובדים בריא, לאומית FIT, מעוף לעמית)</option>' +
+      depts.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    deptSel.value = (depts.includes(prevDept) || prevDept==='מובמנט') ? prevDept : 'all';
+  }
+
+  var monthSet = new Set();
+  docs.forEach(function(d){
+    Object.values(d.completions||{}).forEach(function(c){
+      if(c && c.signed_at) monthSet.add(String(c.signed_at).slice(0,7));
+    });
+  });
+  var now = new Date();
+  var curMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  monthSet.add(curMonth);
+  var months = [...monthSet].sort().reverse();
+  var monthSel = document.getElementById('bm-month');
+  if(monthSel){
+    var prevMonth = monthSel.value;
+    monthSel.innerHTML = months.map(function(m){ return '<option value="'+m+'">'+formatMonth(m)+'</option>'; }).join('');
+    monthSel.value = months.includes(prevMonth) ? prevMonth : curMonth;
+  }
+}
+
+var BRIEFINGS_MONTHLY_MOVMENT_DEPTS = ['כללית אקטיב','עובדים בריא','לאומית FIT','מעוף לעמית'];
+function renderBriefingsMonthly(){
+  var dept = document.getElementById('bm-dept')?.value || 'all';
+  var month = document.getElementById('bm-month')?.value || '';
+  var docs = window._briefingsMonthlyDocs || [];
+
+  var rows = [];
+  var grandScoreSum=0, grandCount=0;
+
+  docs.forEach(function(doc){
+    if(dept!=='all' && doc.dept!=='all'){
+      var docDepts=(doc.dept||'').split(',').map(function(s){ return s.trim(); });
+      if(dept==='מובמנט'){
+        if(!docDepts.some(function(d){ return BRIEFINGS_MONTHLY_MOVMENT_DEPTS.includes(d); })) return;
+      } else if(!docDepts.includes(dept)) return;
+    }
+    var count=0, scoreSum=0;
+    Object.values(doc.completions||{}).forEach(function(c){
+      if(!c || c.score==null || !c.signed_at) return;
+      if(String(c.signed_at).slice(0,7) !== month) return;
+      count++;
+      scoreSum += c.score;
+    });
+    if(count>0){
+      rows.push({title:doc.title, dept:doc.dept, count:count, avg:scoreSum/count});
+      grandScoreSum += scoreSum;
+      grandCount += count;
+    }
+  });
+
+  rows.sort(function(a,b){ return b.count-a.count; });
+  window._briefingsMonthlyRows = rows;
+
+  var wrap = document.getElementById('bm-table-wrap');
+  if(!wrap) return;
+  if(!rows.length){
+    wrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">אין תדריכים לסינון זה</div>';
+    var avgElEmpty=document.getElementById('bm-avg-val'); if(avgElEmpty) avgElEmpty.textContent='—';
+    var cntElEmpty=document.getElementById('bm-ctx-count'); if(cntElEmpty) cntElEmpty.textContent='0';
+    var compElEmpty=document.getElementById('bm-ctx-completions'); if(compElEmpty) compElEmpty.textContent='0';
+    var bestElEmpty=document.getElementById('bm-ctx-best'); if(bestElEmpty) bestElEmpty.textContent='—';
+    return;
+  }
+
+  var scoreColor=function(avg){ return avg>=80?'var(--ok)':avg>=60?'var(--warn)':'var(--danger)'; };
+  var scoreBg=function(avg){ return avg>=80?'var(--ok-bg)':avg>=60?'var(--warn-bg)':'var(--danger-bg)'; };
+
+  wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13.5px">'+
+    '<thead><tr style="background:var(--ink3)">'+
+      '<th style="padding:12px 16px;text-align:right;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--line)">שם תדריך</th>'+
+      '<th style="padding:12px 16px;text-align:right;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--line)">פעילות</th>'+
+      '<th style="padding:12px 16px;text-align:center;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--line)">כמות ביצועים</th>'+
+      '<th style="padding:12px 16px;text-align:center;font-weight:700;color:var(--ice3);font-family:\'DM Mono\',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--line)">ציון ממוצע</th>'+
+    '</tr></thead><tbody>'+
+    rows.map(function(r){
+      return '<tr style="border-bottom:1px solid var(--line)">'+
+        '<td style="padding:13px 16px;color:var(--ice);font-weight:600">'+r.title+'</td>'+
+        '<td style="padding:13px 16px;color:var(--ice2)"><span style="font-size:11px;color:var(--ice3);background:var(--ink3);border-radius:20px;padding:3px 10px">'+(r.dept==='all'?'כל הפעילויות':r.dept)+'</span></td>'+
+        '<td style="padding:13px 16px;text-align:center;font-family:\'DM Mono\',monospace">'+r.count+'</td>'+
+        '<td style="padding:13px 16px;text-align:center"><span style="font-weight:800;border-radius:20px;padding:4px 12px;font-size:12.5px;background:'+scoreBg(r.avg)+';color:'+scoreColor(r.avg)+'">'+Math.round(r.avg)+'%</span></td>'+
+      '</tr>';
+    }).join('')+
+  '</tbody></table>';
+
+  var grandAvg = grandCount ? grandScoreSum/grandCount : 0;
+  var best = rows[0];
+  var avgEl=document.getElementById('bm-avg-val'); if(avgEl) avgEl.textContent=Math.round(grandAvg)+'%';
+  var cntEl=document.getElementById('bm-ctx-count'); if(cntEl) cntEl.textContent=rows.length;
+  var compEl=document.getElementById('bm-ctx-completions'); if(compEl) compEl.textContent=grandCount;
+  var bestEl=document.getElementById('bm-ctx-best'); if(bestEl) bestEl.textContent=best.title.length>22 ? best.title.slice(0,22)+'…' : best.title;
+}
+
+function resetBriefingsMonthlyFilters(){
+  var now = new Date();
+  var cur = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var d = document.getElementById('bm-dept');
+  var m = document.getElementById('bm-month');
+  if(d) d.value='all';
+  if(m && [...m.options].some(function(o){ return o.value===cur; })) m.value=cur;
+  renderBriefingsMonthly();
+}
+
+function exportBriefingsMonthlyExcel(){
+  var XLSX = window.XLSX;
+  if(!XLSX){ alert('ספריית אקסל לא נטענה'); return; }
+  var rows = window._briefingsMonthlyRows || [];
+  if(!rows.length){ alert('אין נתונים לייצוא'); return; }
+  var aoa = [['שם תדריך','פעילות','כמות ביצועים','ציון ממוצע']];
+  rows.forEach(function(r){
+    aoa.push([r.title, r.dept==='all'?'כל הפעילויות':r.dept, r.count, Math.round(r.avg)+'%']);
+  });
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!views'] = [{ RTL: true }];
+  XLSX.utils.book_append_sheet(wb, ws, 'תדריכים חודשי');
+  var monthLabel = document.getElementById('bm-month')?.value || '';
+  XLSX.writeFile(wb, 'תדריכים_חודשי_'+monthLabel+'.xlsx');
 }
 
 // ── View Briefing (content + quiz) ────────────────────
