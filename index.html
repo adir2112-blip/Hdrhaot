@@ -5790,7 +5790,7 @@ forbidden = מה אסור להגיד/לעשות
 todo = מה צריך לעשות`;
 
     const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
-      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000}
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:2000,response_format:{type:'json_object'}}
     });
     if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message);
@@ -5841,7 +5841,7 @@ ${numQ} שאלות בעברית, 4 אפשרויות לכל שאלה, correct=א�
 תוכן: ${content}
 צור בדיוק ${numQ} שאלות.`;
     const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
-      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000}
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.3,max_tokens:3000,response_format:{type:'json_object'}}
     });
     if(_aiErr) throw _aiErr;
     if(data.error)throw new Error(data.error.message);
@@ -6840,7 +6840,7 @@ ${content.slice(0,3000)}
 }`;
 
     const {data,error:_aiErr}=await _sb.functions.invoke('ai-proxy',{
-      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600}
+      body:{model:'gpt-4o-mini',messages:[{role:'user',content:prompt}],temperature:0.2,max_tokens:600,response_format:{type:'json_object'}}
     });
     if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message);
@@ -12089,25 +12089,27 @@ async function generateBriefingQuestions(){
   document.getElementById('nb-questions-area').style.display = 'none';
 
   var prompt = 'קרא את התדריך הבא וצור בדיוק ' + count + ' שאלות אמריקאיות (multiple choice) בעברית.\n\n' +
-    'כל שאלה חייבת להיות בפורמט JSON הבא בדיוק:\n' +
-    '{\n  "q": "טקסט השאלה",\n  "options": ["אפשרות א", "אפשרות ב", "אפשרות ג", "אפשרות ד"],\n  "correct": 0,\n  "hint": "הסבר קצר"\n}\n\n' +
+    'החזר אובייקט JSON יחיד בפורמט הזה בדיוק, ללא טקסט נוסף:\n' +
+    '{"questions":[{"q":"טקסט השאלה","options":["אפשרות א","אפשרות ב","אפשרות ג","אפשרות ד"],"correct":0,"hint":"הסבר קצר"}]}\n\n' +
     'correct הוא אינדקס (0-3) של התשובה הנכונה.\n' +
-    'החזר רק מערך JSON של השאלות, ללא טקסט נוסף.\n\n' +
+    'חשוב: בתוך טקסט השאלה/האפשרויות/ההסבר, אל תשתמש בתו גרשיים (") — למשל לקיצורים כמו ס"מ/מק"ט/ת"ז — כתוב אותם במילים מלאות (סנטימטר/מק״ט בגרש בודד/מספר זהות) או בלעדיהם, כדי לא לשבור את מבנה ה-JSON.\n\n' +
     'תוכן התדריך:\n' + content.slice(0, 3000);
 
   try {
     var {data, error: _aiErr} = await _sb.functions.invoke('ai-proxy', {
-      body: {model:'gpt-4o-mini', max_tokens:2000, messages:[{role:'user',content:prompt}]}
+      body: {model:'gpt-4o-mini', max_tokens:2000, messages:[{role:'user',content:prompt}], response_format:{type:'json_object'}}
     });
     if(_aiErr) throw _aiErr;
     if(data.error) throw new Error(data.error.message || 'שגיאת API');
     var raw = data.choices[0].message.content.trim();
     raw = raw.replace(/```json|```/g,'').trim();
-    _newBriefingQuestions = JSON.parse(raw);
+    var parsed = JSON.parse(raw);
+    _newBriefingQuestions = Array.isArray(parsed) ? parsed : parsed.questions;
+    if(!Array.isArray(_newBriefingQuestions)) throw new Error('תשובת ה-AI לא הכילה רשימת שאלות תקינה');
     _newBriefingQuestions.forEach(shuffleQuestionOptions);
     renderBriefingQuestions();
   } catch(e) {
-    alert('שגיאה ביצירת שאלות: ' + e.message);
+    alert('שגיאה ביצירת שאלות: ' + e.message + ' — נסה שוב, או קצר/פשט את תוכן התדריך.');
   } finally {
     document.getElementById('nb-generating').style.display = 'none';
   }

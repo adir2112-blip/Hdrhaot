@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  let body: { model?: string; messages?: unknown; temperature?: number; max_tokens?: number }
+  let body: { model?: string; messages?: unknown; temperature?: number; max_tokens?: number; response_format?: unknown }
   try {
     body = await req.json()
   } catch {
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  const { model, messages, temperature, max_tokens } = body
+  const { model, messages, temperature, max_tokens, response_format } = body
   if (!model || !messages) {
     return new Response(JSON.stringify({ error: { message: 'model and messages are required' } }), {
       status: 400,
@@ -43,7 +43,11 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
-      body: JSON.stringify({ model, messages, temperature, max_tokens }),
+      // response_format is optional — undefined keys are dropped by
+      // JSON.stringify, so this is a no-op for every existing caller that
+      // doesn't pass it, and forces syntactically-valid JSON output (via
+      // OpenAI's own JSON mode) for callers that ask for {type:"json_object"}.
+      body: JSON.stringify({ model, messages, temperature, max_tokens, response_format }),
     })
   } catch (e) {
     return new Response(JSON.stringify({ error: { message: 'upstream request failed: ' + String(e) } }), {
