@@ -4690,7 +4690,36 @@ function viewFolderArticle(id){
   editKnowledgeArticle(id);
 }
 
-async function buildKnowledgeContext(dept){
+// Some knowledge_base articles run to tens of thousands of characters
+// (e.g. one "Q&A bank" article with ~80 entries is ~25,000 chars — and a
+// dept can have 40+ articles totaling 400,000+ chars). Sending everything
+// in full would blow past the model's context window; the old fix (a flat
+// .slice(0,4000) per article) instead silently cut every long article off
+// partway through — the AI simply never saw anything past ~question 10 of
+// 80. This replaces that with a cheap relevance ranking against the
+// agent's actual question: the best-matching article(s) get full content
+// (the top match always, regardless of size), the rest fill the remaining
+// budget by relevance, and anything left over is listed by title only.
+var HEBREW_STOPWORDS=new Set(['של','את','על','גם','אם','כי','מה','איך','למה','זה','זאת','אלה','אלו','יש','אין','לא','כן','או','עם','אל','כל','רק','עוד','כבר','היה','היא','הוא','הם','הן','אני','אתה','אנחנו','זו','אבל','כדי','לפי','בין','אחרי','לפני','תוך','הכי','שהם','שיש','ולא','שלא']);
+function tokenizeForRelevance(text){
+  return (text||'').toLowerCase()
+    .replace(/[^֐-׿a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(function(w){ return w.length>=2 && !HEBREW_STOPWORDS.has(w); });
+}
+function scoreArticleRelevance(article, questionWords){
+  if(!questionWords.length) return 0;
+  var titleWords=new Set(tokenizeForRelevance(article.title));
+  var contentWords=new Set(tokenizeForRelevance(article.content));
+  var score=0;
+  questionWords.forEach(function(w){
+    if(titleWords.has(w)) score+=3;
+    if(contentWords.has(w)) score+=1;
+  });
+  return score;
+}
+
+async function buildKnowledgeContext(dept, question){
   // dept = group key (e.g. 'מובמנט') OR agent's specific dept
   // For AI: show only articles relevant to THIS specific agent
   const agentGrp = S.agent ? agentGroup(S.agent) : null;
@@ -4714,19 +4743,39 @@ async function buildKnowledgeContext(dept){
 
     return false;
   });
-  // Articles are the primary knowledge source - include more content
+  // Articles are the primary knowledge source. Rank by relevance to the
+  // actual question so long/relevant articles get FULL content instead of
+  // a blind per-article truncation (see comment above buildKnowledgeContext).
   const today=new Date().toISOString().slice(0,10);
-  const articleCtx=articles.map(a=>{
+  const questionWords=tokenizeForRelevance(question||'');
+  const scoredArticles=articles.map(a=>({article:a, score:scoreArticleRelevance(a, questionWords)}));
+  scoredArticles.sort((x,y)=>y.score-x.score);
+
+  const ARTICLE_CONTEXT_BUDGET=60000; // chars across all articles combined
+  let budgetUsed=0;
+  const fullParts=[];
+  const titleOnlyParts=[];
+  scoredArticles.forEach(item=>{
+    const a=item.article;
     var isExpired = a.expiry_date && a.expiry_date < today;
     var prefix = isExpired ? '⚠️ [פג תוקף - '+a.expiry_date+'] '+a.title : '📌 '+a.title;
     // Strip images (base64 and URLs) and embed blocks before sending to AI
     var cleanContent = (a.content||'')
       .replace(/!\[.*?\]\(data:image[^)]+\)/g, '[תמונה]')  // base64 images
       .replace(/!\[.*?\]\(https?:[^)]+\)/g, '[תמונה]')       // URL images
-      .replace(/\[EMBED\][\s\S]*?\[\/EMBED\]/g, '[תוכן מוטמע]') // embeds
-      .slice(0,4000);
-    return prefix+':\n'+cleanContent;
-  }).join('\n\n---\n\n');
+      .replace(/\[EMBED\][\s\S]*?\[\/EMBED\]/g, '[תוכן מוטמע]'); // embeds
+    // The single best-matching article always gets full content, even if it
+    // alone blows the budget — better than truncating the one article that's
+    // actually the answer. Everything after fills what budget remains.
+    if(fullParts.length===0 || budgetUsed+cleanContent.length<=ARTICLE_CONTEXT_BUDGET){
+      fullParts.push(prefix+':\n'+cleanContent);
+      budgetUsed+=cleanContent.length;
+    } else {
+      titleOnlyParts.push(prefix);
+    }
+  });
+  const articleCtx=fullParts.join('\n\n---\n\n') +
+    (titleOnlyParts.length ? '\n\n(מאמרים נוספים קיימים במאגר הידע אך לא הוצגו כאן במלואם עקב אורך — אם רלוונטי, ציין שקיים מידע נוסף: '+titleOnlyParts.join(', ')+')' : '');
 
   // Briefings: only for selected dept (or all depts briefings)
   const relBriefs=S.briefings.filter(b=>{
@@ -4790,7 +4839,7 @@ async function sendKnowledgeChat(mode){
   appendKbMessage(boxId,'ai','חושב...',thinkingId);
   // Load knowledge (cached, max once per 5 min)
   await loadKnowledge();
-  const ctx=await buildKnowledgeContext(dept);
+  const ctx=await buildKnowledgeContext(dept, q);
   console.log('[AI] dept=',dept,'articles=',S_knowledge.length,'ctx=',ctx.length);
   // Build system message with knowledge - injected as first message every time
   const sysMsg = ctx
