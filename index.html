@@ -2339,6 +2339,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
               <div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">❌</span><span>תשובות לא נכונות לטיפול</span></div>
               <span id="incorrect-answers-badge" style="display:none;background:var(--danger);color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:800"></span>
             </button>
+            <!-- Super admin only — toggled in initSuperAdminUI() -->
+            <button onclick="resyncCallio()" id="ksb-callio-resync" style="display:none;width:100%;align-items:center;gap:10px;background:none;border:1px dashed var(--line2);color:var(--ice3);font-weight:600;border-radius:12px;padding:10px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;margin-top:8px;text-align:right">
+              <span style="font-size:16px">🔄</span><span>סנכרון מלא ל-Callio</span>
+            </button>
           </div>
         </div>
         <div style="flex:1;min-width:0">
@@ -12994,6 +12998,33 @@ async function initSuperAdminUI(){
   const email = session?.user?.email||'';
   const logsBtn = document.getElementById('nav-logs');
   if(logsBtn) logsBtn.style.display = isSuperAdmin(email) ? '' : 'none';
+  const callioBtn = document.getElementById('ksb-callio-resync');
+  if(callioBtn) callioBtn.style.display = isSuperAdmin(email) ? 'flex' : 'none';
+}
+
+// Re-sends every knowledge_base article to Callio as item.updated (kb-to-callio
+// Edge Function). Normal changes sync automatically via DB trigger — this is
+// for when Callio suspects they missed an event.
+async function resyncCallio(){
+  if (!(await confirmDialog('לשלוח מחדש את כל מאמרי הידע ל-Callio?'))) return;
+  const btn = document.getElementById('ksb-callio-resync');
+  const label = btn?.querySelector('span:last-child');
+  const orig = label?.textContent;
+  if(btn) btn.disabled = true;
+  if(label) label.textContent = 'שולח...';
+  try {
+    const {data, error} = await _sb.functions.invoke('kb-to-callio', {body:{resync:true}});
+    if(error) throw error;
+    await logManagerAction('סנכרון מלא ל-Callio', 'נשלחו '+data.sent+'/'+data.total);
+    alert(data.failed.length
+      ? '⚠️ נשלחו '+data.sent+' מתוך '+data.total+'. נכשלו:\n'+data.failed.join('\n')
+      : '✅ נשלחו כל '+data.total+' המאמרים ל-Callio');
+  } catch(e){
+    alert('❌ הסנכרון נכשל: '+(e?.message||e));
+  } finally {
+    if(btn) btn.disabled = false;
+    if(label) label.textContent = orig;
+  }
 }
 
 async function loadLogs(){
