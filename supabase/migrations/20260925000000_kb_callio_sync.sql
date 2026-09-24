@@ -35,9 +35,15 @@ begin
 
   v_id := case when tg_op = 'DELETE' then old.id::text else new.id::text end;
 
+  -- old_dept lets the function route deletes, and remove an article from the
+  -- Callio org it left when its dept moves to another org.
   perform net.http_post(
     url := 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/kb-to-callio',
-    body := jsonb_build_object('op', tg_op, 'id', v_id),
+    body := jsonb_build_object(
+      'op', tg_op,
+      'id', v_id,
+      'old_dept', case when tg_op = 'INSERT' then null else old.dept end
+    ),
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-kb-sync-secret', v_secret

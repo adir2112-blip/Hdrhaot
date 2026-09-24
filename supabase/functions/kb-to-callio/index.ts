@@ -1,21 +1,25 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { toPlainText } from './plaintext.ts'
+import { ORGS, type Event, type Org, planChange } from './routing.ts'
 
 // Pushes knowledge_base changes to Callio (call-analysis system), which keeps
-// its own copy and filters by dept per call.
+// its own copy per org and filters by dept per call. Each Callio org
+// (מובמנט, אלן קאר) has its own API key and only gets its own depts — see
+// routing.ts.
 //
 // Two callers:
 //  1. The kb_notify_callio() DB trigger (via pg_net) on insert/update/delete,
 //     authenticated by the x-kb-sync-secret header (same value as the Vault
-//     secret 'kb_sync_secret'). Body: { op, id }.
+//     secret 'kb_sync_secret'). Body: { op, id, old_dept }.
 //  2. The super admin's "סנכרון מלא ל-Callio" button, authenticated by their
-//     own session JWT. Body: { resync: true } → re-sends every article as
-//     item.updated.
+//     own session JWT. Body: { resync: true } → re-sends every article to its
+//     org as item.updated.
 //
 // Secrets (supabase secrets set ...):
-//   CALLIO_KB_TOKEN   Bearer token Callio gave us
-//   KB_SYNC_SECRET    shared with the DB trigger
-// Deploy with --no-verify-jwt: auth is checked here, per caller type.
+//   CALLIO_TOKEN_MOVEMENT, CALLIO_TOKEN_ALLEN_CARR   per-org Callio API keys
+//   KB_SYNC_SECRET                                   shared with the DB trigger
+// An org whose token is not set is skipped. Deploy with --no-verify-jwt: auth
+// is checked here, per caller type.
 
 const CALLIO_URL = Deno.env.get('CALLIO_URL') ?? 'https://callio-ai.com/api/webhooks/knowledge'
 const SUPER_ADMIN_EMAIL = 'adir2112@gmail.com'
@@ -23,7 +27,6 @@ const RETRY_DELAYS_MS = [1000, 3000] // 3 attempts total
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const CALLIO_KB_TOKEN = Deno.env.get('CALLIO_KB_TOKEN') ?? ''
 const KB_SYNC_SECRET = Deno.env.get('KB_SYNC_SECRET') ?? ''
 
 const corsHeaders = {
@@ -32,7 +35,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type Event = 'item.created' | 'item.updated' | 'item.deleted'
 type KbRow = {
   id: string
   title: string | null
@@ -52,6 +54,10 @@ function json(body: unknown, status = 200) {
   })
 }
 
+function tokenFor(org: Org): string {
+  return Deno.env.get(org.tokenEnv) ?? ''
+}
+
 function toItem(row: KbRow) {
   return {
     id: row.id,
@@ -63,7 +69,12 @@ function toItem(row: KbRow) {
   }
 }
 
-async function sendToCallio(event: Event, item: Record<string, unknown>): Promise<boolean> {
+async function sendToCallio(org: Org, event: Event, item: Record<string, unknown>): Promise<boolean> {
+  const token = tokenFor(org)
+  if (!token) {
+    console.warn(`callio ${org.key}: no token configured, skipped ${event} ${item.id}`)
+    return false
+  }
   const body = JSON.stringify({ event, item })
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
@@ -71,15 +82,15 @@ async function sendToCallio(event: Event, item: Record<string, unknown>): Promis
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': `Bearer ${CALLIO_KB_TOKEN}`,
+          'Authorization': `Bearer ${token}`,
         },
         body,
         signal: AbortSignal.timeout(15000),
       })
       if (res.ok) return true
-      console.error(`callio ${event} ${item.id}: HTTP ${res.status} (attempt ${attempt + 1})`)
+      console.error(`callio ${org.key} ${event} ${item.id}: HTTP ${res.status} (attempt ${attempt + 1})`)
     } catch (e) {
-      console.error(`callio ${event} ${item.id}: ${e} (attempt ${attempt + 1})`)
+      console.error(`callio ${org.key} ${event} ${item.id}: ${e} (attempt ${attempt + 1})`)
     }
     if (attempt < RETRY_DELAYS_MS.length) {
       await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt]))
@@ -88,35 +99,46 @@ async function sendToCallio(event: Event, item: Record<string, unknown>): Promis
   return false
 }
 
-// Trigger path: fetch the current row (the trigger only sends op + id) so
-// Callio always gets the latest committed version.
-async function handleChange(op: string, id: string) {
-  if (op === 'DELETE') {
-    await sendToCallio('item.deleted', { id })
-    return
+// Trigger path: the trigger only sends op + id + old dept, so the current row
+// is loaded here — Callio always gets the latest committed version.
+async function handleChange(op: string, id: string, oldDept: string | null) {
+  let row: KbRow | null = null
+  if (op !== 'DELETE') {
+    const { data, error } = await sb.from('knowledge_base').select(COLUMNS).eq('id', id).maybeSingle()
+    if (error) {
+      console.error(`load ${id}: ${error.message}`)
+      return
+    }
+    // Row deleted between the trigger firing and now — the DELETE event covers it.
+    if (!data) return
+    row = data as KbRow
   }
-  const { data, error } = await sb.from('knowledge_base').select(COLUMNS).eq('id', id).maybeSingle()
-  if (error) {
-    console.error(`load ${id}: ${error.message}`)
-    return
-  }
-  // Row deleted between the trigger firing and now — the DELETE event covers it.
-  if (!data) return
-  await sendToCallio(op === 'INSERT' ? 'item.created' : 'item.updated', toItem(data as KbRow))
+  const sends = planChange(op, row?.dept, oldDept)
+  await Promise.all(sends.map(({ org, event }) =>
+    sendToCallio(org, event, event === 'item.deleted' || !row ? { id } : toItem(row))))
 }
 
 async function handleResync() {
   const { data, error } = await sb.from('knowledge_base').select(COLUMNS).order('created_at')
   if (error) throw new Error(error.message)
   const rows = (data ?? []) as KbRow[]
-  const failed: string[] = []
-  const CONCURRENCY = 5
-  for (let i = 0; i < rows.length; i += CONCURRENCY) {
-    const batch = rows.slice(i, i + CONCURRENCY)
-    const results = await Promise.all(batch.map((r) => sendToCallio('item.updated', toItem(r))))
-    results.forEach((ok, j) => { if (!ok) failed.push(batch[j].title ?? batch[j].id) })
+  const orgs = []
+  for (const org of ORGS) {
+    const orgRows = rows.filter((r) => org.depts.includes((r.dept ?? '').trim()))
+    if (!tokenFor(org)) {
+      orgs.push({ org: org.key, total: orgRows.length, sent: 0, failed: [], skipped: 'no token' })
+      continue
+    }
+    const failed: string[] = []
+    const CONCURRENCY = 5
+    for (let i = 0; i < orgRows.length; i += CONCURRENCY) {
+      const batch = orgRows.slice(i, i + CONCURRENCY)
+      const results = await Promise.all(batch.map((r) => sendToCallio(org, 'item.updated', toItem(r))))
+      results.forEach((ok, j) => { if (!ok) failed.push(batch[j].title ?? batch[j].id) })
+    }
+    orgs.push({ org: org.key, total: orgRows.length, sent: orgRows.length - failed.length, failed })
   }
-  return { total: rows.length, sent: rows.length - failed.length, failed }
+  return { orgs }
 }
 
 async function isSuperAdmin(req: Request): Promise<boolean> {
@@ -130,9 +152,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405)
 
-  if (!CALLIO_KB_TOKEN) return json({ error: 'CALLIO_KB_TOKEN not configured' }, 503)
-
-  let body: { op?: string; id?: string; resync?: boolean }
+  let body: { op?: string; id?: string; old_dept?: string | null; resync?: boolean }
   try {
     body = await req.json()
   } catch {
@@ -149,7 +169,7 @@ Deno.serve(async (req) => {
     }
     // Answer pg_net right away; retries to Callio continue in the background.
     // @ts-ignore EdgeRuntime is provided by the Supabase Edge runtime
-    EdgeRuntime.waitUntil(handleChange(op!, id))
+    EdgeRuntime.waitUntil(handleChange(op!, id, body.old_dept ?? null))
     return json({ accepted: true }, 202)
   }
 

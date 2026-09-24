@@ -1,4 +1,4 @@
-// Run: node --test supabase/functions/kb-to-callio/plaintext.test.ts
+// Run: node --test supabase/functions/kb-to-callio/*.test.ts
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { toPlainText } from './plaintext.ts'

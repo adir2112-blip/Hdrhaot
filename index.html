@@ -13015,10 +13015,15 @@ async function resyncCallio(){
   try {
     const {data, error} = await _sb.functions.invoke('kb-to-callio', {body:{resync:true}});
     if(error) throw error;
-    await logManagerAction('סנכרון מלא ל-Callio', 'נשלחו '+data.sent+'/'+data.total);
-    alert(data.failed.length
-      ? '⚠️ נשלחו '+data.sent+' מתוך '+data.total+'. נכשלו:\n'+data.failed.join('\n')
-      : '✅ נשלחו כל '+data.total+' המאמרים ל-Callio');
+    const orgNames = {movement:'מובמנט', allen_carr:'אלן קאר'};
+    const lines = data.orgs.map(o => {
+      const name = orgNames[o.org] || o.org;
+      if(o.skipped) return '⚪ '+name+': לא הוגדר מפתח — לא נשלח';
+      if(o.failed.length) return '⚠️ '+name+': נשלחו '+o.sent+' מתוך '+o.total+'. נכשלו:\n   '+o.failed.join('\n   ');
+      return '✅ '+name+': נשלחו כל '+o.total+' המאמרים';
+    });
+    await logManagerAction('סנכרון מלא ל-Callio', data.orgs.map(o=>o.org+' '+o.sent+'/'+o.total).join(' | '));
+    alert(lines.join('\n'));
   } catch(e){
     alert('❌ הסנכרון נכשל: '+(e?.message||e));
   } finally {
