@@ -1,6 +1,7 @@
-// Which Callio account (org) receives which knowledge_base dept. Each org has
-// its own Callio API key, so an article must only reach the org(s) its dept
-// belongs to. Depts not listed here (e.g. פריפיט) are not sent anywhere.
+// Which Callio account (org) receives which dept. Each org has its own Callio
+// token, so an item must only reach the org(s) its depts belong to, and each
+// org only sees its own depts on the item. Depts not listed here (e.g.
+// פריפיט) are not sent anywhere.
 export type Org = { key: string; tokenEnv: string; depts: string[] }
 
 export const ORGS: Org[] = [
@@ -19,22 +20,29 @@ export const ORGS: Org[] = [
   },
 ]
 
-export function orgsForDept(dept: string | null | undefined): Org[] {
-  const d = (dept ?? '').trim()
-  return ORGS.filter((o) => o.depts.includes(d))
+// null = item not present in Callio (new row, deleted, or inactive).
+// [] = targeted at all depts (tests with no targetDepts).
+export type Depts = string[] | null
+
+// The depts of an item that a given org should see; empty when none.
+export function orgDepts(org: Org, depts: string[]): string[] {
+  return depts.length === 0 ? [...org.depts] : depts.filter((d) => org.depts.includes(d))
+}
+
+export function orgsFor(depts: Depts): Org[] {
+  if (depts === null) return []
+  return ORGS.filter((o) => orgDepts(o, depts).length > 0)
 }
 
 export type Event = 'item.created' | 'item.updated' | 'item.deleted'
 export type Send = { org: Org; event: Event }
 
-// Plans what each org should receive for one DB change. On a dept change that
-// moves an article between orgs, the org that lost it gets item.deleted and
-// the org that gained it gets item.created.
-export function planChange(op: string, newDept: string | null | undefined, oldDept: string | null | undefined): Send[] {
-  if (op === 'INSERT') return orgsForDept(newDept).map((org) => ({ org, event: 'item.created' as Event }))
-  if (op === 'DELETE') return orgsForDept(oldDept).map((org) => ({ org, event: 'item.deleted' as Event }))
-  const before = orgsForDept(oldDept)
-  const after = orgsForDept(newDept)
+// What each org should receive when an item goes from oldDepts to newDepts.
+// An org that loses the item gets item.deleted, one that gains it
+// item.created, one that keeps it item.updated.
+export function planChange(newDepts: Depts, oldDepts: Depts): Send[] {
+  const before = orgsFor(oldDepts)
+  const after = orgsFor(newDepts)
   return [
     ...after.map((org) => ({ org, event: (before.includes(org) ? 'item.updated' : 'item.created') as Event })),
     ...before.filter((org) => !after.includes(org)).map((org) => ({ org, event: 'item.deleted' as Event })),

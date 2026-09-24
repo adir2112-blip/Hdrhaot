@@ -1,9 +1,10 @@
 -- ============================================================
--- Push knowledge_base changes to Callio via the kb-to-callio Edge Function.
+-- Push knowledge changes to Callio via the kb-to-callio Edge Function:
+-- מאמרי ידע (knowledge_base), תדריכים (briefing_docs), מבחנים (briefings).
 --
--- AFTER triggers + pg_net (async): saving an article never waits for, or
--- fails because of, Callio. Any error inside the trigger is swallowed with a
--- WARNING so the manager's insert/update/delete always commits.
+-- AFTER triggers + pg_net (async): saving never waits for, or fails because
+-- of, Callio. Any error inside the trigger is swallowed with a WARNING so the
+-- manager's insert/update/delete always commits.
 --
 -- Inactive until the Vault secret exists (created manually, never in git):
 --   select vault.create_secret('<random>', 'kb_sync_secret');
@@ -24,6 +25,7 @@ as $$
 declare
   v_secret text;
   v_id text;
+  v_old jsonb;
 begin
   select decrypted_secret into v_secret
     from vault.decrypted_secrets
@@ -34,16 +36,15 @@ begin
   end if;
 
   v_id := case when tg_op = 'DELETE' then old.id::text else new.id::text end;
+  -- Slim snapshot of the old row (dept / targetDepts / is_active) so the
+  -- function can route deletes and moves between Callio orgs. Large and
+  -- private columns are dropped: completions holds agent names and scores.
+  v_old := case when tg_op = 'INSERT' then null
+                else to_jsonb(old) - 'content' - 'questions' - 'completions' end;
 
-  -- old_dept lets the function route deletes, and remove an article from the
-  -- Callio org it left when its dept moves to another org.
   perform net.http_post(
     url := 'https://hbjtpjdthvjikfxsufdo.supabase.co/functions/v1/kb-to-callio',
-    body := jsonb_build_object(
-      'op', tg_op,
-      'id', v_id,
-      'old_dept', case when tg_op = 'INSERT' then null else old.dept end
-    ),
+    body := jsonb_build_object('table', tg_table_name, 'op', tg_op, 'id', v_id, 'old', v_old),
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'x-kb-sync-secret', v_secret
@@ -52,21 +53,21 @@ begin
   );
   return null;
 exception when others then
-  raise warning 'kb_notify_callio failed for % %: %', tg_op, v_id, sqlerrm;
+  raise warning 'kb_notify_callio failed for % % %: %', tg_table_name, tg_op, v_id, sqlerrm;
   return null;
 end;
 $$;
 
 revoke all on function public.kb_notify_callio() from public, anon, authenticated;
 
+-- ── knowledge_base ──────────────────────────────────────────
+-- Only real content edits: the app also updates rows on every view/rating
+-- (view_count, week_views, last_view, avg_rating, rating_count).
 drop trigger if exists kb_callio_insert on public.knowledge_base;
 create trigger kb_callio_insert
   after insert on public.knowledge_base
   for each row execute function public.kb_notify_callio();
 
--- Only real content edits. The app also updates rows on every view/rating
--- (view_count, week_views, last_view, avg_rating, rating_count) — those must
--- not reach Callio.
 drop trigger if exists kb_callio_update on public.knowledge_base;
 create trigger kb_callio_update
   after update on public.knowledge_base
@@ -83,4 +84,54 @@ create trigger kb_callio_update
 drop trigger if exists kb_callio_delete on public.knowledge_base;
 create trigger kb_callio_delete
   after delete on public.knowledge_base
+  for each row execute function public.kb_notify_callio();
+
+-- ── briefing_docs (תדריכים) ─────────────────────────────────
+-- Every agent sign-off rewrites completions — ignored here.
+drop trigger if exists kb_callio_insert on public.briefing_docs;
+create trigger kb_callio_insert
+  after insert on public.briefing_docs
+  for each row execute function public.kb_notify_callio();
+
+drop trigger if exists kb_callio_update on public.briefing_docs;
+create trigger kb_callio_update
+  after update on public.briefing_docs
+  for each row
+  when (
+       old.title     is distinct from new.title
+    or old.content   is distinct from new.content
+    or old.questions is distinct from new.questions
+    or old.dept      is distinct from new.dept
+    or old.is_active is distinct from new.is_active
+  )
+  execute function public.kb_notify_callio();
+
+drop trigger if exists kb_callio_delete on public.briefing_docs;
+create trigger kb_callio_delete
+  after delete on public.briefing_docs
+  for each row execute function public.kb_notify_callio();
+
+-- ── briefings (מבחנים) ──────────────────────────────────────
+-- Same: completions / refresh_requested changes are not content.
+drop trigger if exists kb_callio_insert on public.briefings;
+create trigger kb_callio_insert
+  after insert on public.briefings
+  for each row execute function public.kb_notify_callio();
+
+drop trigger if exists kb_callio_update on public.briefings;
+create trigger kb_callio_update
+  after update on public.briefings
+  for each row
+  when (
+       old.title         is distinct from new.title
+    or old.content       is distinct from new.content
+    or old.questions     is distinct from new.questions
+    or old."targetDepts" is distinct from new."targetDepts"
+    or old.is_active     is distinct from new.is_active
+  )
+  execute function public.kb_notify_callio();
+
+drop trigger if exists kb_callio_delete on public.briefings;
+create trigger kb_callio_delete
+  after delete on public.briefings
   for each row execute function public.kb_notify_callio();

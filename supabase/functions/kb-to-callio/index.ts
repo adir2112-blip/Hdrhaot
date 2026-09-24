@@ -1,22 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { toPlainText } from './plaintext.ts'
-import { ORGS, type Event, type Org, planChange } from './routing.ts'
+import { deptsOf, isTable, itemId, type Table, TABLES, toItem } from './items.ts'
+import { ORGS, type Event, type Org, orgDepts, orgsFor, planChange } from './routing.ts'
 
-// Pushes knowledge_base changes to Callio (call-analysis system), which keeps
-// its own copy per org and filters by dept per call. Each Callio org
-// (מובמנט, אלן קאר) has its own API key and only gets its own depts — see
-// routing.ts.
+// Pushes knowledge changes to Callio (call-analysis system), which keeps its
+// own copy per org and filters by depts per call. Synced: מאמרי ידע
+// (knowledge_base), תדריכים (briefing_docs), מבחנים (briefings) — active only.
+// Each Callio org has its own token and only gets its own depts (routing.ts).
 //
 // Two callers:
 //  1. The kb_notify_callio() DB trigger (via pg_net) on insert/update/delete,
 //     authenticated by the x-kb-sync-secret header (same value as the Vault
-//     secret 'kb_sync_secret'). Body: { op, id, old_dept }.
+//     secret 'kb_sync_secret'). Body: { table, op, id, old } — old is the
+//     previous row without its large/private columns (null on INSERT).
 //  2. The super admin's "סנכרון מלא ל-Callio" button, authenticated by their
-//     own session JWT. Body: { resync: true } → re-sends every article to its
-//     org as item.updated.
+//     own session JWT. Body: { resync: true } → re-sends every active item to
+//     its org(s) as item.updated.
 //
 // Secrets (supabase secrets set ...):
-//   CALLIO_TOKEN_MOVEMENT, CALLIO_TOKEN_ALLEN_CARR   per-org Callio API keys
+//   CALLIO_TOKEN_MOVEMENT, CALLIO_TOKEN_ALLEN_CARR   per-org Callio knowledge tokens
 //   KB_SYNC_SECRET                                   shared with the DB trigger
 // An org whose token is not set is skipped. Deploy with --no-verify-jwt: auth
 // is checked here, per caller type.
@@ -35,16 +36,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-type KbRow = {
-  id: string
-  title: string | null
-  content: string | null
-  dept: string | null
-  folder_id: string | null
-  expiry_date: string | null
-}
-
-const COLUMNS = 'id,title,content,dept,folder_id,expiry_date'
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 function json(body: unknown, status = 200) {
@@ -58,18 +49,7 @@ function tokenFor(org: Org): string {
   return Deno.env.get(org.tokenEnv) ?? ''
 }
 
-function toItem(row: KbRow) {
-  return {
-    id: row.id,
-    title: row.title ?? '',
-    content: toPlainText(row.content),
-    dept: row.dept ?? '',
-    folder_id: row.folder_id,
-    expiry_date: row.expiry_date,
-  }
-}
-
-async function sendToCallio(org: Org, event: Event, item: Record<string, unknown>): Promise<boolean> {
+async function sendToCallio(org: Org, event: Event, item: { id: string; [k: string]: unknown }): Promise<boolean> {
   const token = tokenFor(org)
   if (!token) {
     console.warn(`callio ${org.key}: no token configured, skipped ${event} ${item.id}`)
@@ -99,44 +79,60 @@ async function sendToCallio(org: Org, event: Event, item: Record<string, unknown
   return false
 }
 
-// Trigger path: the trigger only sends op + id + old dept, so the current row
-// is loaded here — Callio always gets the latest committed version.
-async function handleChange(op: string, id: string, oldDept: string | null) {
-  let row: KbRow | null = null
+// Trigger path: the current row is loaded here (the trigger only sends the id
+// and a slim old-row snapshot), so Callio always gets the latest committed
+// version.
+// deno-lint-ignore no-explicit-any
+async function handleChange(table: Table, op: string, id: string, old: Record<string, any> | null) {
+  // deno-lint-ignore no-explicit-any
+  let row: Record<string, any> | null = null
   if (op !== 'DELETE') {
-    const { data, error } = await sb.from('knowledge_base').select(COLUMNS).eq('id', id).maybeSingle()
+    const { data, error } = await sb.from(table).select(TABLES[table].columns).eq('id', id).maybeSingle()
     if (error) {
-      console.error(`load ${id}: ${error.message}`)
+      console.error(`load ${table} ${id}: ${error.message}`)
       return
     }
-    // Row deleted between the trigger firing and now — the DELETE event covers it.
+    // Missing = deleted since the trigger fired; the DELETE event covers it.
     if (!data) return
-    row = data as KbRow
+    row = data
   }
-  const sends = planChange(op, row?.dept, oldDept)
+  const newDepts = deptsOf(table, row)
+  const sends = planChange(newDepts, op === 'INSERT' ? null : deptsOf(table, old))
+  const type = TABLES[table].type
   await Promise.all(sends.map(({ org, event }) =>
-    sendToCallio(org, event, event === 'item.deleted' || !row ? { id } : toItem(row))))
+    sendToCallio(org, event, event === 'item.deleted' || !row || !newDepts
+      ? { id: itemId(table, id), type }
+      : toItem(table, row, orgDepts(org, newDepts)))))
 }
 
 async function handleResync() {
-  const { data, error } = await sb.from('knowledge_base').select(COLUMNS).order('created_at')
-  if (error) throw new Error(error.message)
-  const rows = (data ?? []) as KbRow[]
+  const sends: { org: Org; item: ReturnType<typeof toItem> }[] = []
+  for (const table of Object.keys(TABLES) as Table[]) {
+    const { data, error } = await sb.from(table).select(TABLES[table].columns).order(TABLES[table].order)
+    if (error) throw new Error(`${table}: ${error.message}`)
+    for (const row of data ?? []) {
+      const depts = deptsOf(table, row)
+      for (const org of orgsFor(depts)) sends.push({ org, item: toItem(table, row, orgDepts(org, depts!)) })
+    }
+  }
+
   const orgs = []
   for (const org of ORGS) {
-    const orgRows = rows.filter((r) => org.depts.includes((r.dept ?? '').trim()))
+    const mine = sends.filter((s) => s.org === org).map((s) => s.item)
+    const byType = { article: 0, briefing: 0, test: 0 }
+    mine.forEach((i) => byType[i.type]++)
     if (!tokenFor(org)) {
-      orgs.push({ org: org.key, total: orgRows.length, sent: 0, failed: [], skipped: 'no token' })
+      orgs.push({ org: org.key, total: mine.length, byType, sent: 0, failed: [], skipped: 'no token' })
       continue
     }
     const failed: string[] = []
     const CONCURRENCY = 5
-    for (let i = 0; i < orgRows.length; i += CONCURRENCY) {
-      const batch = orgRows.slice(i, i + CONCURRENCY)
-      const results = await Promise.all(batch.map((r) => sendToCallio(org, 'item.updated', toItem(r))))
-      results.forEach((ok, j) => { if (!ok) failed.push(batch[j].title ?? batch[j].id) })
+    for (let i = 0; i < mine.length; i += CONCURRENCY) {
+      const batch = mine.slice(i, i + CONCURRENCY)
+      const results = await Promise.all(batch.map((item) => sendToCallio(org, 'item.updated', item)))
+      results.forEach((ok, j) => { if (!ok) failed.push(batch[j].title || batch[j].id) })
     }
-    orgs.push({ org: org.key, total: orgRows.length, sent: orgRows.length - failed.length, failed })
+    orgs.push({ org: org.key, total: mine.length, byType, sent: mine.length - failed.length, failed })
   }
   return { orgs }
 }
@@ -152,7 +148,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405)
 
-  let body: { op?: string; id?: string; old_dept?: string | null; resync?: boolean }
+  // deno-lint-ignore no-explicit-any
+  let body: { table?: string; op?: string; id?: string; old?: Record<string, any> | null; resync?: boolean }
   try {
     body = await req.json()
   } catch {
@@ -163,13 +160,13 @@ Deno.serve(async (req) => {
   const secret = req.headers.get('x-kb-sync-secret')
   if (secret !== null) {
     if (!KB_SYNC_SECRET || secret !== KB_SYNC_SECRET) return json({ error: 'unauthorized' }, 401)
-    const { op, id } = body
-    if (!id || !['INSERT', 'UPDATE', 'DELETE'].includes(op ?? '')) {
-      return json({ error: 'op and id are required' }, 400)
+    const { table, op, id } = body
+    if (!isTable(table) || !id || !['INSERT', 'UPDATE', 'DELETE'].includes(op ?? '')) {
+      return json({ error: 'table, op and id are required' }, 400)
     }
     // Answer pg_net right away; retries to Callio continue in the background.
     // @ts-ignore EdgeRuntime is provided by the Supabase Edge runtime
-    EdgeRuntime.waitUntil(handleChange(op!, id, body.old_dept ?? null))
+    EdgeRuntime.waitUntil(handleChange(table, op!, String(id), body.old ?? null))
     return json({ accepted: true }, 202)
   }
 

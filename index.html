@@ -13002,11 +13002,11 @@ async function initSuperAdminUI(){
   if(callioBtn) callioBtn.style.display = isSuperAdmin(email) ? 'flex' : 'none';
 }
 
-// Re-sends every knowledge_base article to Callio as item.updated (kb-to-callio
-// Edge Function). Normal changes sync automatically via DB trigger — this is
-// for when Callio suspects they missed an event.
+// Re-sends every active article / תדריך / מבחן to Callio as item.updated
+// (kb-to-callio Edge Function). Normal changes sync automatically via DB
+// triggers — this is for when Callio suspects they missed an event.
 async function resyncCallio(){
-  if (!(await confirmDialog('לשלוח מחדש את כל מאמרי הידע ל-Callio?'))) return;
+  if (!(await confirmDialog('לשלוח מחדש ל-Callio את כל המאמרים, התדריכים והמבחנים הפעילים?'))) return;
   const btn = document.getElementById('ksb-callio-resync');
   const label = btn?.querySelector('span:last-child');
   const orig = label?.textContent;
@@ -13018,9 +13018,10 @@ async function resyncCallio(){
     const orgNames = {movement:'מובמנט', allen_carr:'אלן קאר'};
     const lines = data.orgs.map(o => {
       const name = orgNames[o.org] || o.org;
+      const parts = ' ('+o.byType.article+' מאמרים, '+o.byType.briefing+' תדריכים, '+o.byType.test+' מבחנים)';
       if(o.skipped) return '⚪ '+name+': לא הוגדר מפתח — לא נשלח';
-      if(o.failed.length) return '⚠️ '+name+': נשלחו '+o.sent+' מתוך '+o.total+'. נכשלו:\n   '+o.failed.join('\n   ');
-      return '✅ '+name+': נשלחו כל '+o.total+' המאמרים';
+      if(o.failed.length) return '⚠️ '+name+': נשלחו '+o.sent+' מתוך '+o.total+parts+'. נכשלו:\n   '+o.failed.join('\n   ');
+      return '✅ '+name+': נשלחו כל '+o.total+' הפריטים'+parts;
     });
     await logManagerAction('סנכרון מלא ל-Callio', data.orgs.map(o=>o.org+' '+o.sent+'/'+o.total).join(' | '));
     alert(lines.join('\n'));
