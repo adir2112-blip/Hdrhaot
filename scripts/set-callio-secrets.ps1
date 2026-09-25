@@ -29,11 +29,23 @@ function Read-Token($label) {
 
 Write-Host ''
 Write-Host '=== Supabase login check ===' -ForegroundColor Cyan
-npx --yes supabase projects list *> $null
+# --agent no: the CLI otherwise may detect an "AI agent" environment and
+# refuse interactive prompts (NonInteractiveError).
+npx --yes supabase projects list --agent no *> $null
 if ($LASTEXITCODE -ne 0) {
   Write-Host 'Not logged in - opening browser for Supabase login...'
-  npx --yes supabase login
-  if ($LASTEXITCODE -ne 0) { throw 'Supabase login failed' }
+  npx --yes supabase login --agent no
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host ''
+    Write-Host 'Browser login did not work. Use an access token instead:' -ForegroundColor Yellow
+    Write-Host '  1. Open https://supabase.com/dashboard/account/tokens'
+    Write-Host '  2. "Generate new token", name it e.g. "cli", copy it'
+    Start-Process 'https://supabase.com/dashboard/account/tokens'
+    $s = Read-Host 'Paste the Supabase access token (hidden)' -AsSecureString
+    $sbTok = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)).Trim()
+    npx --yes supabase login --agent no --token $sbTok
+    if ($LASTEXITCODE -ne 0) { throw 'Supabase login failed' }
+  }
 }
 
 Write-Host ''
@@ -55,7 +67,7 @@ try {
     "CALLIO_URL_ALLEN_CARR=`"$acUrl`""
     "CALLIO_TOKEN_ALLEN_CARR=`"$acTok`""
   ) | Set-Content -Path $envFile -Encoding ASCII
-  npx --yes supabase secrets set --env-file $envFile --project-ref $ProjectRef
+  npx --yes supabase secrets set --agent no --env-file $envFile --project-ref $ProjectRef
   if ($LASTEXITCODE -ne 0) { throw 'supabase secrets set failed' }
 } finally {
   Remove-Item $envFile -Force -ErrorAction SilentlyContinue
@@ -63,6 +75,6 @@ try {
 
 Write-Host ''
 Write-Host 'Saved. Secret names now on the project (values are not shown):' -ForegroundColor Green
-npx --yes supabase secrets list --project-ref $ProjectRef | Select-String 'CALLIO_'
+npx --yes supabase secrets list --agent no --project-ref $ProjectRef | Select-String 'CALLIO_'
 Write-Host ''
 Write-Host 'Done - tell Claude "saved". Close this window.' -ForegroundColor Green
