@@ -1,12 +1,13 @@
 // Which Callio account (org) receives which dept. Each org has its own Callio
-// token, so an item must only reach the org(s) its depts belong to, and each
+// webhook URL and token, so an item must only reach the org(s) its depts belong to, and each
 // org only sees its own depts on the item. Depts not listed here (e.g.
 // פריפיט) are not sent anywhere.
-export type Org = { key: string; tokenEnv: string; depts: string[] }
+export type Org = { key: string; urlEnv: string; tokenEnv: string; depts: string[] }
 
 export const ORGS: Org[] = [
   {
     key: 'movement',
+    urlEnv: 'CALLIO_URL_MOVEMENT',
     tokenEnv: 'CALLIO_TOKEN_MOVEMENT',
     depts: [
       'מובמנט', 'כללי', 'כללית אקטיב', 'עובדים בריא', 'לאומית FIT',
@@ -15,6 +16,7 @@ export const ORGS: Org[] = [
   },
   {
     key: 'allen_carr',
+    urlEnv: 'CALLIO_URL_ALLEN_CARR',
     tokenEnv: 'CALLIO_TOKEN_ALLEN_CARR',
     depts: ['אלן קאר'],
   },

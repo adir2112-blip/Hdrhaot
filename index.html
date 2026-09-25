@@ -13019,7 +13019,7 @@ async function resyncCallio(){
     const lines = data.orgs.map(o => {
       const name = orgNames[o.org] || o.org;
       const parts = ' ('+o.byType.article+' מאמרים, '+o.byType.briefing+' תדריכים, '+o.byType.test+' מבחנים)';
-      if(o.skipped) return '⚪ '+name+': לא הוגדר מפתח — לא נשלח';
+      if(o.skipped) return '⚪ '+name+': לא הוגדרו כתובת וטוקן — לא נשלח';
       if(o.failed.length) return '⚠️ '+name+': נשלחו '+o.sent+' מתוך '+o.total+parts+'. נכשלו:\n   '+o.failed.join('\n   ');
       return '✅ '+name+': נשלחו כל '+o.total+' הפריטים'+parts;
     });

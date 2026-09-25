@@ -16,13 +16,13 @@ import { ORGS, type Event, type Org, orgDepts, orgsFor, planChange } from './rou
 //     own session JWT. Body: { resync: true } → re-sends every active item to
 //     its org(s) as item.updated.
 //
-// Secrets (supabase secrets set ...):
-//   CALLIO_TOKEN_MOVEMENT, CALLIO_TOKEN_ALLEN_CARR   per-org Callio knowledge tokens
+// Secrets (set with scripts/set-callio-secrets.ps1 — never in git/chat):
+//   CALLIO_URL_MOVEMENT,   CALLIO_TOKEN_MOVEMENT     per-org Callio knowledge
+//   CALLIO_URL_ALLEN_CARR, CALLIO_TOKEN_ALLEN_CARR   webhook URL + token
 //   KB_SYNC_SECRET                                   shared with the DB trigger
-// An org whose token is not set is skipped. Deploy with --no-verify-jwt: auth
+// An org whose URL or token is not set is skipped. Deploy with --no-verify-jwt: auth
 // is checked here, per caller type.
 
-const CALLIO_URL = Deno.env.get('CALLIO_URL') ?? 'https://callio-ai.com/api/webhooks/knowledge'
 const SUPER_ADMIN_EMAIL = 'adir2112@gmail.com'
 const RETRY_DELAYS_MS = [1000, 3000] // 3 attempts total
 
@@ -45,24 +45,26 @@ function json(body: unknown, status = 200) {
   })
 }
 
-function tokenFor(org: Org): string {
-  return Deno.env.get(org.tokenEnv) ?? ''
+function configFor(org: Org): { url: string; token: string } | null {
+  const url = Deno.env.get(org.urlEnv) ?? ''
+  const token = Deno.env.get(org.tokenEnv) ?? ''
+  return url && token ? { url, token } : null
 }
 
 async function sendToCallio(org: Org, event: Event, item: { id: string; [k: string]: unknown }): Promise<boolean> {
-  const token = tokenFor(org)
-  if (!token) {
-    console.warn(`callio ${org.key}: no token configured, skipped ${event} ${item.id}`)
+  const cfg = configFor(org)
+  if (!cfg) {
+    console.warn(`callio ${org.key}: webhook URL/token not configured, skipped ${event} ${item.id}`)
     return false
   }
   const body = JSON.stringify({ event, item })
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
-      const res = await fetch(CALLIO_URL, {
+      const res = await fetch(cfg.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${cfg.token}`,
         },
         body,
         signal: AbortSignal.timeout(15000),
@@ -121,8 +123,8 @@ async function handleResync() {
     const mine = sends.filter((s) => s.org === org).map((s) => s.item)
     const byType = { article: 0, briefing: 0, test: 0 }
     mine.forEach((i) => byType[i.type]++)
-    if (!tokenFor(org)) {
-      orgs.push({ org: org.key, total: mine.length, byType, sent: 0, failed: [], skipped: 'no token' })
+    if (!configFor(org)) {
+      orgs.push({ org: org.key, total: mine.length, byType, sent: 0, failed: [], skipped: 'not configured' })
       continue
     }
     const failed: string[] = []
