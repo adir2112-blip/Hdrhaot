@@ -4381,6 +4381,13 @@ function editKnowledgeArticle(id){
     contentEl.value = rawContent;
   }
   if(deptEl) deptEl.value=item.dept||'כללי';
+  // Folder list may not be loaded yet if the library tab was never opened
+  const folderEl=document.getElementById('k-edit-folder');
+  if(folderEl){
+    const fill=()=>{ folderEl.innerHTML=folderOptionsHtml(); folderEl.value=item.folder_id||''; };
+    fill();
+    if(!S_folders.length) loadFolders().then(fill);
+  }
   // Load expiry
   // Load has_visual
   var visChk=document.getElementById('k-edit-has-visual');
@@ -4409,12 +4416,13 @@ async function saveKnowledgeEdit(){
   var hasEditExpiry=document.getElementById('k-edit-has-expiry')?.checked||false;
   var editExpiryDate=document.getElementById('k-edit-expiry-date')?.value||'';
   var hasVisual=document.getElementById('k-edit-has-visual')?.checked||false;
-  var updateData={title,content,dept,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null,has_visual:hasVisual};
+  var folderId=document.getElementById('k-edit-folder')?.value||null;
+  var updateData={title,content,dept,folder_id:folderId,expiry_date:hasEditExpiry&&editExpiryDate?editExpiryDate:null,has_visual:hasVisual};
   await logManagerAction('עריכת מאמר', 'כותרת: '+title+' | מאמר id='+_editingKbId);
   const {error} = await _sb.from('knowledge_base').update(updateData).eq('id',_editingKbId);
   if(error){alert('שגיאה: '+error.message);return;}
   const idx = S_knowledge.findIndex(a=>String(a.id)===String(_editingKbId));
-  if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept,expiry_date:updateData.expiry_date};
+  if(idx>=0) S_knowledge[idx]={...S_knowledge[idx],title,content,dept,folder_id:folderId,expiry_date:updateData.expiry_date,has_visual:hasVisual};
   closeKnowledgeEdit();
   renderKnowledgeArticles();
 }
@@ -4511,6 +4519,22 @@ let _selectedFolderId = null;
 async function loadFolders(){
   const {data} = await _sb.from('kb_folders').select('*').order('name');
   S_folders = data||[];
+}
+
+// <option>s for every folder, labelled with its full path ("אב › בן") and
+// ordered depth-first so subfolders sit under their parent.
+function folderOptionsHtml(){
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const out=[];
+  const walk=(parentId,path)=>{
+    S_folders.filter(f=>(f.parent_id||null)===parentId).forEach(f=>{
+      const label=path?path+' › '+f.name:f.name;
+      out.push(`<option value="${esc(f.id)}">${esc(label)}</option>`);
+      walk(f.id,label);
+    });
+  };
+  walk(null,'');
+  return '<option value="">ללא תיקיה</option>'+out.join('');
 }
 
 async function createFolder(parentId){
@@ -14829,6 +14853,12 @@ function renderManagersDiscipline(){
           <option value="מחלקת סחר">מחלקת סחר</option>
         </optgroup>
       </select>
+      <div class="field" style="margin-top:12px">
+        <label class="field-label">תיקיה</label>
+        <select id="k-edit-folder" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);padding:11px 15px;font-size:14px;font-family:'Sora',sans-serif;color:var(--ice);direction:rtl">
+          <option value="">ללא תיקיה</option>
+        </select>
+      </div>
       <div class="field" style="margin-top:12px">
         <label style="display:flex;align-items:center;gap:10px;background:rgba(91,160,230,0.08);border:1.5px solid rgba(91,160,230,0.25);border-radius:12px;padding:12px 14px;cursor:pointer">
           <input type="checkbox" id="k-edit-has-visual" style="width:20px;height:20px;cursor:pointer;accent-color:#5BA0E6">
