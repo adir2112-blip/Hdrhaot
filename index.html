@@ -3398,7 +3398,8 @@ function scopeCompletions(comp){
 
 // Dept pickers: filters show what the manager can see, forms only what they
 // can edit. Applied to the whole page whenever it changes (debounced).
-const SCOPE_FORM_SELECTS=new Set(['k-dept','k-edit-dept','pdf-dept-select','disc-add-dept','reset-group-select','f-dept-pick']);
+// reset-group-select: resets act on S.agents, which is already scoped.
+const SCOPE_FORM_SELECTS=new Set(['k-dept','k-edit-dept','disc-add-dept','reset-group-select','f-dept-pick']);
 function isDeptOptionValue(v){
   return v===GENERAL_DEPT || DEPTS.includes(v) || GROUPS.some(g=>g.key===v || g.depts.includes(v));
 }
@@ -3437,7 +3438,8 @@ let _scopeDomQueued=false;
 const _scopeObserver=new MutationObserver(()=>{
   if(_scopeDomQueued || !scopeActive()) return;
   _scopeDomQueued=true;
-  requestAnimationFrame(()=>{ _scopeDomQueued=false; applyDeptScopeToDom(); });
+  // setTimeout, not requestAnimationFrame: rAF never fires in a background tab.
+  setTimeout(()=>{ _scopeDomQueued=false; applyDeptScopeToDom(); },0);
 });
 function startDeptScopeDom(){
   _scopeObserver.disconnect();
@@ -3980,6 +3982,7 @@ async function unlockAll(){
     S.agents=await dbAgents();
     S.briefings=await dbBriefings();
     S_knowledge=[]; _kbLastLoaded=0;
+    if(typeof renderAgentLogin==='function') renderAgentLogin();
   }
   startDeptScopeDom();
   ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
@@ -8625,8 +8628,9 @@ async function renderLivePanel(){
   el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ice3)">טוען...</div>';
 
   // Get all active agents
-  const {data:agents} = await _sb.from('agents').select('id,name,depts,is_active').eq('is_active',true);
-  if(!agents){ el.innerHTML='<div style="color:var(--danger)">שגיאה בטעינה</div>'; return; }
+  const {data:agentsRaw} = await _sb.from('agents').select('id,name,depts,is_active').eq('is_active',true);
+  if(!agentsRaw){ el.innerHTML='<div style="color:var(--danger)">שגיאה בטעינה</div>'; return; }
+  const agents = agentsRaw.filter(a=>mgrSeesAgent({...a, depts:scopeTags(a.depts)}));
 
   // Get last login per agent from login_history
   const since = new Date(); since.setDate(since.getDate()-30);
