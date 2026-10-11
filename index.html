@@ -2997,6 +2997,10 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
           <button onclick="showSettingsPanel('config')" id="ssb-config" class="ssb-btn" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
             <span style="font-size:18px">⚙️</span><span>הגדרות</span>
           </button>
+          <!-- Super admin only — toggled in initSuperAdminUI() -->
+          <button onclick="showSettingsPanel('managers')" id="ssb-managers" class="ssb-btn" style="display:none;width:100%;align-items:center;gap:10px;background:none;border:none;color:var(--ice2);font-weight:600;border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;margin-bottom:4px;text-align:right;transition:all 0.15s">
+            <span style="font-size:18px">👥</span><span>מנהלים</span>
+          </button>
             <div style="height:1px;background:var(--line);margin:8px 4px"></div>
             <button onclick="lockSettings()" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--danger-bg);border:1px solid var(--danger-line);color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;text-align:right">
               <span style="font-size:18px">🔒</span><span>נעל</span>
@@ -3185,6 +3189,16 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
             <div id="settings-stats-content"></div>
           </div><!-- /sp-stats -->
 
+          <!-- PANEL: MANAGERS (dept scope) — super admin only -->
+          <div id="sp-managers" style="display:none">
+            <div class="card" style="margin-bottom:14px;font-size:13px;color:var(--ice2);line-height:1.7">
+              בחר לכל מנהל את המחלקות שלו — הוא יראה ויערוך רק אותן (ידע, תיקיות, תדריכים, מבחנים, נציגים, בקרות, משמעת ודוחות).
+              סימון קבוצה כולל את כל המחלקות שבה. מנהל בלי שיוך רואה את הכל, כמו היום.
+              <div style="font-size:12px;color:var(--ice3);margin-top:6px">השינוי נכנס לתוקף בכניסה הבאה של המנהל (או ברענון הדף).</div>
+            </div>
+            <div id="mgr-scope-list"></div>
+          </div><!-- /sp-managers -->
+
           <!-- PANEL: CONFIG -->
           <div id="sp-config" style="display:none">
             <div class="card" style="margin-bottom:14px">
@@ -3261,6 +3275,177 @@ function agentGroup(a){
   return null;
 }
 
+/* ══════════════════════════════════════════════════════
+   MANAGER DEPT SCOPE — each manager sees/edits only the depts the super
+   admin assigned in ניהול › מנהלים (table manager_depts). No assignment =
+   full access. Phase 1: enforced in the app (data filtered at load time,
+   dept pickers limited, edit actions guarded) — not yet by RLS.
+   The pure functions between the markers are unit-tested by
+   tests/dept-scope.test.mjs (it extracts them from this file).
+   ══════════════════════════════════════════════════════ */
+// @scope-core-start
+const GENERAL_DEPT='כללי';
+// Concrete depts a stored tag covers: a group key → every dept in the group;
+// 'כללי' or a dept name → itself; 'all' / 'כולם' → null (= every dept).
+function scopeExpandTag(tag){
+  const t=String(tag==null?'':tag).trim();
+  if(!t||t==='all'||t==='כולם') return null;
+  const g=GROUPS.find(x=>x.key===t);
+  return g ? g.depts.slice() : [t];
+}
+// A stored dept value as a list of tags: array, JSON-array string,
+// comma-separated string or a single value.
+function scopeTags(v){
+  if(Array.isArray(v)) return v.map(x=>String(x).trim()).filter(Boolean);
+  const s=String(v==null?'':v).trim();
+  if(!s) return [];
+  if(s[0]==='['){ try{ const a=JSON.parse(s); if(Array.isArray(a)) return a.map(x=>String(x).trim()).filter(Boolean); }catch(e){} }
+  return s.split(',').map(x=>x.trim()).filter(Boolean);
+}
+// Assigned tags (depts, group keys, 'כללי') → Set of concrete depts.
+function scopeBuild(assigned){
+  const set=new Set();
+  (assigned||[]).forEach(t=>{ const e=scopeExpandTag(t); if(e) e.forEach(d=>set.add(d)); });
+  return set;
+}
+// See: the item touches at least one assigned dept. Items for everyone
+// ('all', or no tags when emptyMeansAll) are visible to every manager.
+function scopeCanSee(scope, value, emptyMeansAll){
+  if(!scope) return true;
+  const tags=scopeTags(value);
+  if(!tags.length) return !!emptyMeansAll;
+  return tags.some(t=>{ const e=scopeExpandTag(t); return e===null || e.some(d=>scope.has(d)); });
+}
+// Edit: every dept the item touches is assigned — editing a group-wide or
+// for-everyone item would change other managers' depts too.
+function scopeCanEdit(scope, value){
+  if(!scope) return true;
+  const tags=scopeTags(value);
+  if(!tags.length) return false;
+  return tags.every(t=>{ const e=scopeExpandTag(t); return e!==null && e.every(d=>scope.has(d)); });
+}
+// Folders visible to a scoped manager: own dept, or holding (at any depth)
+// an article they can see — plus every ancestor so the tree stays navigable.
+function scopeVisibleFolderIds(scope, folders, visibleArticles){
+  const all=folders||[];
+  if(!scope) return new Set(all.map(f=>String(f.id)));
+  const byId=new Map(all.map(f=>[String(f.id),f]));
+  const out=new Set();
+  const addWithAncestors=id=>{
+    let cur=byId.get(String(id)); const seen=new Set();
+    while(cur && !seen.has(String(cur.id))){ seen.add(String(cur.id)); out.add(String(cur.id)); cur=cur.parent_id?byId.get(String(cur.parent_id)):null; }
+  };
+  all.forEach(f=>{ if(f.dept && scopeCanSee(scope,f.dept,false)) addWithAncestors(f.id); });
+  (visibleArticles||[]).forEach(a=>{ if(a.folder_id) addWithAncestors(a.folder_id); });
+  return out;
+}
+// @scope-core-end
+
+let _mgrScope=null;          // Set of concrete depts, or null = full access
+let _mgrScopeAssigned=null;  // the raw assignment, for display
+async function loadMgrScope(){
+  _mgrScope=null; _mgrScopeAssigned=null;
+  const email=String(await getCurrentUserEmail()||'').toLowerCase();
+  _currentUserEmail=email;
+  if(!email || isSuperAdmin(email)) return;
+  const {data,error}=await _sb.from('manager_depts').select('depts').eq('email',email).maybeSingle();
+  if(error){
+    // Fail closed: better an empty screen than another dept's data.
+    console.error('manager scope load',error);
+    _mgrScopeAssigned=[]; _mgrScope=new Set();
+    alert('⚠️ לא הצלחנו לטעון את הרשאות המחלקות שלך — רענן את הדף.');
+    return;
+  }
+  if(data && Array.isArray(data.depts) && data.depts.length){
+    _mgrScopeAssigned=data.depts.slice();
+    _mgrScope=scopeBuild(data.depts);
+  }
+}
+function scopeActive(){ return !!_mgrScope && _adminUnlocked && !_agentOnlyMode; }
+function mgrSees(v, emptyMeansAll){ return !scopeActive() || scopeCanSee(_mgrScope, v, emptyMeansAll); }
+function mgrEdits(v){ return !scopeActive() || scopeCanEdit(_mgrScope, v); }
+function mgrSeesAgent(a){ return !!a && mgrSees(a.depts, false); }
+// Controls / discipline / login & usage logs: by the row's dept when set
+// (most controls have none), otherwise by the agent it belongs to.
+function scopeSeesAgentRecord(r){
+  if(!scopeActive()) return true;
+  if(r && r.dept) return mgrSees(r.dept, false);
+  return !!r && S.agents.some(a=>String(a.id)===String(r.agent_id));
+}
+// תדריכים rows as fetched for manager screens: only docs touching the
+// manager's depts ('all' = everyone), with completions parsed + scoped.
+function scopeBriefingDocs(rows){
+  return (rows||[]).filter(d=>mgrSees(d.dept, true)).map(d=>{
+    let c={};
+    try{ c=typeof d.completions==='string'?JSON.parse(d.completions):(d.completions||{}); }catch(e){}
+    d.completions=scopeCompletions(c);
+    return d;
+  });
+}
+function mgrDenyEdit(){ alert('⛔ אין לך הרשאה לערוך תוכן של מחלקות שלא שויכו אליך.'); }
+// Knowledge articles are saved with 'כללי' when no dept was chosen.
+function kbDept(a){ return (a && a.dept) || GENERAL_DEPT; }
+// Keep only completions of agents the manager can see (per-test stats and
+// lists then reflect their own agents only). Writes always re-read
+// completions fresh from the DB, so this never drops other depts' data.
+function scopeCompletions(comp){
+  if(!scopeActive() || !comp || typeof comp!=='object') return comp;
+  const ids=new Set(S.agents.map(a=>String(a.id)));
+  const out={};
+  Object.keys(comp).forEach(k=>{ if(String(k).startsWith('_') || ids.has(String(k))) out[k]=comp[k]; });
+  return out;
+}
+
+// Dept pickers: filters show what the manager can see, forms only what they
+// can edit. Applied to the whole page whenever it changes (debounced).
+const SCOPE_FORM_SELECTS=new Set(['k-dept','k-edit-dept','pdf-dept-select','disc-add-dept','reset-group-select','f-dept-pick']);
+function isDeptOptionValue(v){
+  return v===GENERAL_DEPT || DEPTS.includes(v) || GROUPS.some(g=>g.key===v || g.depts.includes(v));
+}
+function applyDeptScopeToDom(){
+  if(!scopeActive()) return;
+  document.querySelectorAll('select').forEach(sel=>{
+    const form=SCOPE_FORM_SELECTS.has(sel.id);
+    const cur=sel.value;
+    let removedCurrent=false;
+    Array.from(sel.querySelectorAll('option')).forEach(o=>{
+      if(!isDeptOptionValue(o.value)) return;
+      const ok=form ? scopeCanEdit(_mgrScope,o.value) : scopeCanSee(_mgrScope,o.value,false);
+      if(!ok){ if(o.value===cur) removedCurrent=true; o.remove(); }
+    });
+    Array.from(sel.querySelectorAll('optgroup')).forEach(g=>{ if(!g.querySelector('option')) g.remove(); });
+    if(removedCurrent && sel.options.length){ sel.selectedIndex=0; sel.dispatchEvent(new Event('change')); }
+  });
+  // תדריכים: dept checkboxes ('כולם' = every dept → not for scoped managers)
+  document.querySelectorAll('.nb-dept-cb').forEach(cb=>{
+    const ok=scopeCanEdit(_mgrScope,cb.value);
+    const box=cb.closest('label')||cb;
+    if(!ok){ cb.checked=false; if(box.style.display!=='none') box.style.display='none'; }
+  });
+  // מבחנים (bdl-i) and new-agent (ncbl-i / na2-i) dept buttons, indexed into DEPTS
+  document.querySelectorAll('button.dept-cb').forEach(b=>{
+    const m=/^(bdl|ncbl|na2)-(\d+)$/.exec(b.id||''); if(!m) return;
+    if(!scopeCanEdit(_mgrScope,DEPTS[+m[2]])){ b.dataset.checked='0'; b.classList.remove('checked'); if(b.style.display!=='none') b.style.display='none'; }
+  });
+  // Per-agent dept toggles in ניהול › נציגים
+  document.querySelectorAll('[onclick*="toggleDept("]').forEach(el=>{
+    const m=/toggleDept\(\s*[^,]+,\s*'([^']+)'/.exec(el.getAttribute('onclick')||''); if(!m) return;
+    if(!scopeCanEdit(_mgrScope,m[1]) && el.style.display!=='none') el.style.display='none';
+  });
+}
+let _scopeDomQueued=false;
+const _scopeObserver=new MutationObserver(()=>{
+  if(_scopeDomQueued || !scopeActive()) return;
+  _scopeDomQueued=true;
+  requestAnimationFrame(()=>{ _scopeDomQueued=false; applyDeptScopeToDom(); });
+});
+function startDeptScopeDom(){
+  _scopeObserver.disconnect();
+  if(!scopeActive()) return;
+  applyDeptScopeToDom();
+  _scopeObserver.observe(document.body,{childList:true,subtree:true});
+}
+
 /* ---- SUPABASE AUTH ---- */
 const _sb = supabase.createClient('https://hbjtpjdthvjikfxsufdo.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhianRwamR0aHZqaWtmeHN1ZmRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTQ1NDYsImV4cCI6MjA5MDczMDU0Nn0.O3U_lM0fyBdvJCPiXUlfHVqq6hKyjGSZiVRpymlc6Rc');
 
@@ -3323,9 +3508,13 @@ function goToIncorrectAnswersFromAlert(){
 }
 
 async function signOut(){
+  const wasScoped=!!_mgrScope;
   await _sb.auth.signOut();
   localStorage.removeItem('bs_login_ts');
   lockAll();
+  // A dept-scoped session filtered the in-memory data and removed options
+  // from dept pickers — start the next user from a clean page.
+  if(wasScoped){ location.reload(); return; }
   showAuthModal();
 }
 
@@ -3456,7 +3645,7 @@ async function dbAgents(){
     a.last_login=a.last_login||null;
     a.active=a.active===false?false:true; // default true
     return a;
-  });
+  }).filter(a=>mgrSeesAgent(a));
 }
 async function dbBriefings(){
   const {data,error}=await _sb.from('briefings').select('*').order('id');
@@ -3477,7 +3666,7 @@ async function dbBriefings(){
     b.reverse_mode=b.reverse_mode===true||b.reverse_mode==='true'||false;
     b.is_active=b.is_active===false?false:true; // default active
     return b;
-  });
+  }).filter(b=>mgrSees(b.targetDepts, true)).map(b=>{ b.completions=scopeCompletions(b.completions); return b; });
 }
 async function loadAll(){
   showLoading(true);
@@ -3784,6 +3973,15 @@ async function unlockAll(){
   }
   _adminUnlocked = true;
   _agentOnlyMode = false;
+  // Dept scope must be known before anything renders. Agents and tests were
+  // loaded unscoped at page start (for the agent login screen) — re-load.
+  await loadMgrScope();
+  if(scopeActive()){
+    S.agents=await dbAgents();
+    S.briefings=await dbBriefings();
+    S_knowledge=[]; _kbLastLoaded=0;
+  }
+  startDeptScopeDom();
   ['nav-manager','nav-tracking','nav-settings','nav-knowledge','nav-controls'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display='';
   });
@@ -3837,7 +4035,7 @@ function lockTracking(){ if(!_adminUnlocked){ document.getElementById('tracking-
 let _currentSettingsPanel = 'main';
 
 function _openConfigPanel(){
-  const panels = ['main','agents','import','delete','stats','config'];
+  const panels = ['main','agents','import','delete','stats','config','managers'];
   panels.forEach(p=>{
     const el=document.getElementById('sp-'+p);
     if(el) el.style.display=p==='config'?'block':'none';
@@ -3871,7 +4069,7 @@ async function checkConfigAdminPw(){
   if(isSuperAdmin(_cae)){
     document.getElementById('admin-config-modal').style.display='none';
     // Now actually show the config panel content
-    const panels = ['main','agents','import','delete','stats','config'];
+    const panels = ['main','agents','import','delete','stats','config','managers'];
     panels.forEach(p=>{
       const el=document.getElementById('sp-'+p);
       if(el) el.style.display=p==='config'?'block':'none';
@@ -3893,7 +4091,7 @@ async function checkConfigAdminPw(){
 }
 
 function showSettingsPanel(key){
-  const panels = ['main','agents','import','delete','stats','config'];
+  const panels = ['main','agents','import','delete','stats','config','managers'];
   panels.forEach(p => {
     const el = document.getElementById('sp-'+p);
     if(el) el.style.display = p===key ? 'block' : 'none';
@@ -3908,8 +4106,8 @@ function showSettingsPanel(key){
   _currentSettingsPanel = key;
 
   // Update header
-  const eyebrows = {main:'Manager Console',agents:'נציגים',import:'ייבוא',delete:'מחיקה',stats:'סטטיסטיקות',config:'הגדרות'};
-  const titles = {main:'ניהול <em>ראשי</em>',agents:'רשימת <em>נציגים</em>',import:'ייבוא <em>מאקסל</em>',delete:'מחיקת <em>נתונים</em>',stats:'סטטיסטיקות <em>מערכת</em>',config:'<em>הגדרות</em> מערכת'};
+  const eyebrows = {main:'Manager Console',agents:'נציגים',import:'ייבוא',delete:'מחיקה',stats:'סטטיסטיקות',config:'הגדרות',managers:'מנהלים'};
+  const titles = {main:'ניהול <em>ראשי</em>',agents:'רשימת <em>נציגים</em>',import:'ייבוא <em>מאקסל</em>',delete:'מחיקת <em>נתונים</em>',stats:'סטטיסטיקות <em>מערכת</em>',config:'<em>הגדרות</em> מערכת',managers:'שיוך <em>מחלקות</em> למנהלים'};
   const eyEl = document.getElementById('settings-panel-eyebrow');
   const titEl = document.getElementById('settings-panel-title');
   if(eyEl) eyEl.textContent = eyebrows[key]||'';
@@ -3917,6 +4115,7 @@ function showSettingsPanel(key){
 
   if(key==='agents'){ initAgentPanelDepts(); renderSettingsAgents(); }
   if(key==='stats') renderSettingsStats();
+  if(key==='managers') renderMgrScopePanel();
   if(key==='config'){
     getCurrentUserEmail().then(email=>{
       if(!isSuperAdmin(email)){
@@ -3936,6 +4135,7 @@ async function addAgentFromPanel(){
   const pin = document.getElementById('new-agent-pin2')?.value?.trim();
   if(pin && !/^\d{4}$/.test(pin)){ alert('PIN חייב להיות 4 ספרות'); return; }
   const depts = DEPTS.filter((_,i)=>{const b=document.getElementById('na2-'+i);return b&&b.dataset.checked==='1';});
+  if(!mgrEdits(depts)){ alert('⛔ יש לבחור לפחות מחלקה אחת מהמחלקות שמשויכות אליך.'); return; }
   const phone2 = document.getElementById('new-agent-phone2')?.value?.trim()||'';
   const row = {name, depts:JSON.stringify(depts)};
   if(pin) row.pin = pin;
@@ -4091,7 +4291,7 @@ async function loadKnowledge(force=false){
   const now = Date.now();
   if(!force && S_knowledge.length && (now - _kbLastLoaded) < 300000) return; // cache 5 min
   const {data,error} = await _sb.from('knowledge_base').select('*').order('created_at',{ascending:false});
-  if(!error){ S_knowledge = data||[]; _kbLastLoaded = now; }
+  if(!error){ S_knowledge = (data||[]).filter(a=>mgrSees(kbDept(a), false)); _kbLastLoaded = now; }
 }
 
 function checkKnowledgePw(){
@@ -4122,7 +4322,7 @@ function showKnowledgePanel(key){
   if(key==='library'){ loadFolders().then(()=>renderFolderTree()); }
   if(key==='add'){
     const fSel=document.getElementById('k-folder-select');
-    if(fSel) fSel.innerHTML='<option value="">ללא תיקיה</option>'+S_folders.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+    if(fSel) fSel.innerHTML=folderOptionsHtml();
   }
   // Show/hide folder tree panel
   const treePanel=document.getElementById('kb-folder-tree');
@@ -4173,7 +4373,7 @@ function renderKnowledgeArticles(){
       <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
         <button onclick="openArticleComments('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px;color:var(--ice3)">💬 ${a.comment_count||0}</button>
         <button onclick="previewArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px;color:var(--gold);border-color:var(--gold-line)">👁 תצוגה</button>
-        <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px">✏ ערוך</button>
+        ${mgrEdits(kbDept(a))?`<button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:5px 10px;font-size:11px">✏ ערוך</button>`:''}
         <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:5px 10px;font-size:11px">🗑</button>
       </div>
     </div>
@@ -4345,6 +4545,7 @@ async function saveKnowledgeArticle(){
   const content=document.getElementById('k-content')?.value?.trim();
   const dept=document.getElementById('k-dept')?.value||'כללי';
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
+  if(!mgrEdits(dept)){ mgrDenyEdit(); return; }
   const msg=document.getElementById('k-save-msg');
   msg.style.display='flex'; msg.textContent='שומר...'; msg.style.color='var(--ice3)';
   const folderId=document.getElementById('k-folder-select')?.value||null;
@@ -4369,6 +4570,7 @@ let _editingKbId = null;
 function editKnowledgeArticle(id){
   const item = S_knowledge.find(a=>String(a.id)===String(id));
   if(!item){ console.warn('editKnowledgeArticle: not found id=',id,'S_knowledge=',S_knowledge.length); alert('פריט לא נמצא — נסה לרענן'); return; }
+  if(!mgrEdits(kbDept(item))){ mgrDenyEdit(); return; }
   _editingKbId = id;
   const titleEl=document.getElementById('k-edit-title');
   const contentEl=document.getElementById('k-edit-content');
@@ -4384,7 +4586,7 @@ function editKnowledgeArticle(id){
   // Folder list may not be loaded yet if the library tab was never opened
   const folderEl=document.getElementById('k-edit-folder');
   if(folderEl){
-    const fill=()=>{ folderEl.innerHTML=folderOptionsHtml(); folderEl.value=item.folder_id||''; };
+    const fill=()=>{ folderEl.innerHTML=folderOptionsHtml(item.folder_id); folderEl.value=item.folder_id||''; };
     fill();
     if(!S_folders.length) loadFolders().then(fill);
   }
@@ -4413,6 +4615,8 @@ async function saveKnowledgeEdit(){
   const content = document.getElementById('k-edit-content').value.trim();
   const dept = document.getElementById('k-edit-dept').value;
   if(!title||!content){alert('יש למלא כותרת ותוכן');return;}
+  const _orig = S_knowledge.find(a=>String(a.id)===String(_editingKbId));
+  if(!mgrEdits(dept) || (_orig && !mgrEdits(kbDept(_orig)))){ mgrDenyEdit(); return; }
   var hasEditExpiry=document.getElementById('k-edit-has-expiry')?.checked||false;
   var editExpiryDate=document.getElementById('k-edit-expiry-date')?.value||'';
   var hasVisual=document.getElementById('k-edit-has-visual')?.checked||false;
@@ -4519,17 +4723,64 @@ let _selectedFolderId = null;
 async function loadFolders(){
   const {data} = await _sb.from('kb_folders').select('*').order('name');
   S_folders = data||[];
+  if(scopeActive()){
+    await loadKnowledge();
+    const ids=scopeVisibleFolderIds(_mgrScope, S_folders, S_knowledge);
+    S_folders=S_folders.filter(f=>ids.has(String(f.id)));
+  }
+}
+// Folder dept as stored, falling back to the nearest ancestor that has one
+// (subfolders created before folders had depts).
+function folderDept(folder){
+  let cur=folder; const seen=new Set();
+  while(cur && !seen.has(cur.id)){ seen.add(cur.id); if(cur.dept) return cur.dept; cur=S_folders.find(f=>f.id===cur.parent_id); }
+  return null;
+}
+function canEditFolder(folder){
+  if(!scopeActive()) return true;
+  const d=folder && folderDept(folder);
+  return !!d && mgrEdits(d);
+}
+// Small modal: pick one dept tag from `tags` (value list). Resolves with the
+// chosen value, '' for none (only when allowNone), or null if cancelled.
+function pickDeptDialog(title, tags, current, allowNone){
+  return new Promise(resolve=>{
+    const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px';
+    wrap.innerHTML=`<div style="background:var(--ink2,#fff);border-radius:16px;padding:20px;width:100%;max-width:360px;direction:rtl;font-family:Sora,sans-serif">
+      <div style="font-size:15px;font-weight:700;color:var(--ice);margin-bottom:12px">${esc(title)}</div>
+      <select id="f-dept-pick" style="width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ice);direction:rtl;font-family:Sora,sans-serif">
+        ${allowNone?'<option value="">ללא מחלקה</option>':''}${tags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}
+      </select>
+      <div style="display:flex;gap:8px;justify-content:flex-start;margin-top:16px">
+        <button class="btn btn-gold btn-sm" data-act="ok">אישור</button>
+        <button class="btn btn-outline btn-sm" data-act="cancel">ביטול</button>
+      </div></div>`;
+    document.body.appendChild(wrap);
+    const sel=wrap.querySelector('select');
+    if(current!=null) sel.value=current;
+    const done=v=>{ wrap.remove(); resolve(v); };
+    wrap.querySelector('[data-act="ok"]').onclick=()=>done(sel.value);
+    wrap.querySelector('[data-act="cancel"]').onclick=()=>done(null);
+  });
+}
+// Tags a folder/article can be assigned to by the current user.
+function editableDeptTags(){
+  const tags=[GENERAL_DEPT, ...GROUPS.map(g=>g.key), ...DEPTS.filter(d=>!GROUPS.some(g=>g.key===d))];
+  return tags.filter(t=>mgrEdits(t));
 }
 
 // <option>s for every folder, labelled with its full path ("אב › בן") and
-// ordered depth-first so subfolders sit under their parent.
-function folderOptionsHtml(){
+// ordered depth-first so subfolders sit under their parent. A dept-scoped
+// manager only gets folders they can edit (plus `keepId`, the current one).
+function folderOptionsHtml(keepId){
   const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
   const out=[];
   const walk=(parentId,path)=>{
     S_folders.filter(f=>(f.parent_id||null)===parentId).forEach(f=>{
       const label=path?path+' › '+f.name:f.name;
-      out.push(`<option value="${esc(f.id)}">${esc(label)}</option>`);
+      if(canEditFolder(f) || String(f.id)===String(keepId||'')) out.push(`<option value="${esc(f.id)}">${esc(label)}</option>`);
       walk(f.id,label);
     });
   };
@@ -4538,9 +4789,20 @@ function folderOptionsHtml(){
 }
 
 async function createFolder(parentId){
+  const parent = parentId ? S_folders.find(f=>f.id===parentId) : null;
+  if(parent && !canEditFolder(parent)){ mgrDenyEdit(); return; }
   const name = prompt('שם התיקיה:');
   if(!name||!name.trim()) return;
-  const {data,error} = await _sb.from('kb_folders').insert({name:name.trim(), parent_id:parentId||null}).select().single();
+  // Subfolders inherit the parent's dept; a top-level folder asks for one.
+  let dept = parent ? folderDept(parent) : null;
+  if(!parent){
+    const tags=editableDeptTags();
+    if(!tags.length){ mgrDenyEdit(); return; }
+    const picked=await pickDeptDialog('לאיזו מחלקה שייכת התיקיה?', tags, tags[0], !scopeActive());
+    if(picked===null) return;
+    dept=picked||null;
+  }
+  const {data,error} = await _sb.from('kb_folders').insert({name:name.trim(), parent_id:parentId||null, dept}).select().single();
   if(error){alert('שגיאה: '+error.message);return;}
   S_folders.push(data);
   renderFolderTree();
@@ -4548,6 +4810,8 @@ async function createFolder(parentId){
 }
 
 async function deleteFolder(id){
+  // Deleting a folder deletes every article in it (any dept) — super admin only.
+  if(!isSuperAdmin(await getCurrentUserEmail())){ alert('⛔ רק אדיר יכול למחוק תיקיות.'); return; }
   if (!(await confirmDialog('האם אתה בטוח שברצונך למחוק תיקיה זו וכל תכניה לצמיתות?', {danger:true}))) return;
   const { data: { session: _dfs } } = await _sb.auth.getSession();
   if(!_dfs){ alert('נדרש להיות מחובר כמנהל'); return; }
@@ -4604,8 +4868,8 @@ function buildFolderNode(folder, depth){
     <span style="font-size:16px">${isOpen?'📂':'📁'}</span>
     <span style="font-size:13px;font-weight:600;color:${isSelected?'var(--gold)':'var(--ice2)'};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${folder.name}">${folder.name}</span>
     ${articles.length?`<span style="font-size:10px;background:var(--gold-bg);color:var(--gold);border-radius:20px;padding:1px 7px;font-family:'DM Mono',monospace">${articles.length}</span>`:''}
-    <button onclick="event.stopPropagation();createFolder('${folder.id}')" style="background:none;border:none;color:var(--ice3);cursor:pointer;font-size:13px;padding:0 2px" title="תיקיה חדשה">+</button>
-    <button onclick="event.stopPropagation();deleteFolder('${folder.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:0 2px" title="מחק">✕</button>`;
+    ${canEditFolder(folder)?`<button onclick="event.stopPropagation();createFolder('${folder.id}')" style="background:none;border:none;color:var(--ice3);cursor:pointer;font-size:13px;padding:0 2px" title="תיקיה חדשה">+</button>`:''}
+    ${isSuperAdmin(_currentUserEmail)?`<button onclick="event.stopPropagation();deleteFolder('${folder.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:0 2px" title="מחק">✕</button>`:''}`;
 
   row.onclick=()=>toggleFolderNode(folder.id);
   wrap.appendChild(row);
@@ -4665,10 +4929,11 @@ function selectFolder(id){
   const children=S_folders.filter(f=>f.parent_id===id);
 
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <div style="font-size:16px;font-weight:700;color:var(--ice)">📂 ${folder.name}</div>
+    <div style="font-size:16px;font-weight:700;color:var(--ice)">📂 ${folder.name} <span style="font-size:11px;font-weight:600;color:var(--ice3);background:var(--ink3);border-radius:20px;padding:2px 9px;margin-right:6px">${folderDept(folder)||'ללא מחלקה'}</span></div>
     <div style="display:flex;gap:8px">
-      <button onclick="createFolder('${id}')" class="btn btn-outline btn-sm">📁 תת-תיקיה</button>
-      <button onclick="addArticleToFolder('${id}')" class="btn btn-gold btn-sm">+ מאמר</button>
+      ${isSuperAdmin(_currentUserEmail)?`<button onclick="changeFolderDept('${id}')" class="btn btn-outline btn-sm">🏷 מחלקה</button>`:''}
+      ${canEditFolder(folder)?`<button onclick="createFolder('${id}')" class="btn btn-outline btn-sm">📁 תת-תיקיה</button>
+      <button onclick="addArticleToFolder('${id}')" class="btn btn-gold btn-sm">+ מאמר</button>`:''}
     </div>
   </div>`;
 
@@ -4693,13 +4958,26 @@ function selectFolder(id){
         <div style="font-size:12px;color:var(--ice3);line-height:1.5">${(a.content||'').slice(0,120)}${(a.content||'').length>120?'…':''}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px">✏</button>
-        <button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:4px 8px;font-size:11px">🗑</button>
+        ${mgrEdits(kbDept(a))?`<button onclick="editKnowledgeArticle('${a.id}')" class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px">✏</button>`:''}
+        ${isSuperAdmin(_currentUserEmail)?`<button onclick="deleteKnowledgeArticle('${a.id}')" class="btn btn-danger-soft" style="padding:4px 8px;font-size:11px">🗑</button>`:''}
       </div>
     </div>`).join('');
   }
 
   contentEl.innerHTML=html;
+}
+
+async function changeFolderDept(id){
+  if(!isSuperAdmin(await getCurrentUserEmail())) return;
+  const folder=S_folders.find(f=>f.id===id); if(!folder) return;
+  const tags=[GENERAL_DEPT, ...GROUPS.map(g=>g.key), ...DEPTS.filter(d=>!GROUPS.some(g=>g.key===d))];
+  const picked=await pickDeptDialog('מחלקה של התיקיה "'+folder.name+'"', tags, folder.dept||'', true);
+  if(picked===null) return;
+  const {error}=await _sb.from('kb_folders').update({dept:picked||null}).eq('id',id);
+  if(error){ alert('שגיאה: '+error.message); return; }
+  folder.dept=picked||null;
+  await logManagerAction('שינוי מחלקת תיקיה', folder.name+' → '+(picked||'ללא'));
+  renderFolderTree(); selectFolder(id);
 }
 
 function addArticleToFolder(folderId){
@@ -5237,6 +5515,10 @@ async function ensureCorrectionsFolder(){
   if(!S_folders.length) await loadFolders();
   var existing=S_folders.find(function(f){ return f.name===_correctionsFolderName && !f.parent_id; });
   if(existing) return existing.id;
+  // A dept-scoped manager may not see this folder in S_folders (it holds
+  // other depts' fixes) — look it up in the DB before creating a duplicate.
+  var {data:found}=await _sb.from('kb_folders').select('id').eq('name',_correctionsFolderName).is('parent_id',null).limit(1);
+  if(found && found.length) return found[0].id;
   var {data,error}=await _sb.from('kb_folders').insert({name:_correctionsFolderName, parent_id:null}).select().single();
   if(error){ console.error('ensureCorrectionsFolder', error.message); return null; }
   S_folders.push(data);
@@ -5284,7 +5566,7 @@ async function loadAIFeedback(){
       if(el) el.innerHTML='<div style="color:var(--danger)">שגיאה: '+error.message+'</div>';
       return;
     }
-    window._aiFeedbackData = data||[];
+    window._aiFeedbackData = (data||[]).filter(f=>!scopeActive() || S.agents.some(a=>String(a.id)===String(f.agent_id)));
     console.log('[loadAIFeedback] stored', window._aiFeedbackData.length, 'items, el=', !!el);
     renderAIFeedback();
     renderIncorrectAnswers();
@@ -5622,6 +5904,7 @@ async function addAgent(){
   const pinRaw=document.getElementById('new-agent-pin').value.trim();
   if(pinRaw&&(!/^\d{4}$/.test(pinRaw))){alert('קוד ת"ז חייב להיות 4 ספרות');return;}
   const depts=DEPTS.filter((_,i)=>{const btn=document.getElementById('ncbl-'+i);return btn&&btn.dataset.checked==='1';});
+  if(!mgrEdits(depts)){ alert('⛔ יש לבחור לפחות מחלקה אחת מהמחלקות שמשויכות אליך.'); return; }
   const phoneRaw=document.getElementById('new-agent-phone')?.value?.trim()||'';
   const idRaw=document.getElementById('new-agent-idnumber')?.value?.trim()||'';
   const row={name,depts:JSON.stringify(depts)};
@@ -5743,6 +6026,7 @@ function renderSettings(){
 }
 async function toggleDept(id,dept){
   const a=S.agents.find(x=>x.id===id);if(!a)return;
+  if(!mgrEdits(dept)){ mgrDenyEdit(); return; }
   if(!a.depts)a.depts=[];
   const idx=a.depts.indexOf(dept);
   if(idx>-1)a.depts.splice(idx,1);else a.depts.push(dept);
@@ -5753,6 +6037,7 @@ async function toggleDept(id,dept){
 async function toggleActive(id){
   const a=S.agents.find(x=>String(x.id)===String(id));
   if(!a) return;
+  if(!mgrEdits(a.depts)){ mgrDenyEdit(); return; }
   const newActive=a.active===false?true:false;
   await _sb.from('agents').update({active:newActive}).eq('id',id);
   a.active=newActive;
@@ -5979,6 +6264,8 @@ async function publishBriefing(){
   }
 
   const targetDepts=DEPTS.filter((_,i)=>{const btn=document.getElementById('bdl-'+i);return btn&&btn.dataset.checked==='1';});
+  // No depts = every dept, which a dept-scoped manager may not target.
+  if(!mgrEdits(targetDepts)){ alert('⛔ יש לבחור רק מחלקות שמשויכות אליך (לפחות אחת).'); return; }
   const targetAgents=targetDepts.length
     ? S.agents.filter(a=>a.active!==false&&(a.depts||[]).some(d=>targetDepts.includes(d)))
     : S.agents.filter(a=>a.active!==false);
@@ -7694,7 +7981,7 @@ async function renderDashboardOverview(filteredAgents, wb, allBriefings){
   // Fetched fresh here since it isn't cached anywhere shared on the
   // manager dashboard.
   const {data:briefingDocsRaw}=await _sb.from('briefing_docs').select('*').eq('is_active',true).order('published_at',{ascending:false});
-  const briefingDocs=(briefingDocsRaw||[]).map(d=>{
+  const briefingDocs=scopeBriefingDocs(briefingDocsRaw).map(d=>{
     try{ d.completions=typeof d.completions==='string'?JSON.parse(d.completions):(d.completions||{}); }catch(e){ d.completions={}; }
     return d;
   }).filter(briefingDocMatchesDeptFilter);
@@ -7996,6 +8283,7 @@ function openWeakQuestionsPage(){
 async function sendRefreshBriefing(briefingId){
   const localB=S.briefings.find(x=>String(x.id)===String(briefingId));
   if(!localB) return;
+  if(!mgrEdits(localB.targetDepts)){ mgrDenyEdit(); return; }
   const doneCountEstimate=Object.keys(localB.completions).length;
   if(!(await confirmDialog(`לאפס את תדריך "${localB.title}" לרענון חוזר לכל הנציגים?
 ${doneCountEstimate} נציגים שהשלימו יחזרו לממתינים.
@@ -9037,6 +9325,7 @@ async function deleteBriefing(){
   const id=parseInt(document.getElementById('reset-briefing-select').value);
   if(!id){alert('בחר תדריך');return;}
   const b=S.briefings.find(x=>x.id===id);
+  if(!b || !mgrEdits(b.targetDepts)){ mgrDenyEdit(); return; }
   if(!(await confirmDialog(`למחוק את התדריך "${b.title}" לצמיתות?`, {danger:true})))return;
   await _sb.from('briefings').delete().eq('id',id);
   S.briefings=S.briefings.filter(x=>x.id!==id);
@@ -9047,6 +9336,7 @@ async function deleteBriefing(){
 async function deleteBriefingFromDashboard(id){
   const b=S.briefings.find(x=>x.id===id);
   if(!b)return;
+  if(!mgrEdits(b.targetDepts)){ mgrDenyEdit(); return; }
   if(!(await confirmDialog(`למחוק את התדריך "${b.title}" לצמיתות?`, {danger:true})))return;
   await _sb.from('briefings').delete().eq('id',id);
   S.briefings=S.briefings.filter(x=>x.id!==id);
@@ -9689,6 +9979,7 @@ function toggleReverse(){
 async function toggleBriefingActive(briefingId){
   const b=S.briefings.find(x=>String(x.id)===String(briefingId));
   if(!b) return;
+  if(!mgrEdits(b.targetDepts)){ mgrDenyEdit(); return; }
   // NULL or TRUE = currently active → set to false. FALSE = inactive → set to true
   const currentlyActive = b.is_active !== false;
   const newActive = !currentlyActive;
@@ -10811,6 +11102,7 @@ let _editingBriefingId = null;
 function loadBriefingForEdit(id){
   const b=S.briefings.find(x=>String(x.id)===String(id));
   if(!b){ alert('תדריך לא נמצא'); return; }
+  if(!mgrEdits(b.targetDepts)){ mgrDenyEdit(); return; }
 
   _editingBriefingId=id;
 
@@ -10878,6 +11170,8 @@ async function updateBriefing(){
     const btn=document.getElementById('bdl-'+i);
     return btn&&btn.dataset.checked==='1';
   });
+  // No depts = every dept, which a dept-scoped manager may not target.
+  if(!mgrEdits(b.targetDepts) || !mgrEdits(targetDepts)){ alert('⛔ יש לבחור רק מחלקות שמשויכות אליך (לפחות אחת).'); return; }
   const deadlineVal=document.getElementById('briefing-deadline').value||null;
   const featuredVal=document.getElementById('briefing-featured').value==='1';
   const reverseVal=document.getElementById('briefing-reverse').value==='1';
@@ -11260,7 +11554,7 @@ async function checkControlsPw(){
 
 async function loadControls(){
   const {data} = await _sb.from('controls').select('*').order('control_date', {ascending:false});
-  S_controls = data||[];
+  S_controls = (data||[]).filter(scopeSeesAgentRecord);
   _controlsLoaded = true;
   applyControlsCategoryLabels();
   populateControlFilters();
@@ -12233,6 +12527,7 @@ async function publishNewBriefing(){
 if(!title){ alert('יש להזין כותרת'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
 if(!content){ alert('יש להזין תוכן'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
 if(!selectedDepts.length){ alert('יש לבחור לפחות מחלקה אחת'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
+if(!mgrEdits(selectedDepts.includes('כולם') ? 'all' : selectedDepts)){ alert('⛔ יש לבחור רק מחלקות שמשויכות אליך.'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
 if(!_newBriefingQuestions.length){ alert('יש לצור שאלות קודם'); pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; }); return; }
 
   var dept = selectedDepts.includes('כולם') ? 'all' : selectedDepts.join(',');
@@ -12301,6 +12596,7 @@ async function loadBriefingsTab(){
   if(dept !== 'all') q = q.eq('dept', dept);
   var {data:briefings, error} = await q;
   if(error){ el.innerHTML = '<div style="color:var(--danger)">שגיאה: '+error.message+'</div>'; return; }
+  briefings = scopeBriefingDocs(briefings);
   if(!briefings || !briefings.length){
     el.innerHTML = emptyState('✨','עדיין אין תדריכים כאן','לחץ על "תדריך חדש" כדי להתחיל');
     return;
@@ -12578,6 +12874,7 @@ async function viewBriefingDoc(el){
   document.getElementById('bsm-content').innerHTML = skeletonCards(3,2);
 
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
+  if(!error && b) b = scopeBriefingDocs([b])[0];
   if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
 
   var questions = [];
@@ -12622,6 +12919,7 @@ async function showBriefingStatus(el){
   document.getElementById('bsm-content').innerHTML = skeletonCards(3,2);
 
   var {data:b, error} = await _sb.from('briefing_docs').select('*').eq('id', briefingId).single();
+  if(!error && b) b = scopeBriefingDocs([b])[0];
   if(error || !b){ document.getElementById('bsm-content').innerHTML = '<div style="color:var(--danger)">שגיאה</div>'; return; }
 
   document.getElementById('bsm-title').textContent = '📄 ' + b.title;
@@ -13025,6 +13323,88 @@ async function initSuperAdminUI(){
   if(logsBtn) logsBtn.style.display = isSuperAdmin(email) ? '' : 'none';
   const callioBtn = document.getElementById('ksb-callio-resync');
   if(callioBtn) callioBtn.style.display = isSuperAdmin(email) ? 'flex' : 'none';
+  const mgrBtn = document.getElementById('ssb-managers');
+  if(mgrBtn) mgrBtn.style.display = isSuperAdmin(email) ? 'flex' : 'none';
+}
+
+/* ── ניהול › מנהלים: per-manager dept assignment (manager_depts) ── */
+let _mgrScopeRows = {};   // email → depts[]
+async function renderMgrScopePanel(){
+  const el=document.getElementById('mgr-scope-list');
+  if(!el) return;
+  if(!isSuperAdmin(await getCurrentUserEmail())){ el.innerHTML=''; return; }
+  el.innerHTML=skeletonCards(3,2);
+  const {data,error}=await _sb.from('manager_depts').select('email,depts,updated_at');
+  if(error){ el.innerHTML='<div style="color:var(--danger)">שגיאה בטעינה: '+esc(error.message)+'</div>'; return; }
+  _mgrScopeRows={};
+  (data||[]).forEach(r=>{ _mgrScopeRows[r.email]=r.depts||[]; });
+  el.innerHTML=MANAGER_EMAILS.map((email,i)=>mgrScopeCardHtml(email,i)).join('');
+  MANAGER_EMAILS.forEach((_,i)=>syncMgrScopeGroups(i));
+}
+function mgrScopeCardHtml(email, i){
+  const assigned=_mgrScopeRows[email.toLowerCase()]||[];
+  const has=t=>assigned.includes(t);
+  const status=assigned.length
+    ? '<span style="color:var(--ok);font-weight:700">✅ '+assigned.map(esc).join(', ')+'</span>'
+    : '<span style="color:var(--warn);font-weight:700">⚠️ לא הוגדר — רואה את כל המחלקות</span>';
+  const cb=(value,label,extra)=>`<label style="display:inline-flex;align-items:center;gap:6px;background:var(--ink3);border:1px solid var(--line2);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--ice2);cursor:pointer;margin:3px">
+      <input type="checkbox" class="mgr-scope-cb" data-i="${i}" value="${esc(value)}" ${extra||''} style="accent-color:var(--gold)"> ${esc(label)}</label>`;
+  const groups=GROUPS.map(g=>{
+    const single=g.depts.length===1;
+    const groupBox=cb(g.key, single?g.label:g.label+' (כל הקבוצה)', (has(g.key)?'checked ':'')+`data-group="${esc(g.key)}" onchange="syncMgrScopeGroups(${i})"`);
+    const deptBoxes=single?'':g.depts.map(d=>cb(d,d,(has(d)||has(g.key)?'checked ':'')+`data-in-group="${esc(g.key)}"`)).join('');
+    return `<div style="margin:6px 0">${groupBox}${deptBoxes?'<div style="margin-right:22px">'+deptBoxes+'</div>':''}</div>`;
+  }).join('');
+  return `<div class="card" style="margin-bottom:12px" id="mgr-scope-card-${i}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:700;color:var(--ice);direction:ltr">${esc(email)}</div>
+      <div style="font-size:12px">${status}</div>
+    </div>
+    <div>${cb(GENERAL_DEPT,'כללי (תוכן לכולם)',has(GENERAL_DEPT)?'checked':'')}</div>
+    ${groups}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-gold btn-sm" onclick="saveMgrScope(${i})">💾 שמור</button>
+      ${assigned.length?`<button class="btn btn-outline btn-sm" onclick="clearMgrScope(${i})">↺ בטל הגבלה (יראה הכל)</button>`:''}
+    </div>
+  </div>`;
+}
+// A checked group covers all its depts — show them checked and locked.
+function syncMgrScopeGroups(i){
+  document.querySelectorAll(`.mgr-scope-cb[data-i="${i}"][data-group]`).forEach(g=>{
+    document.querySelectorAll(`.mgr-scope-cb[data-i="${i}"][data-in-group="${CSS.escape(g.dataset.group)}"]`).forEach(d=>{
+      if(g.checked){ d.checked=true; d.disabled=true; } else { d.disabled=false; }
+    });
+  });
+}
+function readMgrScope(i){
+  const out=[];
+  document.querySelectorAll(`.mgr-scope-cb[data-i="${i}"]`).forEach(c=>{
+    if(!c.checked) return;
+    if(c.dataset.inGroup){
+      const g=document.querySelector(`.mgr-scope-cb[data-i="${i}"][data-group="${CSS.escape(c.dataset.inGroup)}"]`);
+      if(g && g.checked) return; // covered by the group key
+    }
+    out.push(c.value);
+  });
+  return out;
+}
+async function saveMgrScope(i){
+  const email=String(MANAGER_EMAILS[i]||'').toLowerCase(); if(!email) return;
+  const depts=readMgrScope(i);
+  if(!depts.length){ alert('לא סומנה אף מחלקה. כדי שהמנהל יראה הכל לחץ "בטל הגבלה".'); return; }
+  const me=await getCurrentUserEmail();
+  const {error}=await _sb.from('manager_depts').upsert({email, depts, updated_at:new Date().toISOString(), updated_by:me},{onConflict:'email'});
+  if(error){ alert('שגיאה בשמירה: '+error.message); return; }
+  await logManagerAction('שיוך מחלקות למנהל', email+' → '+depts.join(', '));
+  renderMgrScopePanel();
+}
+async function clearMgrScope(i){
+  const email=String(MANAGER_EMAILS[i]||'').toLowerCase(); if(!email) return;
+  if(!(await confirmDialog('לבטל את ההגבלה של '+email+'? המנהל יראה שוב את כל המחלקות.'))) return;
+  const {error}=await _sb.from('manager_depts').delete().eq('email',email);
+  if(error){ alert('שגיאה: '+error.message); return; }
+  await logManagerAction('ביטול שיוך מחלקות למנהל', email);
+  renderMgrScopePanel();
 }
 
 // Re-sends every active article / תדריך / מבחן to Callio as item.updated
@@ -13448,9 +13828,10 @@ async function checkDisciplinePw(){
 async function loadDiscipline(force=false){
   if(!force&&_disciplineLoaded) return;
   const {data:d1}=await _sb.from('discipline').select('*').eq('is_manager',false).order('event_date',{ascending:false});
-  S_discipline=d1||[];
+  S_discipline=(d1||[]).filter(scopeSeesAgentRecord);
   const {data:d2}=await _sb.from('discipline').select('*').eq('is_manager',true).order('event_date',{ascending:false});
-  S_managers_disc=d2||[];
+  // Records about managers themselves — not for dept-scoped managers.
+  S_managers_disc=scopeActive()?[]:(d2||[]);
   _disciplineLoaded=true;
   populateDisciplineFilters();
 }
@@ -13919,8 +14300,8 @@ async function loadReports(){
   }
   const {data:usage} = await uq;
 
-  const loginArr = logins||[];
-  const usageArr = usage||[];
+  const loginArr = (logins||[]).filter(scopeSeesAgentRecord);
+  const usageArr = (usage||[]).filter(scopeSeesAgentRecord);
 
   const uniqueAgentsLogin = new Set(loginArr.map(r=>r.agent_id)).size;
   const uniqueAgentsAI = new Set(usageArr.map(r=>r.agent_id)).size;
