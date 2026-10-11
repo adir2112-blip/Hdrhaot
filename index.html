@@ -5883,12 +5883,22 @@ async function pinConfirm(){
   if(!a)return;
   _pinConfirming=true;
   try{
-    const {data:ok,error}=await _sb.rpc('verify_agent_pin',{p_agent_id:a.id,p_pin:_pinVal});
-    if(!error && ok){
+    // Server-side lockout: 3 wrong PINs lock the agent for 15 minutes.
+    const {data:res,error}=await _sb.rpc('verify_agent_pin_v2',{p_agent_id:a.id,p_pin:_pinVal});
+    if(!error && res && res.ok){
       closePinModal();
       selectAgent(sid);
     } else {
-      document.getElementById('pin-error').style.display='block';
+      const errEl=document.getElementById('pin-error');
+      if(res && res.locked){
+        const mins=Math.max(1, Math.ceil((res.seconds_left||900)/60));
+        errEl.textContent='⛔ יותר מדי ניסיונות שגויים — הכניסה נחסמה ל-'+mins+' דקות';
+      } else if(res && res.attempts_left!=null){
+        errEl.textContent='✗ קוד שגוי — נותרו '+res.attempts_left+' ניסיונות';
+      } else {
+        errEl.textContent='✗ קוד שגוי — נסה שוב';
+      }
+      errEl.style.display='block';
       const dotsEl=document.getElementById('pin-dots');
       dotsEl.classList.remove('pin-shake'); void dotsEl.offsetWidth; dotsEl.classList.add('pin-shake');
       setTimeout(()=>dotsEl.classList.remove('pin-shake'), 420);
