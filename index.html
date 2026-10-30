@@ -21,6 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 <style>
 :root {
   /* v1.9 "Nectar — Refined" palette */
@@ -10508,8 +10509,34 @@ function renderTestsList(){
   }).join('');
 }
 
+// Sanitize the rich HTML that formatContent builds, so content authored by
+// anyone (articles, briefings, embeds) can never run scripts in a viewer's
+// browser. Allows safe embeds (iframes) only from a small host allowlist.
+var _RICH_IFRAME_HOSTS = ['docs.google.com','drive.google.com','www.youtube.com','youtube.com','youtube-nocookie.com','www.youtube-nocookie.com','player.vimeo.com','forms.gle','www.canva.com'];
+if(typeof DOMPurify !== 'undefined' && !window.__richSanitizerHooked){
+  window.__richSanitizerHooked = true;
+  DOMPurify.addHook('uponSanitizeElement', function(node, data){
+    if(data.tagName === 'iframe'){
+      var src = node.getAttribute && node.getAttribute('src') || '';
+      var ok = false;
+      try{ var u = new URL(src); ok = u.protocol === 'https:' && _RICH_IFRAME_HOSTS.indexOf(u.hostname) !== -1; }catch(e){ ok = false; }
+      if(!ok && node.parentNode) node.parentNode.removeChild(node);
+    }
+  });
+}
+function sanitizeRichHtml(html){
+  if(typeof DOMPurify === 'undefined'){
+    // Pathological (library failed to load): degrade to safe plain text.
+    return String(html||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  return DOMPurify.sanitize(String(html||''), {
+    ADD_TAGS: ['iframe'],
+    ADD_ATTR: ['allow','allowfullscreen','frameborder','scrolling','target','rel'],
+    ALLOW_DATA_ATTR: false
+  });
+}
 function formatContent(raw){
-  // Handle [EMBED]...[/EMBED] blocks — render iframes directly
+  // Handle [EMBED]...[/EMBED] blocks — render iframes directly (sanitized at the end)
   raw = (raw||'').replace(/\[EMBED\]([\s\S]*?)\[\/EMBED\]/g, function(m, html){
     return html;
   });
@@ -10577,7 +10604,7 @@ function formatContent(raw){
       html+='<div style="font-size:14px;line-height:1.7;color:var(--ice2);margin:2px 0">'+processInline(l)+'</div>';
     }
   });
-  return html;
+  return sanitizeRichHtml(html);
 }
 
 /* ── Rich Editor Helpers ── */
