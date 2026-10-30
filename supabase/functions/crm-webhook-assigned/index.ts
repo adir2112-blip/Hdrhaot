@@ -1,4 +1,5 @@
 // supabase/functions/crm-webhook-assigned/index.ts
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const CRM_URL = 'https://crm.azriasolutions.com/api/webhooks/briefing-assigned';
 
@@ -14,6 +15,23 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Hardening: assigning a briefing is a manager-only action. Verify the
+    // caller's own token resolves to a manager via the existing is_manager()
+    // check (the anon key carries no email, so it is rejected).
+    const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: `Bearer ${jwt}` } } }
+    );
+    const { data: isMgr, error: mgrErr } = await authClient.rpc('is_manager');
+    if (mgrErr || isMgr !== true) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const body = await req.json();
     const { phone, briefing_id, briefing_title, content, questions, org, assigned_at } = body;
 
