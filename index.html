@@ -12573,6 +12573,11 @@ if(!_newBriefingQuestions.length){ alert('יש לצור שאלות קודם'); p
 
   var dept = selectedDepts.includes('כולם') ? 'all' : selectedDepts.join(',');
 
+  // (A) Best-effort: refresh the manager session up front so a stale/expired
+  // token doesn't silently fail the CRM sync. This can only help — if the
+  // refresh itself fails we still fall back to the existing session, and the
+  // real "did it reach CRM" check below (B) is the safety net.
+  try { await _sb.auth.refreshSession(); } catch(e){}
   var {data:{session}} = await _sb.auth.getSession();
   var managerEmail = session?.user?.email || 'לא ידוע';
 
@@ -12595,14 +12600,16 @@ var {data, error} = await _sb.from('briefing_docs').insert(row).select().single(
       });
 
   
-for(var ai=0; ai<relevantAgents.length; ai++){
+var crmTotal = 0, crmFailed = 0;
+  for(var ai=0; ai<relevantAgents.length; ai++){
     var ag = relevantAgents[ai];
     var agPhone = ag.phone || ag.mobile || '';
     if(!agPhone) continue;
     var agOrg = selectedDepts.includes('כולם')
       ? ((ag.depts||[])[0] || '')
       : ((ag.depts||[]).find(function(d){ return selectedDepts.includes(d); }) || '');
-    await sendCRMAssignedWebhook({
+    crmTotal++;
+    var _crmOk = await sendCRMAssignedWebhook({
       phone: agPhone,
       briefingId: data.id,
       briefingTitle: data.title,
@@ -12610,12 +12617,31 @@ for(var ai=0; ai<relevantAgents.length; ai++){
       questions: _newBriefingQuestions,
       org: agOrg
     });
+    if(_crmOk !== true) crmFailed++;
   }
 
-pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; });
+  pubBtns.forEach(function(b){ b.disabled=false; b.textContent=pubBtnsOrigText; b.style.opacity='1'; b.style.cursor='pointer'; });
+
+  // (B) Never fail silently: if the CRM sync did not go through, tell the
+  // manager clearly instead of showing a success message.
+  if(crmTotal > 0 && crmFailed === crmTotal){
+    // Every agent failed — CRM never received this briefing. Roll the publish
+    // back (unpublish) so it isn't half-live and a clean retry after re-login
+    // won't create a duplicate.
+    try { await _sb.from('briefing_docs').update({is_active:false}).eq('id', data.id); } catch(e){}
+    closeNewBriefingModal();
+    loadBriefingsTab();
+    alert('⛔ התדריך לא פורסם.\nנא לפנות למנהל המערכת ולמסור לו שצריך לחדש את ההתחברות למערכת (התנתקות והתחברות מחדש), ואז לפרסם את התדריך שוב.');
+    return;
+  }
+
   closeNewBriefingModal();
   loadBriefingsTab();
-  alert('✅ התדריך פורסם בהצלחה!');
+  if(crmFailed > 0){
+    alert('התדריך פורסם, אך ' + crmFailed + ' מתוך ' + crmTotal + ' נציגים לא נשלחו ל-CRM.\nנא לפנות למנהל המערכת.');
+  } else {
+    alert('✅ התדריך פורסם בהצלחה!');
+  }
 }
 
 // ── Load Briefings Tab (Manager) ──────────────────────
