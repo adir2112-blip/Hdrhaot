@@ -17,7 +17,15 @@ const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const ALLOWED_MODELS = new Set(['gpt-4o-mini'])
 const MAX_TOKENS_CAP = 4000
 const MAX_MESSAGES_BYTES = 200_000
-const DAILY_CAP = 5000
+// 15.11.2026: two separate daily caps instead of one global 5000. Real usage over the last
+// 3 months peaked at 86/day. Managers (logged in, checked with is_manager()) and agents
+// (anonymous) each get their own bucket, so an outsider who burns the agent bucket can no
+// longer switch off the managers' tools. The owner gets a WhatsApp alert when a bucket fills.
+const CAP_MANAGERS = 300
+const CAP_AGENTS = 300
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
+const ALERT_PHONE = '972509143496'
+const WA_BOT_SEND = 'https://whatsapp-bot-production-120a.up.railway.app/api/send'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,12 +66,39 @@ Deno.serve(async (req) => {
   const today = new Date().toISOString().slice(0, 10)
   const usageKey = `ai_usage_${today}`
 
-  // Generous global daily ceiling — fails OPEN so a DB hiccup never blocks AI.
+  // Who is calling: a logged-in manager (supabase-js sends the session JWT) or an agent (anon).
+  let isManager = false
   try {
-    const { data: existing } = await sb.from('app_settings').select('value').eq('key', usageKey).single()
-    const used = existing ? parseInt(existing.value, 10) || 0 : 0
-    if (used >= DAILY_CAP) {
-      return json({ error: { message: 'daily AI limit reached, try again tomorrow' } }, 429)
+    const asCaller = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get('Authorization') || '' } },
+    })
+    const { data } = await asCaller.rpc('is_manager')
+    isManager = data === true
+  } catch { /* treat as agent */ }
+
+  // Per-bucket daily cap with an atomic counter. Fails OPEN on any DB error.
+  const bucket = isManager ? 'mgr' : 'agent'
+  const cap = isManager ? CAP_MANAGERS : CAP_AGENTS
+  try {
+    const { data: n } = await sb.rpc('ai_usage_bump', { p_key: `ai_usage_${bucket}_${today}` })
+    if (typeof n === 'number') {
+      if (n === cap) {
+        const who = isManager ? "כלי המנהלים" : "כלי הנציגים (צ'אט ידע / תדריך הפוך)"
+        fetch(WA_BOT_SEND, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: ALERT_PHONE,
+            source: 'מערכת הדרכות',
+            message: `🤖 מערכת הדרכות: ${who} הגיעו היום לתקרת ה-AI (${cap} בקשות).
+עד חצות ה-AI ב${isManager ? 'כלי המנהלים' : 'כלי הנציגים'} לא יענה.
+אם זה שימוש רגיל, אפשר להעלות את התקרה ב-ai-proxy.`,
+          }),
+        }).catch(() => {})
+      }
+      if (n > cap) {
+        return json({ error: { message: 'daily AI limit reached, try again tomorrow' } }, 429)
+      }
     }
   } catch {
     // ignore — never block the response on the ceiling check
@@ -89,13 +124,9 @@ Deno.serve(async (req) => {
 
   const data = await openaiRes.json()
 
-  // Best-effort daily usage counter (same key/shape the app already showed
-  // in the admin settings panel) — uses the service role so it works even
-  // though anon can no longer write to app_settings.
+  // Total daily counter (same key the admin settings panel shows), now atomic.
   try {
-    const { data: existing } = await sb.from('app_settings').select('value').eq('key', usageKey).single()
-    const count = existing ? (parseInt(existing.value, 10) || 0) + 1 : 1
-    await sb.from('app_settings').upsert({ key: usageKey, value: String(count) }, { onConflict: 'key' })
+    await sb.rpc('ai_usage_bump', { p_key: usageKey })
   } catch {
     // usage tracking must never break the actual AI response
   }
