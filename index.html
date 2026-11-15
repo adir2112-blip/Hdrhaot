@@ -6312,7 +6312,6 @@ async function publishBriefing(){
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
   sendPushToAgents(data.title, targetDepts);
-  sendWhatsAppToAgents(data.title, targetDepts);
   const deptLabel=targetDepts.length?` · פעילויות: ${targetDepts.join(', ')}`:'· לכל הנציגים';
   document.getElementById('pub-msg').textContent=`"${data.title}" · ${targetAgents.length} נציגים${deptLabel} · ${ts}`;
   resetManager();
@@ -11248,124 +11247,8 @@ async function updateBriefing(){
   resetManager();
 }
 
-/* ══ WHATSAPP NOTIFICATIONS — Green API ══════════════════════════════ */
-const GREEN_API_INSTANCE = '7107586490';
-const GREEN_API_TOKEN    = 'b76e1da4c0a84de29d4366024a081d40ae85ddb6e6c24b30b8';
-const GREEN_API_BASE     = `https://api.green-api.com/waInstance${GREEN_API_INSTANCE}`;
-
-// שלח הודעת WhatsApp לנציג בודד (מספר טלפון)
-async function sendWhatsApp(phone, message) {
-  try {
-    const cleaned = phone.replace(/[^0-9]/g, '');
-    const chatId = (cleaned.startsWith('0') ? '972' + cleaned.slice(1) : cleaned) + '@c.us';
-    const res = await fetch(`${GREEN_API_BASE}/sendMessage/${GREEN_API_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chatId, message })
-    });
-    const data = await res.json();
-    if (data.error || !data.idMessage) throw new Error(JSON.stringify(data));
-    return true;
-  } catch(e) {
-    console.error('[WA] Failed to send to', phone, ':', e.message);
-    return false;
-  }
-}
-
-// שלח לקבוצת WhatsApp לפי Chat ID של הקבוצה
-async function sendWhatsAppGroup(groupChatId, message) {
-  try {
-    const res = await fetch(`${GREEN_API_BASE}/sendMessage/${GREEN_API_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chatId: groupChatId, message })
-    });
-    const data = await res.json();
-    if (data.error || !data.idMessage) throw new Error(JSON.stringify(data));
-    console.log('[WA] Group message sent ✓');
-    return true;
-  } catch(e) {
-    console.error('[WA] Group failed:', e.message);
-    return false;
-  }
-}
-
-// שלח לכל הנציגים הרלוונטיים
-async function sendWhatsAppToAgents(briefingTitle, targetDepts) {
-  const activeAgents = S.agents.filter(a => a.active !== false && a.phone);
-  const relevant = targetDepts?.length
-    ? activeAgents.filter(a => (a.depts||[]).some(d => targetDepts.includes(d)))
-    : activeAgents;
-
-  if (!relevant.length) {
-    console.log('[WA] No agents with phone numbers');
-    return;
-  }
-
-  const message = `🔔 *עדכון חשוב — תדריך חדש!*
-
-שלום 👋
-פורסם תדריך חדש הממתין לך:
-
-📌 *${briefingTitle}*
-
-✅ קרא את התדריך בעיון
-✅ מלא את המבחן בסיום
-✅ חתום על קריאה והבנה
-
-⏱ יש למלא בהקדם האפשרי
-
-👇 לכניסה ומילוי:
-https://adir2112-blip.github.io/Hdrhaot/`;
-
-  let sent = 0;
-  for (const agent of relevant) {
-    const ok = await sendWhatsApp(agent.phone, message);
-    if (ok) sent++;
-  }
-  console.log(`[WA] Sent to ${sent}/${relevant.length} agents`);
-}
-
-// שלח תזכורת לנציגים שלא מילאו תדריך שעומד לפוג
-async function sendWhatsAppReminders() {
-  const now = new Date();
-  const in2days = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-
-  for (const b of S.briefings) {
-    if (!b.deadline) continue;
-    const deadline = new Date(b.deadline);
-    if (deadline < now || deadline > in2days) continue;
-
-    // נציגים שלא השלימו
-    const pending = S.agents.filter(a =>
-      a.active !== false &&
-      a.phone &&
-      !b.completions[String(a.id)] &&
-      (!b.targetDepts?.length || (a.depts||[]).some(d => b.targetDepts.includes(d)))
-    );
-
-    for (const agent of pending) {
-      const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-      const msg = `⏰ *תזכורת חשובה!*
-
-שלום 👋
-עדיין לא מילאת את התדריך הבא:
-
-📌 *${b.title}*
-
-⚠️ נותרו *${daysLeft} ימים* בלבד למילוי!
-
-✅ קרא את התדריך בעיון
-✅ מלא את המבחן בסיום
-✅ חתום על קריאה והבנה
-
-👇 לכניסה ומילוי:
-https://adir2112-blip.github.io/Hdrhaot/`;
-      await sendWhatsApp(agent.phone, msg);
-    }
-  }
-  console.log('[WA] Reminders sent');
-}
+/* WhatsApp דרך Green-API הוסר ב-15.11.2026: החשבון לא בשימוש (הנציגים לא קיבלו הודעות),
+   והטוקן היה גלוי לכל גולש בקוד הדף. התראה על תדריך חדש נשלחת ב-Push (sendPushToAgents). */
 
 /* ── EDIT PHONE MODAL ────────────────────────────── */
 let _editPhoneAgentId = null;
