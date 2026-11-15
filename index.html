@@ -12548,6 +12548,7 @@ var crmTotal = 0, crmFailed = 0;
 
   closeNewBriefingModal();
   loadBriefingsTab();
+  notifyBriefingGroup(data && data.title ? data.title : row.title);
   if(crmFailed > 0){
     alert('התדריך פורסם, אך ' + crmFailed + ' מתוך ' + crmTotal + ' נציגים לא נשלחו ל-CRM.\nנא לפנות למנהל המערכת.');
   } else {
