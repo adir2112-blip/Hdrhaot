@@ -6312,6 +6312,7 @@ async function publishBriefing(){
   document.getElementById('preview-section').style.display='none';
   document.getElementById('pub-confirm').style.display='block';
   sendPushToAgents(data.title, targetDepts);
+  notifyBriefingGroup(data.title);
   const deptLabel=targetDepts.length?` · פעילויות: ${targetDepts.join(', ')}`:'· לכל הנציגים';
   document.getElementById('pub-msg').textContent=`"${data.title}" · ${targetAgents.length} נציגים${deptLabel} · ${ts}`;
   resetManager();
@@ -11249,6 +11250,33 @@ async function updateBriefing(){
 
 /* WhatsApp דרך Green-API הוסר ב-15.11.2026: החשבון לא בשימוש (הנציגים לא קיבלו הודעות),
    והטוקן היה גלוי לכל גולש בקוד הדף. התראה על תדריך חדש נשלחת ב-Push (sendPushToAgents). */
+
+/* ── WhatsApp לקבוצת "עדכונים מוקד מובמנט" (15.11.2026) ──────────────
+   תדריך חדש → הודעה אחת לקבוצה, מבוט הוואטסאפ של A.L (whatsapp-bot ב-Railway, /api/send).
+   לא לנציגים בפרטי. בלי ⚠️ (הבוט לא שולח את האימוג'י הזה בהודעות). */
+const BRIEFING_WA_GROUP = '120363315689031985@g.us'; // "עדכונים מוקד מובמנט" — לאמת לפני עלייה
+const WA_BOT_SEND = 'https://whatsapp-bot-production-120a.up.railway.app/api/send';
+async function notifyBriefingGroup(title) {
+  if (!BRIEFING_WA_GROUP) return;
+  const message = `📢 *תדריך חדש עלה למערכת*
+
+📌 *${title}*
+
+יש לקרוא, למלא את המבחן ולחתום על קריאה והבנה.
+
+👇 לכניסה:
+https://adir2112-blip.github.io/Hdrhaot/`;
+  try {
+    const res = await fetch(WA_BOT_SEND, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: BRIEFING_WA_GROUP, message, source: 'מערכת הדרכות' })
+    });
+    if (!res.ok) console.error('[WA group] HTTP', res.status);
+  } catch (e) {
+    console.error('[WA group] failed:', e.message);
+  }
+}
 
 /* ── EDIT PHONE MODAL ────────────────────────────── */
 let _editPhoneAgentId = null;
