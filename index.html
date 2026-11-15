@@ -4193,7 +4193,7 @@ function renderSettingsAgents(){
       <div style="flex:1">
         <div style="font-size:14px;font-weight:600;color:var(--ice)">${a.name}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${(a.depts||[]).map(d=>`<span class="dept-chip">${d}</span>`).join('')||'<span style="font-size:11px;color:var(--ice3)">—</span>'}</div>
-        ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
+        ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${esc(a.last_login)}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
       </div>
       <div style="display:flex;gap:6px;align-items:center">
         <button onclick="toggleActive(${a.id})" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid ${a.active!==false?'rgba(26,158,110,0.3)':'rgba(217,64,64,0.3)'};background:${a.active!==false?'rgba(26,158,110,0.08)':'rgba(217,64,64,0.08)'};color:${a.active!==false?'var(--ok)':'var(--danger)'};font-weight:700;cursor:pointer;font-family:'Sora',sans-serif">${a.active!==false?'● פעיל':'○ לא פעיל'}</button>
@@ -6008,7 +6008,7 @@ function renderSettings(){
           <div>
             <div style="font-size:14px;font-weight:500;color:var(--ice)">${a.name}</div>
             <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">${a.has_pin?`קוד: ****`:'ללא קוד'} ${a.phone?`· 📱 ${a.phone}`:''}</div>
-            ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${a.last_login}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
+            ${a.last_login?`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ok);font-family:'DM Mono',monospace;background:var(--ok-bg);border:1px solid var(--ok-line);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--ok)"></span>${esc(a.last_login)}</div>`:`<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;background:rgba(0,0,0,0.04);border:1px solid var(--line2);padding:2px 8px;border-radius:20px;margin-top:4px"><span style="width:5px;height:5px;border-radius:50%;background:var(--line2)"></span>טרם התחבר</div>`}
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
@@ -7639,10 +7639,10 @@ function openAgentStats(agentId){
         <div>
           <div style="font-size:13px;font-weight:600;color:var(--ice)">${b.title}</div>
           <div style="font-size:11px;color:var(--ice3);margin-top:2px;font-family:'DM Mono',monospace">${comp.ts}</div>
-          ${comp.feedback?`<div style="font-size:11px;color:var(--gold);margin-top:4px;font-style:italic">💬 ${comp.feedback}</div>`:''}
+          ${comp.feedback?`<div style="font-size:11px;color:var(--gold);margin-top:4px;font-style:italic">💬 ${esc(comp.feedback)}</div>`:''}
           ${comp.reverse_score!==undefined?`<div style="margin-top:8px;background:rgba(91,160,230,0.08);border:1px solid rgba(91,160,230,0.2);border-radius:10px;padding:8px 12px">
             <div style="font-size:11px;font-weight:700;color:#5BA0E6;font-family:'DM Mono',monospace;margin-bottom:4px">🎤 מבחן מילולי — ${comp.reverse_score}%</div>
-            ${comp.reverse_summary?`<div style="font-size:12px;color:var(--ice3);margin-bottom:6px;font-style:italic">${comp.reverse_summary}</div>`:''}
+            ${comp.reverse_summary?`<div style="font-size:12px;color:var(--ice3);margin-bottom:6px;font-style:italic">${esc(comp.reverse_summary)}</div>`:''}
             ${comp.reverse_missing&&comp.reverse_missing.length?`<div style="font-size:11px;color:#D94040;font-family:'DM Mono',monospace">חסר: ${comp.reverse_missing.join(' · ')}</div>`:''}
           </div>`:''}
         </div>
@@ -8913,14 +8913,14 @@ function renderVerbalPanel(){
   el.innerHTML=rows.map(r=>`<div class="track-row" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div style="flex:1">
-        <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--ice)">${esc(r.name)}</div>
         <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">📋 ${r.briefing}</div>
         ${r.ts?`<div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">🕐 ${r.ts}</div>`:''}
       </div>
       <div style="font-size:24px;font-weight:800;color:${sc(r.score)};flex-shrink:0">${r.score}%</div>
     </div>
     ${r.summary?`<div style="font-size:13px;color:var(--ice3);margin-bottom:8px;font-style:italic;border-right:2px solid var(--gold);padding-right:8px">${r.summary}</div>`:''}
-    ${r.text?`<div style="background:rgba(0,0,0,0.03);border-right:3px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--ice2);line-height:1.7;white-space:pre-wrap">${r.text}</div>`:''}
+    ${r.text?`<div style="background:rgba(0,0,0,0.03);border-right:3px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--ice2);line-height:1.7;white-space:pre-wrap">${esc(r.text)}</div>`:''}
     ${r.correct&&r.correct.length?`<div style="background:var(--ok-bg);border-radius:10px;padding:8px 12px;margin-bottom:6px">
       <div style="font-size:11px;font-weight:700;color:var(--ok);margin-bottom:4px;font-family:'DM Mono',monospace">✅ נכון</div>
       ${r.correct.map(c=>`<div style="font-size:13px;color:var(--ice)">◆ ${c}</div>`).join('')}
@@ -9006,7 +9006,7 @@ function renderScoresPanel(){
   el.innerHTML=rows.map((r,i)=>`<div class="track-row" style="margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer" title="לחץ לצפייה בתשובות" onclick="openScoreAnswers(${i})">
     <div style="font-size:18px;font-weight:800;color:var(--ice3);min-width:28px;text-align:center">#${i+1}</div>
     <div style="flex:1">
-      <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
+      <div style="font-size:15px;font-weight:700;color:var(--ice)">${esc(r.name)}</div>
       <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">📋 ${r.briefing}</div>
       ${r.ts?`<div style="font-size:10px;color:var(--ice3);font-family:'DM Mono',monospace;margin-top:2px">🕐 ${r.ts}</div>`:''}
     </div>
@@ -9146,13 +9146,13 @@ function renderFeedbackPanel(){
   el.innerHTML=rows.map(r=>`<div class="track-row" style="margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
       <div>
-        <div style="font-size:15px;font-weight:700;color:var(--ice)">${r.name}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--ice)">${esc(r.name)}</div>
         <div style="font-size:11px;color:var(--ice3);font-family:'DM Mono',monospace">📋 ${r.briefing}${r.ts?' · '+r.ts:''}</div>
       </div>
       ${r.score!==undefined?`<span style="font-size:16px;font-weight:800;color:${r.score>=80?'var(--ok)':r.score>=60?'var(--warn)':'var(--danger)'}">${r.score}%</span>`:''}
     </div>
     <div style="background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--ice);line-height:1.7;border-right:3px solid var(--gold)">
-      💬 ${r.feedback}
+      💬 ${esc(r.feedback)}
     </div>
   </div>`).join('');
 }
@@ -12383,7 +12383,7 @@ function showControlDetails(controlId){
   document.getElementById('ctrl-details-content').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div>
-        <div style="font-size:16px;font-weight:700;color:var(--ice)">${c.agent_name||'—'}</div>
+        <div style="font-size:16px;font-weight:700;color:var(--ice)">${esc(c.agent_name||'—')}</div>
         <div style="font-size:12px;color:var(--ice3);margin-top:3px">${c.dept||''} · ${c.control_date||''} ${c.control_time||''}</div>
         <div style="font-size:12px;color:var(--ice3)">ממשב: ${c.supervisor||'—'} · נושא: ${c.topic||'—'}</div>
       </div>
@@ -13342,14 +13342,14 @@ function showQuizReview(agentName, score, answers, questions){
   if(answers && answers.length && questions && questions.length){
     rowsHtml = answers.map(function(a, i){
       var q = questions[i] || a;
-      var qText = q.q || a.q || '—';
+      var qText = esc(q.q || a.q || '—');
       var opts = q.options || a.options || [];
       var correct = q.correct !== undefined ? q.correct : a.correct;
       var chosen = a.chosen !== undefined ? a.chosen : i;
       var isRight = chosen === correct;
       if(isRight) correctCount++;
-      var chosenText = opts[chosen] !== undefined ? opts[chosen] : '—';
-      var correctText = opts[correct] !== undefined ? opts[correct] : '—';
+      var chosenText = esc(opts[chosen] !== undefined ? opts[chosen] : '—');
+      var correctText = esc(opts[correct] !== undefined ? opts[correct] : '—');
       var bg = isRight ? 'rgba(5,150,105,0.06)' : 'rgba(196,59,54,0.06)';
       var border = isRight ? 'rgba(5,150,105,0.2)' : 'rgba(196,59,54,0.2)';
       return '<div style="background:'+bg+';border:1px solid '+border+';border-radius:10px;padding:12px 14px;margin-bottom:10px">' +
@@ -13370,7 +13370,7 @@ function showQuizReview(agentName, score, answers, questions){
     '<div style="padding:18px 22px;background:var(--ink3);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">' +
       '<div>' +
         '<div style="font-size:11px;color:var(--ice3);font-weight:700;letter-spacing:0.08em;margin-bottom:3px">סקירת מבחן</div>' +
-        '<div style="font-size:17px;font-weight:800;color:var(--ice)">'+agentName+'</div>' +
+        '<div style="font-size:17px;font-weight:800;color:var(--ice)">'+esc(agentName)+'</div>' +
         '<div style="font-size:28px;font-weight:900;color:'+scoreColor+';margin-top:2px">'+score+'%</div>' +
       '</div>' +
       '<button onclick="document.getElementById(\'quiz-review-modal-custom\').remove()" style="background:rgba(255,255,255,0.08);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice);font-size:16px">✕</button>' +
@@ -14110,7 +14110,7 @@ function renderKbComments(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:28px;height:28px;border-radius:50%;background:var(--gold-bg);border:1px solid var(--gold-line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold)">${(c.agent_name||'?')[0]}</div>
-          <div style="font-size:13px;font-weight:600;color:var(--ice)">${c.agent_name||'נציג'}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ice)">${esc(c.agent_name||'נציג')}</div>
           ${stars?`<span style="font-size:13px;color:${starColor}">${stars}</span>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -14118,7 +14118,7 @@ function renderKbComments(){
           ${_adminUnlocked?`<button onclick="deleteKbComment('${c.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px;padding:0">🗑</button>`:''}
         </div>
       </div>
-      ${c.comment?`<div style="font-size:13px;color:var(--ice2);line-height:1.6;padding-right:36px">${c.comment}</div>`:''}
+      ${c.comment?`<div style="font-size:13px;color:var(--ice2);line-height:1.6;padding-right:36px">${esc(c.comment)}</div>`:''}
     </div>`;
   }).join('');
 }
