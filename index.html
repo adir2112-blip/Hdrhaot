@@ -12096,7 +12096,7 @@ function renderShoulder(){
   if(!rows.length){ box.innerHTML=emptyState('👥','אין רשומות כתף בשטח','לחץ "+ הוספת כתף בשטח" כדי להתחיל'); return; }
   box.innerHTML=rows.map(function(c){
     var s=parseShoulder(c);
-    var n=s.calls.filter(function(x){ return x&&(x.phone||x.topic||x.notes); }).length;
+    var n=s.calls.filter(function(x){ return x&&(x.phone||x.topic||x.keep||x.improve||x.notes); }).length;
     return '<div style="background:var(--ink2);border:1px solid var(--line2);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
       '<div style="flex:1;min-width:170px">'+
         '<div style="font-size:15px;font-weight:800;color:var(--ice)">'+shEsc(c.agent_name)+'</div>'+
@@ -12120,7 +12120,16 @@ function shRenderCalls(calls){
         '<input id="sh-call-phone-'+i+'" type="text" placeholder="מספר טלפון" value="'+shEsc(c.phone)+'" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl">'+
         '<input id="sh-call-topic-'+i+'" type="text" placeholder="נושא הפנייה" value="'+shEsc(c.topic)+'" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl">'+
       '</div>'+
-      '<textarea id="sh-call-notes-'+i+'" rows="2" placeholder="נקודות לשימור / שיפור" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl;font-family:\'Sora\',sans-serif">'+shEsc(c.notes)+'</textarea>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div>'+
+          '<div style="font-size:11px;color:var(--ok);font-weight:700;margin-bottom:4px">✅ נקודות לשימור</div>'+
+          '<textarea id="sh-call-keep-'+i+'" rows="2" placeholder="מה הנציג עשה טוב..." style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl;font-family:\'Sora\',sans-serif">'+shEsc(c.keep!=null?c.keep:(c.improve==null?(c.notes||''):''))+'</textarea>'+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:4px">📈 נקודות לשיפור</div>'+
+          '<textarea id="sh-call-improve-'+i+'" rows="2" placeholder="על מה לשים דגש..." style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl;font-family:\'Sora\',sans-serif">'+shEsc(c.improve||'')+'</textarea>'+
+        '</div>'+
+      '</div>'+
     '</div>';
   }
   box.innerHTML=html;
@@ -12177,10 +12186,11 @@ async function saveShoulder(){
     calls.push({
       phone:(document.getElementById('sh-call-phone-'+i)?.value||'').trim(),
       topic:(document.getElementById('sh-call-topic-'+i)?.value||'').trim(),
-      notes:(document.getElementById('sh-call-notes-'+i)?.value||'').trim()
+      keep:(document.getElementById('sh-call-keep-'+i)?.value||'').trim(),
+      improve:(document.getElementById('sh-call-improve-'+i)?.value||'').trim()
     });
   }
-  if(!calls.some(function(c){ return c.phone||c.topic||c.notes; })){ alert('יש למלא לפחות שיחה אחת'); return; }
+  if(!calls.some(function(c){ return c.phone||c.topic||c.keep||c.improve; })){ alert('יש למלא לפחות שיחה אחת'); return; }
   var summary=(document.getElementById('sh-summary')?.value||'').trim();
   var nextNotes=(document.getElementById('sh-next')?.value||'').trim();
   var dept=document.getElementById('sh-dept-field').value||'';
@@ -12210,11 +12220,13 @@ function viewShoulder(id){
   var c=S_controls.find(function(x){ return String(x.id)===String(id); }); if(!c) return;
   var s=parseShoulder(c);
   var callsHtml=s.calls.map(function(x,i){
-    if(!x||(!x.phone&&!x.topic&&!x.notes)) return '';
+    if(!x||(!x.phone&&!x.topic&&!x.keep&&!x.improve&&!x.notes)) return '';
+    var keep=(x.keep!=null?x.keep:(x.improve==null?(x.notes||''):''));
     return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--ink3)">'+
       '<div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:4px">📞 שיחה '+(i+1)+'</div>'+
       '<div style="font-size:13px;color:var(--ice)"><b>טלפון:</b> '+shEsc(x.phone||'—')+' · <b>נושא:</b> '+shEsc(x.topic||'—')+'</div>'+
-      '<div style="font-size:13px;color:var(--ice2);margin-top:4px;white-space:pre-wrap"><b>לשימור/שיפור:</b> '+shEsc(x.notes||'—')+'</div>'+
+      '<div style="font-size:13px;color:var(--ice2);margin-top:4px;white-space:pre-wrap"><b style="color:var(--ok)">✅ לשימור:</b> '+shEsc(keep||'—')+'</div>'+
+      '<div style="font-size:13px;color:var(--ice2);margin-top:2px;white-space:pre-wrap"><b style="color:var(--warn)">📈 לשיפור:</b> '+shEsc(x.improve||'—')+'</div>'+
     '</div>';
   }).join('');
   var html='<div style="margin-bottom:12px;font-size:13px;color:var(--ice3)"><b style="color:var(--ice);font-size:15px">'+shEsc(c.agent_name)+'</b> · '+shEsc(c.dept||'')+' · '+shEsc(c.control_date||'')+(c.supervisor?' · גורם ממשב: '+shEsc(c.supervisor):'')+'</div>'+
