@@ -1230,6 +1230,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         <div id="nav-controls-dropdown" style="display:none;position:absolute;top:100%;right:0;min-width:170px;background:var(--ink2);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.18);padding:6px;z-index:50">
           <button onclick="switchTab('controls','monthly')" style="width:100%;text-align:right;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--ice2);font-size:13px;font-weight:500;font-family:'Sora',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">📋 בקרות</button>
           <button onclick="switchTab('controls','mystery')" style="width:100%;text-align:right;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--ice2);font-size:13px;font-weight:500;font-family:'Sora',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">🕵️ לקוח סמוי</button>
+          <button onclick="switchTab('controls','shoulder')" style="width:100%;text-align:right;padding:9px 12px;border-radius:8px;border:none;background:none;color:var(--ice2);font-size:13px;font-weight:500;font-family:'Sora',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background='var(--gold-bg)';this.style.color='var(--gold)'" onmouseout="this.style.background='none';this.style.color='var(--ice2)'">👥 כתף בשטח</button>
         </div>
       </div>
       <button class="nav-btn" onclick="switchTab('discipline')" id="nav-discipline">
@@ -1857,7 +1858,7 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
       </div>
 
       <!-- Sub tabs -->
-      <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0">
+      <div id="ctrl-subtabs" style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0">
         <button id="ctrl-tab-monthly" onclick="showControlsPanel('monthly')"
           style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--gold);color:var(--gold);font-family:'Sora',sans-serif">
           📊 בקרות חודשיות
@@ -1947,6 +1948,79 @@ input::placeholder, textarea::placeholder { color: var(--ice4); }
         </div>
         <div id="ctrl-daily-report-list" style="overflow-x:auto"></div>
       </div>
+
+      <!-- SHOULDER PANEL (כתף בשטח) -->
+      <div id="ctrl-panel-shoulder" style="display:none">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <select id="sh-month" onchange="renderShoulder()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif"><option value="all">כל החודשים</option></select>
+          <select id="sh-dept" onchange="renderShoulder()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif"><option value="all">כל הפעילויות</option></select>
+          <input type="text" id="sh-search" placeholder="🔍 חיפוש לפי שם נציג..." oninput="renderShoulder()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;min-width:200px;direction:rtl">
+          <button class="btn btn-gold" onclick="openShoulderModal()" style="margin-right:auto">+ הוספת כתף בשטח</button>
+        </div>
+        <div id="shoulder-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOULDER MODALS (כתף בשטח) -->
+  <div id="shoulder-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;max-width:720px;width:100%;margin:24px auto;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)">
+        <div>
+          <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:0.05em">👥 כתף בשטח</div>
+          <div id="sh-modal-title" style="font-size:19px;font-weight:800;color:var(--ice);font-family:'Sora',sans-serif">כתף בשטח חדש</div>
+        </div>
+        <button onclick="closeShoulderModal()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px">✕</button>
+      </div>
+      <div style="padding:20px 22px">
+        <input type="hidden" id="sh-edit-id">
+        <div style="margin-bottom:14px;background:var(--ink3);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:12px;color:var(--ice3);line-height:1.6">
+          מטרת הבקרה: מעקב שוטף אחר שיחות הנציג, מתן כלים, משוב בזמן אמת וחיזוק נקודות לשימור ולשיפור. לכל נציג נבחנות 4 שיחות.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">נציג</div>
+            <select id="sh-agent" onchange="shFillDept()" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;font-family:'Sora',sans-serif;direction:rtl"><option value="">בחר נציג...</option></select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">פעילות</div>
+            <input type="text" id="sh-dept-field" readonly style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink4);color:var(--ice3);font-size:13px;box-sizing:border-box" placeholder="מתמלא אוטומטית">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">תאריך</div>
+            <input type="date" id="sh-date" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">גורם ממשב</div>
+            <select id="sh-supervisor" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;direction:rtl">
+              <option value="">בחר ממשב...</option>
+              <option>הודיה מזרחי</option><option>בקי ביטון</option><option>טל אברהם</option><option>לבנה דניאל</option><option>תהילה כהן</option><option>אליה ביטון</option><option>עדי כהן</option>
+            </select>
+          </div>
+        </div>
+        <div id="sh-calls"></div>
+        <div style="margin-top:6px">
+          <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">📌 דגשים לסיכום כתף בשטח</div>
+          <textarea id="sh-summary" rows="3" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;direction:rtl;box-sizing:border-box;font-family:'Sora',sans-serif" placeholder="סיכום כללי של הכתף בשטח..."></textarea>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--ice3);margin-bottom:5px">🎯 דגשים לבקרה הבאה</div>
+          <textarea id="sh-next" rows="3" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line2);background:var(--ink3);color:var(--ice);font-size:13px;direction:rtl;box-sizing:border-box;font-family:'Sora',sans-serif" placeholder="על מה לשים דגש בבקרה הבאה..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-start;padding:16px 22px;border-top:1px solid var(--line)">
+        <button class="btn btn-gold" onclick="saveShoulder()">💾 שמירה</button>
+        <button class="btn btn-outline" onclick="closeShoulderModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+  <div id="shoulder-view-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+    <div style="background:var(--ink2);border:1px solid var(--line2);border-radius:20px;max-width:640px;width:100%;margin:24px auto;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)">
+        <div id="sh-view-title" style="font-size:18px;font-weight:800;color:var(--ice);font-family:'Sora',sans-serif">כתף בשטח</div>
+        <button onclick="closeShoulderView()" style="background:var(--ink3);border:1px solid var(--line2);width:32px;height:32px;border-radius:50%;cursor:pointer;color:var(--ice2);font-size:16px">✕</button>
+      </div>
+      <div id="sh-view-content" style="padding:20px 22px"></div>
     </div>
   </div>
 
@@ -11368,6 +11442,7 @@ function applyControlsCategoryLabels(){
     if(!isMystery && dailyBtn.style.borderBottomColor==='var(--gold)') showControlsPanel('monthly');
   }
   updateTodayMysteryWidget();
+  applyShoulderView();
 }
 // "לקוחות סמויים שבוצעו היום" — company-wide count (not dept/agent
 // filtered — this is a page-level daily target, not scoped to whatever
@@ -11977,6 +12052,187 @@ async function saveControl(){
   populateControlFilters();
   renderControlsMonthly();
   updateTodayMysteryWidget();
+}
+
+/* ══════════════ כתף בשטח (field shoulder-to-shoulder) ══════════════ */
+function shEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function isShoulderCat(){ return (window._controlsCategory||'monthly')==='shoulder'; }
+function shoulderList(){ return S_controls.filter(function(c){ return (c.control_type||'')==='shoulder'; }); }
+function parseShoulder(c){
+  try{ var o=JSON.parse(c.notes||'{}'); return {calls:Array.isArray(o.calls)?o.calls:[], summary:o.summary||'', next:o.next||''}; }
+  catch(e){ return {calls:[],summary:'',next:''}; }
+}
+// Toggle the shoulder panel vs the regular controls sub-tabs when switching category.
+function applyShoulderView(){
+  var on=isShoulderCat();
+  var subtabs=document.getElementById('ctrl-subtabs');
+  var sPanel=document.getElementById('ctrl-panel-shoulder');
+  if(subtabs) subtabs.style.display=on?'none':'flex';
+  if(sPanel) sPanel.style.display=on?'block':'none';
+  if(on){
+    ['monthly','history','table','daily'].forEach(function(p){ var el=document.getElementById('ctrl-panel-'+p); if(el) el.style.display='none'; });
+    var w=document.getElementById('ctrl-today-mystery-widget'); if(w) w.style.display='none';
+    renderShoulder();
+  } else {
+    var anyVisible=['monthly','history','table'].some(function(p){ var el=document.getElementById('ctrl-panel-'+p); return el&&el.style.display!=='none'; });
+    if(!anyVisible && typeof showControlsPanel==='function') showControlsPanel('monthly');
+  }
+}
+function renderShoulder(){
+  var all=shoulderList();
+  // Month filter options
+  var months=[...new Set(all.map(function(c){return c.month;}).filter(Boolean))].sort().reverse();
+  var mSel=document.getElementById('sh-month');
+  if(mSel){ var pv=mSel.value; mSel.innerHTML='<option value="all">כל החודשים</option>'+months.map(function(m){return '<option value="'+m+'">'+formatMonth(m)+'</option>';}).join(''); mSel.value=(pv==='all'||months.includes(pv))?pv:'all'; }
+  // Dept filter options
+  var depts=[...new Set(all.map(function(c){return c.dept;}).filter(Boolean))].sort();
+  var dSel=document.getElementById('sh-dept');
+  if(dSel){ var pd=dSel.value; dSel.innerHTML='<option value="all">כל הפעילויות</option>'+depts.map(function(d){return '<option value="'+shEsc(d)+'">'+shEsc(d)+'</option>';}).join(''); dSel.value=(pd==='all'||depts.includes(pd))?pd:'all'; }
+  var fm=mSel?mSel.value:'all', fd=dSel?dSel.value:'all', q=(document.getElementById('sh-search')?.value||'').trim();
+  var rows=all.filter(function(c){ return (fm==='all'||c.month===fm)&&(fd==='all'||c.dept===fd)&&(!q||(c.agent_name||'').indexOf(q)>=0); });
+  rows.sort(function(a,b){ return (b.control_date||'').localeCompare(a.control_date||''); });
+  var box=document.getElementById('shoulder-list');
+  if(!box) return;
+  if(!rows.length){ box.innerHTML=emptyState('👥','אין רשומות כתף בשטח','לחץ "+ הוספת כתף בשטח" כדי להתחיל'); return; }
+  box.innerHTML=rows.map(function(c){
+    var s=parseShoulder(c);
+    var n=s.calls.filter(function(x){ return x&&(x.phone||x.topic||x.notes); }).length;
+    return '<div style="background:var(--ink2);border:1px solid var(--line2);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
+      '<div style="flex:1;min-width:170px">'+
+        '<div style="font-size:15px;font-weight:800;color:var(--ice)">'+shEsc(c.agent_name)+'</div>'+
+        '<div style="font-size:12px;color:var(--ice3);margin-top:2px">'+shEsc(c.dept||'')+' · '+shEsc(c.control_date||'')+(c.supervisor?' · '+shEsc(c.supervisor):'')+'</div>'+
+      '</div>'+
+      '<div style="background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-line);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">'+n+'/4 שיחות</div>'+
+      '<button class="btn btn-outline btn-sm" onclick="viewShoulder(\''+c.id+'\')">👁 צפייה</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="openShoulderModal(\''+c.id+'\')">✏ עריכה</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="deleteShoulder(\''+c.id+'\')" style="color:var(--danger)">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+function shRenderCalls(calls){
+  var box=document.getElementById('sh-calls'); if(!box) return;
+  var html='';
+  for(var i=0;i<4;i++){
+    var c=calls[i]||{};
+    html+='<div style="border:1px solid var(--line2);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--ink3)">'+
+      '<div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px">📞 שיחה '+(i+1)+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">'+
+        '<input id="sh-call-phone-'+i+'" type="text" placeholder="מספר טלפון" value="'+shEsc(c.phone)+'" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl">'+
+        '<input id="sh-call-topic-'+i+'" type="text" placeholder="נושא הפנייה" value="'+shEsc(c.topic)+'" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl">'+
+      '</div>'+
+      '<textarea id="sh-call-notes-'+i+'" rows="2" placeholder="נקודות לשימור / שיפור" style="width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid var(--line2);background:var(--ink2);color:var(--ice);font-size:13px;box-sizing:border-box;direction:rtl;font-family:\'Sora\',sans-serif">'+shEsc(c.notes)+'</textarea>'+
+    '</div>';
+  }
+  box.innerHTML=html;
+}
+function shFillDept(){
+  var agent=S.agents.find(function(a){ return String(a.id)===String(document.getElementById('sh-agent').value); });
+  var MOVMENT=['כללית אקטיב','עובדים בריא','מעוף לעמית','לאומית FIT'];
+  var dept=''; if(agent){ var d=agent.depts||[]; dept=d.some(function(x){return MOVMENT.includes(x);})?'מובמנט':(d[0]||''); }
+  var f=document.getElementById('sh-dept-field'); if(f) f.value=dept;
+}
+function openShoulderModal(id){
+  var modal=document.getElementById('shoulder-modal'); if(!modal) return;
+  var agentSel=document.getElementById('sh-agent');
+  agentSel.innerHTML='<option value="">בחר נציג...</option>'+
+    S.agents.filter(function(a){return a.active!==false;}).sort(function(a,b){return a.name.localeCompare(b.name,'he');})
+            .map(function(a){return '<option value="'+a.id+'">'+shEsc(a.name)+'</option>';}).join('');
+  var today=new Date().toISOString().slice(0,10);
+  if(id){
+    var c=S_controls.find(function(x){return String(x.id)===String(id);}); if(!c) return;
+    var s=parseShoulder(c);
+    document.getElementById('sh-modal-title').textContent='עריכת כתף בשטח';
+    document.getElementById('sh-edit-id').value=c.id;
+    agentSel.value=c.agent_id;
+    document.getElementById('sh-dept-field').value=c.dept||'';
+    document.getElementById('sh-date').value=c.control_date||today;
+    document.getElementById('sh-supervisor').value=c.supervisor||'';
+    document.getElementById('sh-summary').value=s.summary||'';
+    document.getElementById('sh-next').value=s.next||'';
+    shRenderCalls(s.calls);
+  } else {
+    document.getElementById('sh-modal-title').textContent='כתף בשטח חדש';
+    document.getElementById('sh-edit-id').value='';
+    agentSel.value='';
+    document.getElementById('sh-dept-field').value='';
+    document.getElementById('sh-date').value=today;
+    document.getElementById('sh-supervisor').value='';
+    document.getElementById('sh-summary').value='';
+    document.getElementById('sh-next').value='';
+    shRenderCalls([]);
+  }
+  modal.style.display='flex';
+}
+function closeShoulderModal(){ var m=document.getElementById('shoulder-modal'); if(m) m.style.display='none'; }
+async function saveShoulder(){
+  var agentId=document.getElementById('sh-agent').value;
+  if(!agentId){ alert('יש לבחור נציג'); return; }
+  var agent=S.agents.find(function(a){ return String(a.id)===String(agentId); });
+  var date=document.getElementById('sh-date').value;
+  if(!date){ alert('יש לבחור תאריך'); return; }
+  var supervisor=document.getElementById('sh-supervisor').value;
+  if(!supervisor){ alert('יש לבחור גורם ממשב'); return; }
+  var calls=[];
+  for(var i=0;i<4;i++){
+    calls.push({
+      phone:(document.getElementById('sh-call-phone-'+i)?.value||'').trim(),
+      topic:(document.getElementById('sh-call-topic-'+i)?.value||'').trim(),
+      notes:(document.getElementById('sh-call-notes-'+i)?.value||'').trim()
+    });
+  }
+  if(!calls.some(function(c){ return c.phone||c.topic||c.notes; })){ alert('יש למלא לפחות שיחה אחת'); return; }
+  var summary=(document.getElementById('sh-summary')?.value||'').trim();
+  var nextNotes=(document.getElementById('sh-next')?.value||'').trim();
+  var dept=document.getElementById('sh-dept-field').value||'';
+  var payload=JSON.stringify({calls:calls,summary:summary,next:nextNotes});
+  var row={
+    agent_id:parseInt(agentId), agent_name:agent?agent.name:'', dept:dept,
+    control_type:'shoulder', control_date:date, control_time:new Date().toTimeString().slice(0,5),
+    supervisor:supervisor, topic:'כתף בשטח', customer_name:'', customer_phone:'',
+    doc_done:false, opening_done:false, body_done:false, closing_done:false, score:0,
+    notes:payload, retention:summary, improvement:nextNotes, month:date.slice(0,7)
+  };
+  var editId=document.getElementById('sh-edit-id').value;
+  if(editId){
+    var r=await _sb.from('controls').update(row).eq('id',editId);
+    if(r.error){ alert('שגיאה: '+r.error.message); return; }
+    var idx=S_controls.findIndex(function(c){ return String(c.id)===String(editId); });
+    if(idx>=0) S_controls[idx]=Object.assign({},S_controls[idx],row,{id:parseInt(editId)});
+  } else {
+    var r2=await _sb.from('controls').insert(row).select().single();
+    if(r2.error){ alert('שגיאה: '+r2.error.message); return; }
+    S_controls.unshift(r2.data);
+  }
+  closeShoulderModal();
+  renderShoulder();
+}
+function viewShoulder(id){
+  var c=S_controls.find(function(x){ return String(x.id)===String(id); }); if(!c) return;
+  var s=parseShoulder(c);
+  var callsHtml=s.calls.map(function(x,i){
+    if(!x||(!x.phone&&!x.topic&&!x.notes)) return '';
+    return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--ink3)">'+
+      '<div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:4px">📞 שיחה '+(i+1)+'</div>'+
+      '<div style="font-size:13px;color:var(--ice)"><b>טלפון:</b> '+shEsc(x.phone||'—')+' · <b>נושא:</b> '+shEsc(x.topic||'—')+'</div>'+
+      '<div style="font-size:13px;color:var(--ice2);margin-top:4px;white-space:pre-wrap"><b>לשימור/שיפור:</b> '+shEsc(x.notes||'—')+'</div>'+
+    '</div>';
+  }).join('');
+  var html='<div style="margin-bottom:12px;font-size:13px;color:var(--ice3)"><b style="color:var(--ice);font-size:15px">'+shEsc(c.agent_name)+'</b> · '+shEsc(c.dept||'')+' · '+shEsc(c.control_date||'')+(c.supervisor?' · גורם ממשב: '+shEsc(c.supervisor):'')+'</div>'+
+    callsHtml+
+    (s.summary?'<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px"><div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:3px">📌 דגשים לסיכום כתף בשטח</div><div style="font-size:13px;color:var(--ice2);white-space:pre-wrap">'+shEsc(s.summary)+'</div></div>':'')+
+    (s.next?'<div style="margin-top:12px"><div style="font-size:12px;font-weight:800;color:var(--gold);margin-bottom:3px">🎯 דגשים לבקרה הבאה</div><div style="font-size:13px;color:var(--ice2);white-space:pre-wrap">'+shEsc(s.next)+'</div></div>':'');
+  document.getElementById('sh-view-title').textContent='כתף בשטח — '+(c.agent_name||'');
+  document.getElementById('sh-view-content').innerHTML=html;
+  document.getElementById('shoulder-view-modal').style.display='flex';
+}
+function closeShoulderView(){ var m=document.getElementById('shoulder-view-modal'); if(m) m.style.display='none'; }
+async function deleteShoulder(id){
+  var c=S_controls.find(function(x){ return String(x.id)===String(id); }); if(!c) return;
+  if(!(await confirmDialog('למחוק את רשומת כתף בשטח של '+(c.agent_name||'')+'?',{danger:true}))) return;
+  var r=await _sb.from('controls').delete().eq('id',id);
+  if(r.error){ alert('שגיאה: '+r.error.message); return; }
+  S_controls=S_controls.filter(function(x){ return String(x.id)!==String(id); });
+  renderShoulder();
 }
 
 function populateTableFilters(){
